@@ -19,9 +19,11 @@ from unicodedata import category
 
 from django.contrib import admin
 from django.urls import path, include
-from transcendence import views
+from transcendence.views import page_not_found
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('transcendence.urls')),
 ]
+
+handler404 = page_not_found
