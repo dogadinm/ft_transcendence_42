@@ -14,16 +14,25 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from unicodedata import category
+# from unicodedata import category
 
+
+# from django.contrib import admin
+# from django.urls import path, include
+# from transcendence.views import page_not_found
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     path('', include('transcendence.urls')),
+# ]
+
+# handler404 = page_not_found
 
 from django.contrib import admin
-from django.urls import path, include
-from transcendence.views import page_not_found
+from django.urls import path
+from django.urls import include, re_path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('transcendence.urls')),
+    re_path(r'^', include('transcendence.urls'))
 ]
-
-handler404 = page_not_found
