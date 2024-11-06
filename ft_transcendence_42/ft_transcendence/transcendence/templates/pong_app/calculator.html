@@ -15,6 +15,11 @@
     <input type="button" id="submit" value="Get Results">
     <script>
         const socket = new WebSocket('ws://localhost:8000/ws/livec/');
+        if (socket.readyState === WebSocket.OPEN) {
+            console.log("Work");
+        } else {
+            console.log(socket);
+        }
         socket.onmessage = (e) => {
             result = JSON.parse(e.data).result;
             document.getElementById("results").value += "Server: " + result + "\n";
@@ -33,6 +38,8 @@
         document.querySelector("#submit").onclick = (e) => {
             inputfield = document.querySelector("#exp")
             exp = inputfield.value
+            console.log("Socket sending soon");
+            console.log(socket);
             socket.send(JSON.stringify(
                 {
                     expression: exp

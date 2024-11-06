@@ -3,36 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pong Game</title>
+    <title>Multiplayer Pong Game</title>
     <style>
-        body, html {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        #gameCanvas {
-            background-color: #333;
-            border: 2px solid white;
-        }
     </style>
 </head>
 <body>
+    <div id="scoreboard">Player One: <span id="scoreOne">0</span> | Player Two: <span id="scoreTwo">0</span></div>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const context = canvas.getContext('2d');
+        const roomName = prompt("Enter room name:");
+        const socket = new WebSocket(`ws://localhost:8000/ws/game/${roomName}/`);
+        if (socket.readyState === WebSocket.OPEN) {
+            console.log("Work");
+        } else {
+            console.log(socket);
+        }
+        socket.onmessage = function(e) {
+        console.log("Socket message");
+        console.log(socket);
+        const data = JSON.parse(e.data);
+            if (data.type === 'state_update') {
+                updateGameState(data.state);
+            }
+        };
 
+        socket.onclose = (e) => {
+            console.log("Socket closed!");
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const context = canvas ? canvas.getContext('2d') : null;
+        if (!context) {
+            console.error("Failed to get canvas context. Canvas might not be loaded.");
+        }
+        const scoreOneDisplay = document.getElementById('scoreOne');
+        const scoreTwoDisplay = document.getElementById('scoreTwo');
+
+        let scoreOne = 0;
+        let scoreTwo = 0;
         const paddleWidth = 10, paddleHeight = 100;
         const playerSpeed = 6;
-
+        
         const leftPaddle = { x: 10, y: canvas.height / 2 - paddleHeight / 2, dy: 0 };
         const rightPaddle = { x: canvas.width - 20, y: canvas.height / 2 - paddleHeight / 2, dy: 0 };
-
+        
         const ball = {
             x: canvas.width / 2,
             y: canvas.height / 2,
@@ -41,7 +55,7 @@
             dx: 4 * (Math.random() > 0.5 ? 1 : -1),
             dy: 4 * (Math.random() > 0.5 ? 1 : -1),
         };
-
+        
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp') rightPaddle.dy = -playerSpeed;
             if (e.key === 'ArrowDown') rightPaddle.dy = playerSpeed;
@@ -55,13 +69,32 @@
         });
 
         function gameLoop() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            drawPaddle(leftPaddle);
-            drawPaddle(rightPaddle);
-            drawBall();
-            movePaddle(leftPaddle);
-            movePaddle(rightPaddle);
-            moveBall();
+            console.log("Running gameLoop");
+            if (context) {
+                console.log("Canvas context available");
+                movePaddle(leftPaddle);
+                movePaddle(rightPaddle);
+                moveBall();
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                drawPaddle(leftPaddle);
+                drawPaddle(rightPaddle);
+                drawBall();
+
+                console.log("Socket sending soon");
+                console.log(socket);
+                socket.send(JSON.stringify({
+                    type: 'state_update',
+                    state: {
+                        leftPaddle: leftPaddle.y,
+                        rightPaddle: rightPaddle.y,
+                        ball: { x: ball.x, y: ball.y }
+                    }
+                }));
+                console.log("Socket sent");
+                console.log(socket);
+            } else {
+                console.error("Canvas context is not available.");
+                }
             requestAnimationFrame(gameLoop);
         }
 
@@ -87,33 +120,31 @@
         function moveBall() {
             ball.x += ball.dx;
             ball.y += ball.dy;
-
             if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
                 ball.dy *= -1;
             }
-
             if (ball.x - ball.radius < leftPaddle.x + paddleWidth &&
                 ball.y > leftPaddle.y &&
                 ball.y < leftPaddle.y + paddleHeight) {
                 ball.dx *= -1;
             }
-
             if (ball.x + ball.radius > rightPaddle.x &&
                 ball.y > rightPaddle.y &&
                 ball.y < rightPaddle.y + paddleHeight) {
                 ball.dx *= -1;
             }
+        }
 
-            if (ball.x + ball.radius < 0 || ball.x - ball.radius > canvas.width) {
-                resetBall();
-            }
+        function updateGameState(state) {
+            leftPaddle.y = state.leftPaddle;
+            rightPaddle.y = state.rightPaddle;
+            ball.x = state.ball.x;
+            ball.y = state.ball.y;
         }
-        function resetBall() {
-            ball.x = canvas.width / 2;
-            ball.y = canvas.height / 2;
-            ball.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
-            ball.dy = 4 * (Math.random() > 0.5 ? 1 : -1);
-        }
+        socket.onclose = function() {
+            console.log("WebSocket closed");
+            // Optionally, stop the game or reconnect
+        };
 
         gameLoop();
     </script>
