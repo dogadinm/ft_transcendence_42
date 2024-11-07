@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Calculator</title>
-</head>
-
+{% extends "pong_app/layout.html" %}
+{% block body %}
 <body>
     <textarea name="ta" id="results" cols="30" rows="10">
 
@@ -52,4 +46,6 @@
     </script>
 </body>
 
-</html>
+
+
+{% endblock %}
