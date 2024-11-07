@@ -26,3 +26,6 @@ def page_not_found(request, exception):
 
 def calculator(request):
     return render(request, 'pong_app/calculator.html', {})
+
+def cha_view(request):
+    return render(request, 'pong_app/chat.html')
