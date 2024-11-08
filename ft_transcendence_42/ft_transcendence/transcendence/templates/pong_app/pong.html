@@ -1,198 +1,64 @@
 {% extends "pong_app/layout.html" %}
 {% block body %}
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Pong Game</title>
+    <title>Multiplayer Pong</title>
     <style>
-        /* Basic styling for the game */
-        body, html {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        #scoreboard {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        #gameCanvas {
-            background-color: #333;
-            border: 2px solid white;
-        }
+        canvas { background: #000; display: block; margin: 0 auto; }
     </style>
 </head>
 <body>
-    <div id="scoreboard">Player One: <span id="scoreOne">0</span> | Player Two: <span id="scoreTwo">0</span></div>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
-
     <script>
-        // Prompt the user for a room name
-        const roomName = prompt("Enter room name:");
-        
-        // Create a WebSocket connection for the given room
-        const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomName}/`);
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const roomName = prompt("Enter room name:");
+const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomName}/`);
 
-        // Variables for canvas and game context
-        const canvas = document.getElementById('gameCanvas');
-        const context = canvas ? canvas.getContext('2d') : null;
-        if (!context) {
-            console.error("Failed to get canvas context. Canvas might not be loaded.");
-        }
+let paddleY1 = 150;
+let paddleY2 = 150;
+let playerSide = null;
 
-        // Variables for game state
-        const paddleWidth = 10, paddleHeight = 100, playerSpeed = 6;
-        const leftPaddle = { x: 10, y: canvas.height / 2 - paddleHeight / 2, dy: 0 };
-        const rightPaddle = { x: canvas.width - 20, y: canvas.height / 2 - paddleHeight / 2, dy: 0 };
-        const ball = { x: canvas.width / 2, y: canvas.height / 2, radius: 7, dx: 4, dy: 4 };
-        let scoreOne = 0, scoreTwo = 0;
+socket.onopen = function() {
+    console.log("Connected to the game room:", roomName);
+};
 
-        // Ask player if they are Player One or Player Two
-        const isPlayerOne = confirm("Are you Player One? Click OK for Yes, Cancel for No.");
+socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    const { paddles, ball, score } = data;
 
-        // Display score
-        const scoreOneDisplay = document.getElementById('scoreOne');
-        const scoreTwoDisplay = document.getElementById('scoreTwo');
+    paddleY1 = paddles.left.paddleY;
+    paddleY2 = paddles.right.paddleY;
 
-        // Handle keyboard events for paddle movement
-        document.addEventListener('keydown', (e) => {
-            if (isPlayerOne) {
-                if (e.key === 'w') leftPaddle.dy = -playerSpeed;
-                if (e.key === 's') leftPaddle.dy = playerSpeed;
-            } else {
-                if (e.key === 'ArrowUp') rightPaddle.dy = -playerSpeed;
-                if (e.key === 'ArrowDown') rightPaddle.dy = playerSpeed;
-            }
-        });
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        document.addEventListener('keyup', (e) => {
-            if (isPlayerOne) {
-                if (e.key === 'w' || e.key === 's') leftPaddle.dy = 0;
-            } else {
-                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') rightPaddle.dy = 0;
-            }
-        });
+    ctx.fillStyle = 'white';
+    ctx.fillRect(10, paddleY1, 10, 100);
+    ctx.fillRect(780, paddleY2, 10, 100);
 
-        // Main game loop
-        function gameLoop() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            movePaddle(leftPaddle);
-            movePaddle(rightPaddle);
-            moveBall();
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+    ctx.fill();
 
-            drawPaddle(leftPaddle);
-            drawPaddle(rightPaddle);
-            drawBall();
+    ctx.fillStyle = 'white';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Player 1: ${score.player1}`, 20, 20);
+    ctx.fillText(`Player 2: ${score.player2}`, 650, 20);
+};
 
-            // Send game state updates to the server
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    type: 'state_update',
-                    state: {
-                        leftPaddleY: leftPaddle.y,
-                        rightPaddleY: rightPaddle.y,
-                        ballX: ball.x,
-                        ballY: ball.y,
-                        scoreOne: scoreOne,
-                        scoreTwo: scoreTwo
-                    }
-                }));
-            }
+document.addEventListener('keydown', (e) => {
+    if (playerSide === null) {
+        if (e.key === 'w') paddleY1 -= 10;
+        if (e.key === 's') paddleY1 += 10;
+        if (e.key === 'ArrowUp') paddleY2 -= 10;
+        if (e.key === 'ArrowDown') paddleY2 += 10;
 
-            requestAnimationFrame(gameLoop);
-        }
+        socket.send(JSON.stringify({ side: 'left', paddleY: paddleY1 }));
+        socket.send(JSON.stringify({ side: 'right', paddleY: paddleY2 }));
+    }
+});
 
-        gameLoop();
 
-        // WebSocket message handler
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-
-            // Update game state with data received from the server
-            if (!isPlayerOne) leftPaddle.y = data.state.leftPaddleY;
-            if (isPlayerOne) rightPaddle.y = data.state.rightPaddleY;
-
-            ball.x = data.state.ballX;
-            ball.y = data.state.ballY;
-
-            scoreOne = data.state.scoreOne;
-            scoreTwo = data.state.scoreTwo;
-            scoreOneDisplay.textContent = scoreOne;
-            scoreTwoDisplay.textContent = scoreTwo;
-        };
-
-        // WebSocket error handling
-        socket.onerror = function(error) {
-            console.error("WebSocket error: ", error);
-        };
-
-        socket.onclose = function() {
-            console.log("WebSocket connection closed.");
-        };
-
-        // Paddle and Ball movement functions
-        function movePaddle(paddle) {
-            paddle.y += paddle.dy;
-            if (paddle.y < 0) paddle.y = 0;
-            if (paddle.y + paddleHeight > canvas.height) paddle.y = canvas.height - paddleHeight;
-        }
-
-        function moveBall() {
-            ball.x += ball.dx;
-            ball.y += ball.dy;
-
-            // Check for wall collisions
-            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
-                ball.dy *= -1;
-            }
-
-            // Check for paddle collisions
-            if (ball.x - ball.radius < leftPaddle.x + paddleWidth &&
-                ball.y > leftPaddle.y && ball.y < leftPaddle.y + paddleHeight) {
-                ball.dx *= -1;
-            }
-            if (ball.x + ball.radius > rightPaddle.x &&
-                ball.y > rightPaddle.y && ball.y < rightPaddle.y + paddleHeight) {
-                ball.dx *= -1;
-            }
-
-            // Check for scoring
-            if (ball.x + ball.radius < 0) {
-                scoreTwo++;
-                resetBall();
-            }
-            if (ball.x - ball.radius > canvas.width) {
-                scoreOne++;
-                resetBall();
-            }
-        }
-
-        // Draw functions
-        function drawPaddle(paddle) {
-            context.fillStyle = 'white';
-            context.fillRect(paddle.x, paddle.y, paddleWidth, paddleHeight);
-        }
-
-        function drawBall() {
-            context.beginPath();
-            context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            context.fillStyle = 'white';
-            context.fill();
-            context.closePath();
-        }
-
-        // Reset ball position after a score
-        function resetBall() {
-            ball.x = canvas.width / 2;
-            ball.y = canvas.height / 2;
-            ball.dx *= Math.random() > 0.5 ? 1 : -1;
-            ball.dy *= Math.random() > 0.5 ? 1 : -1;
-        }
     </script>
 </body>
+</html>
 {% endblock %}
