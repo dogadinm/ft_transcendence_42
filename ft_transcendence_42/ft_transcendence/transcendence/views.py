@@ -6,49 +6,82 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-
+from .models import User, Score
 
 # Create your views here.
 
 def index(request):
-    # posts = Post.objects.all().order_by('id').reverse()
-
-    # Pagination
-    # p = Paginator(posts, 10)
-    # numb_page = request.GET.get("page")
-    # post_page = p.get_page(numb_page)
-
-
     return render(request, "pong_app/index.html")
-
-
-def login(request):
-    return render(request, 'pong_app/login.html')
-def register(request):
-    return render(request, 'pong_app/register.html')
 
 def pong(request):
     return render(request, 'pong_app/pong.html')
 
-def categories(request, cat_id):
-    return HttpResponse(f"<h1>Categories<h1><p>id: {cat_id}<p>")
-
-def archive(request, year):
-    if year > 2023:
-        return redirect('/')
-    return HttpResponse(f"<h1>Archive<h1><p>Year: {year}<p>")
-
-def categories_by_slug(request, cat_slug):
-    if request.POST:
-        print(request.POST)
-    return HttpResponse(f"<h1>Categories<h1><p>Slug: {cat_slug}<p>")
-
-def page_not_found(request, exception):
-    return HttpResponseNotFound("<h1>Not found page<h1>")
-
-
 def calculator(request):
     return render(request, 'pong_app/calculator.html', {})
 
-def cha_view(request):
+def chat_view(request):
     return render(request, 'pong_app/chat.html')
+
+def login_view(request):
+    if (request.user.is_authenticated):
+        return redirect('index')
+    if request.method == "POST":
+        # Attempt to sign user in
+        username = request.POST["username"]
+        password = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+
+        # Check if authentication successful
+        if user is not None:
+            login(request, user)
+            return redirect('index')
+        else:
+            return render(request, "pong_app/login.html", {
+                "message": "Invalid username and/or password."
+            })
+    else:
+        return render(request, "pong_app/login.html")
+
+def register(request):
+    if (request.user.is_authenticated):
+        return redirect('index')
+    if request.method == "POST":
+
+        username = request.POST["username"]
+        email = request.POST["email"]
+        password = request.POST["password"]
+        confirmation = request.POST["confirmation"]
+        if password != confirmation:
+            return render(request, "pong_app/register.html", {
+                "message": "Passwords must match."
+            })
+
+        # Attempt to create new user
+        try:
+            user = User.objects.create_user(username, email, password)
+            user.save()
+        except IntegrityError:
+            return render(request, "pong_app/register.html", {
+                "message": "Username already taken."
+            })
+        login(request, user)
+        return redirect('index')
+    else:
+        return render(request, "pong_app/register.html")
+
+
+def account(request, user_id):
+    username = User.objects.get(pk=user_id)
+    score = Score.objects.filter(user=username) #doesnt work
+
+    return render(request, "pong_app/account.html", {
+        "username": username,
+        "score": score,
+        "user_account": username
+    })
+
+def logout_view(request):
+    logout(request)
+    return redirect("index")
+
+
