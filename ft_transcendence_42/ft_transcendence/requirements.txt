@@ -3,4 +3,4 @@ uvicorn
 uvicorn[STANDARD]
 channels
 channels-redis
-psycopg2
+psycopg2-binary
