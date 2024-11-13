@@ -22,7 +22,7 @@ class Calculator(WebsocketConsumer):
         }))
 
 
-class GameConsumer(AsyncWebsocketConsumer):
+class GameLogic(AsyncWebsocketConsumer):
     players = {'left': None, 'right': None}
     paddles = {'left': {'paddleY': 150}, 'right': {'paddleY': 150}}
     ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
@@ -32,88 +32,82 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'game_{self.room_name}'
+        self.role = self.scope['url_route']['kwargs']['role']
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        # Assign player to 'left' or 'right' side if available
-        if GameConsumer.players['left'] is None:
-            GameConsumer.players['left'] = self.channel_name
-        elif GameConsumer.players['right'] is None:
-            GameConsumer.players['right'] = self.channel_name
+        #Assigning a role
+        if self.role == 'player1' and GameLogic.players['left'] is None:
+            GameLogic.players['left'] = self.channel_name
+        elif self.role == 'player2' and GameLogic.players['right'] is None:
+            GameLogic.players['right'] = self.channel_name
 
-        # Start the game loop if not already running
-        if not GameConsumer.game_loop_running:
-            GameConsumer.game_loop_running = True
+        if not GameLogic.game_loop_running:
+            GameLogic.game_loop_running = True
             asyncio.create_task(self.game_loop())
 
-        # Send initial game state to the new player
+        #Sending the initial state of the game
         await self.send(json.dumps({
             'type': 'game_update',
-            'paddles': GameConsumer.paddles,
-            'ball': GameConsumer.ball,
-            'score': GameConsumer.score,
+            'paddles': GameLogic.paddles,
+            'ball': GameLogic.ball,
+            'score': GameLogic.score,
         }))
+
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-        # Remove the player on disconnect
-        if GameConsumer.players['left'] == self.channel_name:
-            GameConsumer.players['left'] = None
-        elif GameConsumer.players['right'] == self.channel_name:
-            GameConsumer.players['right'] = None
+        if self.role == 'player1' and GameLogic.players['left'] == self.channel_name:
+            GameLogic.players['left'] = None
+        elif self.role == 'player2' and GameLogic.players['right'] == self.channel_name:
+            GameLogic.players['right'] = None
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        if 'paddleY' in data and 'side' in data:
-            side = data['side']
-            if side in GameConsumer.paddles:
-                GameConsumer.paddles[side]['paddleY'] = data['paddleY']
+        side = data.get('side')
+        if 'paddleY' in data and side in GameLogic.paddles:
+            GameLogic.paddles[side]['paddleY'] = data['paddleY']
 
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'game_update',
-                    'paddles': GameConsumer.paddles,
-                    'ball': GameConsumer.ball,
-                    'score': GameConsumer.score,
+                    'paddles': GameLogic.paddles,
+                    'ball': GameLogic.ball,
+                    'score': GameLogic.score,
                 }
             )
 
     async def game_loop(self):
         while True:
-            # Update ball position
-            GameConsumer.ball['x'] += GameConsumer.ball['dx']
-            GameConsumer.ball['y'] += GameConsumer.ball['dy']
+            GameLogic.ball['x'] += GameLogic.ball['dx']
+            GameLogic.ball['y'] += GameLogic.ball['dy']
 
-            # Ball collision with top/bottom walls
-            if GameConsumer.ball['y'] <= 0 or GameConsumer.ball['y'] >= 400:
-                GameConsumer.ball['dy'] *= -1
+            if GameLogic.ball['y'] <= 0 or GameLogic.ball['y'] >= 400:
+                GameLogic.ball['dy'] *= -1
 
-            # Ball collision with paddles
-            for side, paddle in GameConsumer.paddles.items():
+            for side, paddle in GameLogic.paddles.items():
                 paddle_x = 10 if side == 'left' else 780
-                if paddle_x < GameConsumer.ball['x'] < paddle_x + 10:
-                    if paddle['paddleY'] < GameConsumer.ball['y'] < paddle['paddleY'] + 100:
-                        GameConsumer.ball['dx'] *= -1
+                if paddle_x < GameLogic.ball['x'] < paddle_x + 10:
+                    if paddle['paddleY'] < GameLogic.ball['y'] < paddle['paddleY'] + 100:
+                        GameLogic.ball['dx'] *= -1
 
-            # Check for scoring
-            if GameConsumer.ball['x'] <= 0:
-                GameConsumer.score['player2'] += 1
+            if GameLogic.ball['x'] <= 0:
+                GameLogic.score['player2'] += 1
                 await self.reset_ball()
-            elif GameConsumer.ball['x'] >= 800:
-                GameConsumer.score['player1'] += 1
+            elif GameLogic.ball['x'] >= 800:
+                GameLogic.score['player1'] += 1
                 await self.reset_ball()
 
-            # Broadcast game state to all players
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'game_update',
-                    'paddles': GameConsumer.paddles,
-                    'ball': GameConsumer.ball,
-                    'score': GameConsumer.score,
+                    'paddles': GameLogic.paddles,
+                    'ball': GameLogic.ball,
+                    'score': GameLogic.score,
                 }
             )
             await asyncio.sleep(0.03)
@@ -122,4 +116,4 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
     async def reset_ball(self):
-        GameConsumer.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
+        GameLogic.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}

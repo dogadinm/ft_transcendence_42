@@ -1,64 +1,28 @@
-{% extends "pong_app/layout.html" %}
+{% extends 'pong_app/layout.html' %}
+
+{% block title %}Pong Game{% endblock %}
+
 {% block body %}
-<head>
-    <title>Multiplayer Pong</title>
-    <style>
-        canvas { background: #000; display: block; margin: 0 auto; }
-    </style>
-</head>
-<body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const roomName = prompt("Enter room name:");
-const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomName}/`);
+<div class="container text-center mt-5">
+    <h1>Welcome to Pong Game</h1>
+    <form method="get" action="">
+        <label for="roomName">Enter Room Name:</label>
+        <input type="text" id="roomName" name="room_name" required>
+        <br><br>
+        <a class="btn btn-primary" onclick="joinGame('player1')">Play as Player 1</a>
+        <a class="btn btn-success" onclick="joinGame('player2')">Play as Player 2</a>
+        <a class="btn btn-secondary" onclick="joinGame('spectator')">Spectate</a>
+    </form>
+</div>
 
-let paddleY1 = 150;
-let paddleY2 = 150;
-let playerSide = null;
-
-socket.onopen = function() {
-    console.log("Connected to the game room:", roomName);
-};
-
-socket.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    const { paddles, ball, score } = data;
-
-    paddleY1 = paddles.left.paddleY;
-    paddleY2 = paddles.right.paddleY;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(10, paddleY1, 10, 100);
-    ctx.fillRect(780, paddleY2, 10, 100);
-
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Player 1: ${score.player1}`, 20, 20);
-    ctx.fillText(`Player 2: ${score.player2}`, 650, 20);
-};
-
-document.addEventListener('keydown', (e) => {
-    if (playerSide === null) {
-        if (e.key === 'w') paddleY1 -= 10;
-        if (e.key === 's') paddleY1 += 10;
-        if (e.key === 'ArrowUp') paddleY2 -= 10;
-        if (e.key === 'ArrowDown') paddleY2 += 10;
-
-        socket.send(JSON.stringify({ side: 'left', paddleY: paddleY1 }));
-        socket.send(JSON.stringify({ side: 'right', paddleY: paddleY2 }));
+<script>
+function joinGame(role) {
+    const roomName = document.getElementById('roomName').value;
+    if (roomName) {
+        window.location.href = `/${roomName}/${role}/`;
+    } else {
+        alert('Please enter a room name.');
     }
-});
-
-
-    </script>
-</body>
-</html>
+}
+</script>
 {% endblock %}

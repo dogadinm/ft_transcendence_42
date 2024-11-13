@@ -13,9 +13,6 @@ from .models import User, Score
 def index(request):
     return render(request, "pong_app/index.html")
 
-def pong(request):
-    return render(request, 'pong_app/pong.html')
-
 def calculator(request):
     return render(request, 'pong_app/calculator.html', {})
 
@@ -83,5 +80,18 @@ def account(request, user_id):
 def logout_view(request):
     logout(request)
     return redirect("index")
+
+def pong(request):
+    return render(request, 'pong_app/pong.html')
+
+def player1_view(request, room_name):
+    return render(request, 'pong_app/player1.html', {'room_name': room_name})
+
+def player2_view(request, room_name):
+    return render(request, 'pong_app/player2.html', {'room_name': room_name})
+
+def spectator_view(request, room_name):
+    return render(request, 'pong_app/spectator.html', {'room_name': room_name})
+
 
 
