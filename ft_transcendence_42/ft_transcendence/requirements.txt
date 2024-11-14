@@ -1,6 +1,3 @@
 django
-uvicorn
-uvicorn[STANDARD]
-channels
-channels-redis
+channels[daphne]
 psycopg2-binary
