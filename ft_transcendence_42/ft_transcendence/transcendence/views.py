@@ -6,8 +6,8 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from .models import User, Score
-
+from .models import User, Score, Room
+from django.contrib.auth import login
 # Create your views here.
 
 def index(request):
@@ -84,14 +84,9 @@ def logout_view(request):
 def pong(request):
     return render(request, 'pong_app/pong.html')
 
-def player1_view(request, room_name):
-    return render(request, 'pong_app/player1.html', {'room_name': room_name})
 
-def player2_view(request, room_name):
-    return render(request, 'pong_app/player2.html', {'room_name': room_name})
-
-def spectator_view(request, room_name):
-    return render(request, 'pong_app/spectator.html', {'room_name': room_name})
-
+def room(request, room_name):
+    room, created = Room.objects.get_or_create(name=room_name)
+    return render(request, 'pong_app/room.html', {'room_name': room_name})
 
 

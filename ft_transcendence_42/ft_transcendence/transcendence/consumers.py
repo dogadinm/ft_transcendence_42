@@ -1,26 +1,11 @@
 import json
-from channels.generic.websocket import WebsocketConsumer
-from channels.generic.websocket import AsyncWebsocketConsumer
 import asyncio
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+from .models import Room
+from django.contrib.auth import get_user_model
 
-class Calculator(WebsocketConsumer):
-    def connect(self):
-        self.accept()
-
-    def disconnect(self, close_code):
-        self.close()   
-
-    def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        expression = text_data_json['expression']
-        try:
-            result = eval(expression)
-        except Exception as e:
-            result = "Invalid Expression"
-        self.send(text_data=json.dumps({
-            'result': result
-        }))
-
+User = get_user_model()
 
 class GameLogic(AsyncWebsocketConsumer):
     players = {'left': None, 'right': None}
@@ -32,33 +17,31 @@ class GameLogic(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'game_{self.room_name}'
-        self.role = self.scope['url_route']['kwargs']['role']
+        self.user = self.scope['user']
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        #Assigning a role
-        if self.role == 'player1' and GameLogic.players['left'] is None:
+        
+        self.room, created = await self.get_or_create_room(self.room_name)
+
+        if not GameLogic.players['left']:
             GameLogic.players['left'] = self.channel_name
-        elif self.role == 'player2' and GameLogic.players['right'] is None:
+            self.role = 'player1'
+        elif not GameLogic.players['right']:
             GameLogic.players['right'] = self.channel_name
+            self.role = 'player2'
+        else:
+            self.role = 'spectator'
+
+        await self.send(json.dumps({'type': 'role_assignment', 'role': self.role}))
 
         if not GameLogic.game_loop_running:
             GameLogic.game_loop_running = True
             asyncio.create_task(self.game_loop())
 
-        #Sending the initial state of the game
-        await self.send(json.dumps({
-            'type': 'game_update',
-            'paddles': GameLogic.paddles,
-            'ball': GameLogic.ball,
-            'score': GameLogic.score,
-        }))
-
-
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
         if self.role == 'player1' and GameLogic.players['left'] == self.channel_name:
             GameLogic.players['left'] = None
         elif self.role == 'player2' and GameLogic.players['right'] == self.channel_name:
@@ -66,28 +49,34 @@ class GameLogic(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        side = data.get('side')
-        if 'paddleY' in data and side in GameLogic.paddles:
-            GameLogic.paddles[side]['paddleY'] = data['paddleY']
+        paddle_y = data.get('paddleY')
 
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'game_update',
-                    'paddles': GameLogic.paddles,
-                    'ball': GameLogic.ball,
-                    'score': GameLogic.score,
-                }
-            )
+        if self.role == 'player1':
+            GameLogic.paddles['left']['paddleY'] = paddle_y
+        elif self.role == 'player2':
+            GameLogic.paddles['right']['paddleY'] = paddle_y
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'game_update',
+                'paddles': GameLogic.paddles,
+                'ball': GameLogic.ball,
+                'score': GameLogic.score,
+            }
+        )
 
     async def game_loop(self):
         while True:
+
             GameLogic.ball['x'] += GameLogic.ball['dx']
             GameLogic.ball['y'] += GameLogic.ball['dy']
+
 
             if GameLogic.ball['y'] <= 0 or GameLogic.ball['y'] >= 400:
                 GameLogic.ball['dy'] *= -1
 
+    
             for side, paddle in GameLogic.paddles.items():
                 paddle_x = 10 if side == 'left' else 780
                 if paddle_x < GameLogic.ball['x'] < paddle_x + 10:
@@ -100,6 +89,7 @@ class GameLogic(AsyncWebsocketConsumer):
             elif GameLogic.ball['x'] >= 800:
                 GameLogic.score['player1'] += 1
                 await self.reset_ball()
+
 
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -117,3 +107,7 @@ class GameLogic(AsyncWebsocketConsumer):
 
     async def reset_ball(self):
         GameLogic.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
+
+    @database_sync_to_async
+    def get_or_create_room(self, room_name):
+        return Room.objects.get_or_create(name=room_name)

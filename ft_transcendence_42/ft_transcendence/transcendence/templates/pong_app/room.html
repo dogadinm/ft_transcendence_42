@@ -1,0 +1,53 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+
+<div id="roleInfo"></div>
+<canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;"></canvas>
+
+<script>
+const socket = new WebSocket(`ws://${window.location.host}/ws/game/{{ room_name }}/`);
+let paddleY = 150;
+
+socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+
+    if (data.type === 'role_assignment') {
+        document.getElementById('roleInfo').innerText = `You are ${data.role}`;
+        if (data.role === 'player1') {
+            document.addEventListener('keydown', movePaddle);
+        } else if (data.role === 'player2') {
+            document.addEventListener('keydown', movePaddle);
+        }
+    } else if (data.type === 'game_update') {
+        drawGame(data);
+    }
+};
+
+function movePaddle(e) {
+    if (e.key === 'w') paddleY -= 10;
+    if (e.key === 's') paddleY += 10;
+    socket.send(JSON.stringify({ paddleY }));
+}
+
+function drawGame(data) {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+    ctx.fillRect(10, data.paddles.left.paddleY, 10, 100);
+    ctx.fillRect(780, data.paddles.right.paddleY, 10, 100);
+
+
+    ctx.beginPath();
+    ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+
+    ctx.font = '20px Arial';
+    ctx.fillText(`Player 1: ${data.score.player1}`, 20, 20);
+    ctx.fillText(`Player 2: ${data.score.player2}`, 650, 20);
+}
+</script>
+{% endblock %}

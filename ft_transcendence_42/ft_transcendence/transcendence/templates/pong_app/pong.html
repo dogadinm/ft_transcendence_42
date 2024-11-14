@@ -9,17 +9,15 @@
         <label for="roomName">Enter Room Name:</label>
         <input type="text" id="roomName" name="room_name" required>
         <br><br>
-        <a class="btn btn-primary" onclick="joinGame('player1')">Play as Player 1</a>
-        <a class="btn btn-success" onclick="joinGame('player2')">Play as Player 2</a>
-        <a class="btn btn-secondary" onclick="joinGame('spectator')">Spectate</a>
+        <a class="btn btn-primary" onclick="joinGame()">Connect</a>
     </form>
 </div>
 
 <script>
-function joinGame(role) {
+function joinGame() {
     const roomName = document.getElementById('roomName').value;
     if (roomName) {
-        window.location.href = `/${roomName}/${role}/`;
+        window.location.href = `/room/${roomName}/`;
     } else {
         alert('Please enter a room name.');
     }
