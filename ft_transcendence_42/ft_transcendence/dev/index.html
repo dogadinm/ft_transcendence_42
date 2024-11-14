@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Welcome to the Pong game!</h1>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="#" onclick="showSection('login-section')">Login</a>
+        <a href="#" onclick="showSection('sign-up-section')">Sign Up</a>
+        <a href="#" onclick="showSection('chat-section')">Chat</a>
+        <a href="#" onclick="showSection('score-section')">Score</a>
+        <a href="#" onclick="showSection('pong-game-section'); startPongGame();">Play Pong Game</a>
+    </nav>
+
+    <!-- Sections -->
+    <div id="login-section" class="section">
+        <h2>Login</h2>
+        <form>
+            <input type="text" placeholder="Username">
+            <input type="password" placeholder="Password">
+            <button type="submit">Login</button>
+        </form>
+        <p>Not registered? <a href="#" onclick="showSection('sign-up-section')">Please, sign up</a></p>
+    </div>
+
+    <div id="sign-up-section" class="section">
+        <h2>Sign Up</h2>
+        <form>
+            <input type="text" placeholder="Username">
+            <input type="email" placeholder="Email">
+            <input type="password" placeholder="Password">
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+
+    <div id="chat-section" class="section">
+        <h2>Chat</h2>
+        <!-- Chat UI elements go here -->
+    </div>
+
+    <div id="score-section" class="section">
+        <h2>Score</h2>
+        <!-- Score UI elements go here -->
+    </div>
+
+    <div id="pong-game-section" class="section">
+        <h2>Pong Game</h2>
+        <canvas></canvas>
+        <p>Control the left player by using up and down arrow keys</p>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="pongScript.js"></script>
+</body>
+</html>
