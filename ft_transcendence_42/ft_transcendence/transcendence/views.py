@@ -89,4 +89,8 @@ def room(request, room_name):
     room, created = Room.objects.get_or_create(name=room_name)
     return render(request, 'pong_app/room.html', {'room_name': room_name})
 
+def bot(request):
+    return render(request, 'pong_app/bot.html')
 
+def chat(request):
+    return render(request, 'pong_app/chat.html')

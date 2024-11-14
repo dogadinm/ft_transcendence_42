@@ -1,0 +1,8 @@
+{% extends 'pong_app/layout.html' %}
+{% load static %}
+{% block body %}
+<body>
+<script src="{% static 'js/game.js' %}"></script>
+<button onclick="showSection('pong-game-section'); startPongGame();">Play Pong Game</button>
+</body>
+{% endblock %}
