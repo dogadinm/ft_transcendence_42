@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Game</title>
+    <!-- Link to Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="blackjack.css">
+</head>
+<body>
+    <!-- Game Title -->
+    <h1>BLACKJACK</h1>
+
+    <!-- Dealer's Cards -->
+    <div id="dealer-section">
+        <h2>Dealer's Cards</h2>
+        <div id="dealer-cards">
+            <img id="hidden" src="./cards/back.png" alt="Hidden card">
+        </div>
+        <p id="dealer-sum">0</p>
+    </div>
+
+    <!-- Player's Cards -->
+    <div id="your-section">
+        <h2>Your Cards</h2>
+        <div id="your-cards"></div>
+        <p id="your-sum">0</p>
+    </div>
+
+    <!-- Game Controls -->
+    <div id="controls">
+        <button id="hit">Hit</button>
+        <button id="stay">Stay</button>
+        <button id="start-again">Start Again</button>
+        <button id="quit">Quit</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results"></div>
+
+    <!-- JavaScript -->
+    <script src="blackjack.js"></script>
+</body>
+</html>
