@@ -4,110 +4,76 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Room
 from django.contrib.auth import get_user_model
+from .game import room_manager
 
-User = get_user_model()
-
-class GameLogic(AsyncWebsocketConsumer):
-    players = {'left': None, 'right': None}
-    paddles = {'left': {'paddleY': 150}, 'right': {'paddleY': 150}}
-    ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
-    score = {'player1': 0, 'player2': 0}
-    game_loop_running = False
-
+class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'game_{self.room_name}'
         self.user = self.scope['user']
 
+        # Connect the user to the WebSocket group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        
-        self.room, created = await self.get_or_create_room(self.room_name)
+        # Get or create a room object
+        self.room_game = room_manager.get_or_create_room(self.room_name)
+        self.role = await self.assign_role()
 
-        if not GameLogic.players['left']:
-            GameLogic.players['left'] = self.channel_name
-            self.role = 'player1'
-        elif not GameLogic.players['right']:
-            GameLogic.players['right'] = self.channel_name
-            self.role = 'player2'
-        else:
-            self.role = 'spectator'
-
+        # Send the assigned role to the user
         await self.send(json.dumps({'type': 'role_assignment', 'role': self.role}))
 
-        if not GameLogic.game_loop_running:
-            GameLogic.game_loop_running = True
-            asyncio.create_task(self.game_loop())
+        # Start the game loop if it is not already running
+        if not self.room_game.game_loop_running:
+            self.room_game.game_loop_running = True
+            asyncio.create_task(self.room_game.game_loop(self.send_game_update))
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        if self.role == 'player1' and GameLogic.players['left'] == self.channel_name:
-            GameLogic.players['left'] = None
-        elif self.role == 'player2' and GameLogic.players['right'] == self.channel_name:
-            GameLogic.players['right'] = None
+
+        # Free up space if a player disconnects
+        if self.role == 'player1':
+            self.room_game.players['left'] = None
+        elif self.role == 'player2':
+            self.room_game.players['right'] = None
+        if self.room_game.players['right'] == None and self.room_game.players['left'] == None:
+            room_manager.remove_room(self.room_name)
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         paddle_y = data.get('paddleY')
 
+        paddle_y = max(0, min(300, paddle_y))
+        # Update the racket position
         if self.role == 'player1':
-            GameLogic.paddles['left']['paddleY'] = paddle_y
+            self.room_game.paddles['left']['paddleY'] = paddle_y
         elif self.role == 'player2':
-            GameLogic.paddles['right']['paddleY'] = paddle_y
+            self.room_game.paddles['right']['paddleY'] = paddle_y
 
+    async def send_game_update(self, game_state):
+        # print("Sending game update:", game_state)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'game_update',
-                'paddles': GameLogic.paddles,
-                'ball': GameLogic.ball,
-                'score': GameLogic.score,
+                'game_state': game_state
             }
         )
 
-    async def game_loop(self):
-        while True:
-
-            GameLogic.ball['x'] += GameLogic.ball['dx']
-            GameLogic.ball['y'] += GameLogic.ball['dy']
-
-
-            if GameLogic.ball['y'] <= 0 or GameLogic.ball['y'] >= 400:
-                GameLogic.ball['dy'] *= -1
-
-    
-            for side, paddle in GameLogic.paddles.items():
-                paddle_x = 10 if side == 'left' else 780
-                if paddle_x < GameLogic.ball['x'] < paddle_x + 10:
-                    if paddle['paddleY'] < GameLogic.ball['y'] < paddle['paddleY'] + 100:
-                        GameLogic.ball['dx'] *= -1
-
-            if GameLogic.ball['x'] <= 0:
-                GameLogic.score['player2'] += 1
-                await self.reset_ball()
-            elif GameLogic.ball['x'] >= 800:
-                GameLogic.score['player1'] += 1
-                await self.reset_ball()
-
-
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'game_update',
-                    'paddles': GameLogic.paddles,
-                    'ball': GameLogic.ball,
-                    'score': GameLogic.score,
-                }
-            )
-            await asyncio.sleep(0.03)
-
     async def game_update(self, event):
-        await self.send(text_data=json.dumps(event))
+        await self.send(text_data=json.dumps({
+            'type': 'game_update',
+            'paddles': event['game_state']['paddles'],
+            'ball': event['game_state']['ball'],
+            'score': event['game_state']['score']
+        }))
 
-    async def reset_ball(self):
-        GameLogic.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
-
-    @database_sync_to_async
-    def get_or_create_room(self, room_name):
-        return Room.objects.get_or_create(name=room_name)
+    async def assign_role(self):
+        if not self.room_game.players['left']:
+            self.room_game.players['left'] = self.channel_name
+            return 'player1'
+        elif not self.room_game.players['right']:
+            self.room_game.players['right'] = self.channel_name
+            return 'player2'
+        return 'spectator'

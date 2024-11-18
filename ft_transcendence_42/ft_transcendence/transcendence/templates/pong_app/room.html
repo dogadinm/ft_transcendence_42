@@ -8,15 +8,15 @@
 <script>
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/{{ room_name }}/`);
 let paddleY = 150;
+const paddleHeight = 100;
+const fieldHeight = 400;
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
 
     if (data.type === 'role_assignment') {
         document.getElementById('roleInfo').innerText = `You are ${data.role}`;
-        if (data.role === 'player1') {
-            document.addEventListener('keydown', movePaddle);
-        } else if (data.role === 'player2') {
+        if (data.role === 'player1' || data.role === 'player2') {
             document.addEventListener('keydown', movePaddle);
         }
     } else if (data.type === 'game_update') {
@@ -27,6 +27,10 @@ socket.onmessage = function(event) {
 function movePaddle(e) {
     if (e.key === 'w') paddleY -= 10;
     if (e.key === 's') paddleY += 10;
+
+    if (paddleY < 0) paddleY = 0;
+    if (paddleY > fieldHeight - paddleHeight) paddleY = fieldHeight - paddleHeight;
+
     socket.send(JSON.stringify({ paddleY }));
 }
 
@@ -35,15 +39,12 @@ function drawGame(data) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-
     ctx.fillRect(10, data.paddles.left.paddleY, 10, 100);
     ctx.fillRect(780, data.paddles.right.paddleY, 10, 100);
-
 
     ctx.beginPath();
     ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
     ctx.fill();
-
 
     ctx.font = '20px Arial';
     ctx.fillText(`Player 1: ${data.score.player1}`, 20, 20);
