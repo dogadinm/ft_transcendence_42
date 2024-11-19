@@ -18,6 +18,16 @@ h1 {
     font-family: "Cairo", sans-serif;
 }
 
+/* Scoreboard */
+#scoreboard {
+    margin: 10px 0;
+    font-size: 1.5em;
+}
+
+#scoreboard p {
+    margin: 5px 0;
+}
+
 /* Card Containers */
 #dealer-cards, #your-cards {
     display: flex;
@@ -86,12 +96,6 @@ button:disabled {
 
 #results.quit {
     color: #95a5a6;
-}
-
-/* Dealer and Player Sum Display */
-#dealer-sum, #your-sum {
-    font-size: 1.5em;
-    margin: 10px 0;
 }
 
 /* Hidden Card Styling */

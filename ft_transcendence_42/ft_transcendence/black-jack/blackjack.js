@@ -10,6 +10,10 @@ let deck;
 
 let canHit = true;
 
+let playerWins = 0;
+let dealerWins = 0;
+let ties = 0; // To keep track of ties
+
 // Initialize the game
 window.onload = function () {
     document.getElementById("hit").addEventListener("click", hit);
@@ -55,7 +59,7 @@ function startGame() {
     dealerAceCount += checkAce(hidden);
 
     // Dealer's first card is hidden (back side)
-    document.getElementById("dealer-cards").innerHTML = `<img id="hidden" src="./cards/back.png">`;
+    document.getElementById("dealer-cards").innerHTML = `<img id="hidden" src="./cards/BACK.png">`;
 
     // Dealer draws cards until sum >= 17
     while (dealerSum < 17) {
@@ -76,10 +80,12 @@ function startGame() {
         document.getElementById("your-cards").append(cardImg);
     }
 
-    // Reset results and buttons
     document.getElementById("results").innerText = "";
+    document.getElementById("results").className = "";
     document.getElementById("hit").disabled = false;
     document.getElementById("stay").disabled = false;
+
+    updateScoreboard();
 }
 
 // Handle Hit button
@@ -92,9 +98,19 @@ function hit() {
     const cardImg = createCardImage(card);
     document.getElementById("your-cards").append(cardImg);
 
+    // Automatically handle the case where the player goes over 21 or hits 21
     if (reduceAce(yourSum, yourAceCount) > 21) {
         canHit = false;
+        dealerWins++;
+        updateScoreboard();
         displayResults("You Lose!");
+        setTimeout(startGame, 1000); // Restart the game after 1 second
+    } else if (yourSum === 21) {
+        canHit = false;
+        playerWins++;
+        updateScoreboard();
+        displayResults("You Win!");
+        setTimeout(startGame, 1000); // Restart the game after 1 second
     }
 }
 
@@ -110,19 +126,37 @@ function stay() {
     let message = "";
     if (yourSum > 21) {
         message = "You Lose!";
+        dealerWins++;
     } else if (dealerSum > 21 || yourSum > dealerSum) {
         message = "You Win!";
+        playerWins++;
     } else if (yourSum < dealerSum) {
         message = "You Lose!";
+        dealerWins++;
     } else {
         message = "It's a Tie!";
+        ties++; // Increase tie count without ending the game
     }
 
     displayResults(message);
+    updateScoreboard();
+
+    // If it's a tie, reset the deck and re-deal the cards
+    if (message === "It's a Tie!") {
+        setTimeout(() => {
+            startGame();
+        }, 1000); // Restart after a short delay to show the result
+    } else {
+        setTimeout(startGame, 1000); // Restart after 1 second
+    }
 }
 
 // Handle Start Again button
 function startAgain() {
+    playerWins = 0;
+    dealerWins = 0;
+    ties = 0; // Reset ties
+    updateScoreboard();
     startGame();
 }
 
@@ -165,8 +199,10 @@ function displayResults(message) {
     resultsEl.classList.add(
         message.includes("Win") ? "win" : message.includes("Lose") ? "lose" : "tie"
     );
+}
 
-    // Disable buttons after the game ends
-    document.getElementById("hit").disabled = true;
-    document.getElementById("stay").disabled = true;
+function updateScoreboard() {
+    document.getElementById("player-score").innerText = `Player Wins: ${playerWins}`;
+    document.getElementById("dealer-score").innerText = `Dealer Wins: ${dealerWins}`;
+    document.getElementById("ties").innerText = `Ties: ${ties}`; // Show ties on the scoreboard
 }
