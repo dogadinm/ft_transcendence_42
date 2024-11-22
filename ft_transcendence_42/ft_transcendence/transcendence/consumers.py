@@ -42,14 +42,23 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        paddle_y = data.get('paddleY')
+        action = data.get('action')
+        direction = data.get('direction')
 
-        paddle_y = max(0, min(300, paddle_y))
-        # Update the racket position
-        if self.role == 'player1':
-            self.room_game.paddles['left']['paddleY'] = paddle_y
-        elif self.role == 'player2':
-            self.room_game.paddles['right']['paddleY'] = paddle_y
+        if action == 'move':
+            if self.role == 'player1' and direction == 'up':
+                self.room_game.paddles['left']['direction'] = -1
+            elif self.role == 'player1' and direction == 'down':
+                self.room_game.paddles['left']['direction'] = 1
+            elif self.role == 'player2' and direction == 'up':
+                self.room_game.paddles['right']['direction'] = -1
+            elif self.role == 'player2' and direction == 'down':
+                self.room_game.paddles['right']['direction'] = 1
+        elif action == 'stop':
+            if self.role == 'player1' and direction in ['up', 'down']:
+                self.room_game.paddles['left']['direction'] = 0
+            elif self.role == 'player2' and direction in ['up', 'down']:
+                self.room_game.paddles['right']['direction'] = 0
 
     async def send_game_update(self, game_state):
         # print("Sending game update:", game_state)

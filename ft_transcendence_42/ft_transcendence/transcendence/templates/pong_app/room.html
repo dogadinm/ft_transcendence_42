@@ -8,13 +8,12 @@
 <script>
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/{{ room_name }}/`);
 
-let paddleY = 150;
-const paddleHeight = 100;
-const fieldHeight = 400;
-const paddleSpeed = 3;
-
 let movingUp = false;
 let movingDown = false;
+
+socket.onopen = function() {
+    console.log("Connected to the WebSocket server");
+};
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
@@ -24,32 +23,40 @@ socket.onmessage = function(event) {
         if (data.role === 'player1' || data.role === 'player2') {
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
-            requestAnimationFrame(gameLoop);
         }
     } else if (data.type === 'game_update') {
         drawGame(data);
     }
 };
 
+socket.onclose = function() {
+    console.log("Disconnected from the WebSocket server");
+};
+
+socket.onerror = function(error) {
+    console.error("WebSocket error:", error);
+};
+
 function handleKeyDown(e) {
-    if (e.key === 'w') movingUp = true;
-    if (e.key === 's') movingDown = true;
+    if (e.key === 'w' && !movingUp) {
+        movingUp = true;
+        socket.send(JSON.stringify({ action: 'move', direction: 'up' }));
+    }
+    if (e.key === 's' && !movingDown) {
+        movingDown = true;
+        socket.send(JSON.stringify({ action: 'move', direction: 'down' }));
+    }
 }
 
 function handleKeyUp(e) {
-    if (e.key === 'w') movingUp = false;
-    if (e.key === 's') movingDown = false;
-}
-
-function gameLoop() {
-    if (movingUp) paddleY -= paddleSpeed;
-    if (movingDown) paddleY += paddleSpeed;
-
-    paddleY = Math.max(0, Math.min(fieldHeight - paddleHeight, paddleY));
-
-    socket.send(JSON.stringify({ paddleY }));
-
-    requestAnimationFrame(gameLoop);
+    if (e.key === 'w' && movingUp) {
+        movingUp = false;
+        socket.send(JSON.stringify({ action: 'stop', direction: 'up' }));
+    }
+    if (e.key === 's' && movingDown) {
+        movingDown = false;
+        socket.send(JSON.stringify({ action: 'stop', direction: 'down' }));
+    }
 }
 
 function drawGame(data) {
@@ -57,16 +64,21 @@ function drawGame(data) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillRect(10, data.paddles.left.paddleY, 10, 100);
-    ctx.fillRect(780, data.paddles.right.paddleY, 10, 100);
+    // Draw paddles
+    ctx.fillStyle = 'black';
+    ctx.fillRect(10, data.paddles.left.paddleY, 10, 100); // Left paddle
+    ctx.fillRect(780, data.paddles.right.paddleY, 10, 100); // Right paddle
 
+    // Draw ball
     ctx.beginPath();
     ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
     ctx.fill();
 
+    // Draw score
     ctx.font = '20px Arial';
     ctx.fillText(`Player 1: ${data.score.player1}`, 20, 20);
     ctx.fillText(`Player 2: ${data.score.player2}`, 650, 20);
 }
 </script>
+
 {% endblock %}

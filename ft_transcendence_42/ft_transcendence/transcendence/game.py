@@ -1,23 +1,34 @@
 import asyncio
+import random
 
 class RoomGame:
     def __init__(self):
         self.players = {'left': None, 'right': None}
-        self.paddles = {'left': {'paddleY': 150}, 'right': {'paddleY': 150}}
+        self.paddles = {
+            'left': {'paddleY': 150, 'direction': 0},  # direction: -1 (up), 1 (down), 0 (stationary)
+            'right': {'paddleY': 150, 'direction': 0}
+        }
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
         self.score = {'player1': 0, 'player2': 0}
         self.game_loop_running = False
         self.speed = 1.0
+        self.paddle_speed = 20
 
     async def game_loop(self, send_update):
         #print("Game loop started")
         while self.game_loop_running:
+            self.update_paddles()
             self.update_ball()
             # print(f"Ball position: {self.ball['x']}, {self.ball['y']}")
             await send_update(self.get_game_state())
             await asyncio.sleep(0.03)
             if (self.players['left'] == None and self.players['right'] == None):
                 self.game_loop_running = False
+
+    def update_paddles(self):
+        for side, paddle in self.paddles.items():
+            paddle['paddleY'] += paddle['direction'] * self.paddle_speed
+            paddle['paddleY'] = max(0, min(300, paddle['paddleY']))
 
     def update_ball(self):
         # Calculate the new position
@@ -74,6 +85,8 @@ class RoomGame:
 
     def reset_ball(self):
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
+        self.ball['dx'] = random.choice([-4, 4])
+        self.ball['dy'] = random.choice([-3, -2, 2, 3])
         self.speed = 1
 
     def get_game_state(self):
