@@ -7,6 +7,7 @@ class RoomGame:
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
         self.score = {'player1': 0, 'player2': 0}
         self.game_loop_running = False
+        self.speed = 1.0
 
     async def game_loop(self, send_update):
         #print("Game loop started")
@@ -19,20 +20,49 @@ class RoomGame:
                 self.game_loop_running = False
 
     def update_ball(self):
-        # Update the ball position
-        self.ball['x'] += self.ball['dx']
-        self.ball['y'] += self.ball['dy']
+        # Calculate the new position
+        new_x = self.ball['x'] + self.ball['dx'] * self.speed
+        new_y = self.ball['y'] + self.ball['dy'] * self.speed
 
         # Check for collision with upper and lower boundaries
-        if self.ball['y'] <= 0 or self.ball['y'] >= 400:
+        if new_y <= 0 or new_y >= 400:
             self.ball['dy'] *= -1
+            new_y = self.ball['y'] + self.ball['dy'] * self.speed
 
-        # Checking the ball collision with the rackets
+        # Check for collision with paddles
         for side, paddle in self.paddles.items():
-            paddle_x = 10 if side == 'left' else 780
-            if paddle_x < self.ball['x'] < paddle_x + 10:
-                if paddle['paddleY'] < self.ball['y'] < paddle['paddleY'] + 100:
+            paddle_x = 20 if side == 'left' else 780
+            paddle_y_start = paddle['paddleY']
+            paddle_y_end = paddle['paddleY'] + 100
+
+            # Check if ball crosses paddle's X position
+            if (
+                    (self.ball['x'] < paddle_x <= new_x and side == 'right') or
+                    (self.ball['x'] > paddle_x >= new_x and side == 'left')
+            ):
+                # Check if ball is within the paddle's Y range
+                ball_cross_y = self.ball['y'] + (new_y - self.ball['y']) * \
+                               ((paddle_x - self.ball['x']) / (new_x - self.ball['x']))
+
+                if paddle_y_start <= ball_cross_y <= paddle_y_end:
                     self.ball['dx'] *= -1
+                    self.speed += 0.1
+                    new_x = self.ball['x'] + self.ball['dx'] * self.speed
+                    break
+
+        # Goal check
+        if new_x <= 0:
+            self.score['player2'] += 1
+            self.reset_ball()
+            return
+        elif new_x >= 800:
+            self.score['player1'] += 1
+            self.reset_ball()
+            return
+
+        # Update the ball's position
+        self.ball['x'] = new_x
+        self.ball['y'] = new_y
 
         # Goal check
         if self.ball['x'] <= 0:
@@ -44,6 +74,7 @@ class RoomGame:
 
     def reset_ball(self):
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
+        self.speed = 1
 
     def get_game_state(self):
         return {

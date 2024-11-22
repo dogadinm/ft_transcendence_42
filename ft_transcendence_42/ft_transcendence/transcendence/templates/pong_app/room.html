@@ -7,9 +7,14 @@
 
 <script>
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/{{ room_name }}/`);
+
 let paddleY = 150;
 const paddleHeight = 100;
 const fieldHeight = 400;
+const paddleSpeed = 3;
+
+let movingUp = false;
+let movingDown = false;
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
@@ -17,21 +22,34 @@ socket.onmessage = function(event) {
     if (data.type === 'role_assignment') {
         document.getElementById('roleInfo').innerText = `You are ${data.role}`;
         if (data.role === 'player1' || data.role === 'player2') {
-            document.addEventListener('keydown', movePaddle);
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            requestAnimationFrame(gameLoop);
         }
     } else if (data.type === 'game_update') {
         drawGame(data);
     }
 };
 
-function movePaddle(e) {
-    if (e.key === 'w') paddleY -= 10;
-    if (e.key === 's') paddleY += 10;
+function handleKeyDown(e) {
+    if (e.key === 'w') movingUp = true;
+    if (e.key === 's') movingDown = true;
+}
 
-    if (paddleY < 0) paddleY = 0;
-    if (paddleY > fieldHeight - paddleHeight) paddleY = fieldHeight - paddleHeight;
+function handleKeyUp(e) {
+    if (e.key === 'w') movingUp = false;
+    if (e.key === 's') movingDown = false;
+}
+
+function gameLoop() {
+    if (movingUp) paddleY -= paddleSpeed;
+    if (movingDown) paddleY += paddleSpeed;
+
+    paddleY = Math.max(0, Math.min(fieldHeight - paddleHeight, paddleY));
 
     socket.send(JSON.stringify({ paddleY }));
+
+    requestAnimationFrame(gameLoop);
 }
 
 function drawGame(data) {
