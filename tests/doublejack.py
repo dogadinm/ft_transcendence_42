@@ -3,6 +3,26 @@
 import sys
 import random
 
+#def value of hand
+def	evalHand(cards):
+	total = 0
+	aces = 0
+	# Convert cards to their corresponding values
+	for card in cards:
+		if (card % 13) == 0:  # Ace
+			total += 11
+			aces += 1
+		elif (card % 13) >= 10:  # J, Q, K
+			total += 10
+		else:
+			total += (card % 13) + 1  # Cards 2-10
+	# Adjust for Aces if the total exceeds 42
+	while total > 42 and aces:
+		total -= 10
+		aces -= 1
+	return total
+
+
 # need deck
 class Deck:
 	def __init__(self) :
@@ -40,15 +60,21 @@ class Player:
 		self.standing = False
 		self.wins = 0
 	def __str__(self):
-		str = "(" + self.name + ", "
-		str += f'{self.elo}, '
-		str += f'{self.standing}, '
-		str += f'{self.wins}, '
+		str = "(N: " + self.name + ", "
+		str += f'E: {self.elo}, '
+		str += f'S: {self.standing}, '
+		str += f'W: {self.wins}, H: '
 		for val in self.cards:
 			str += self.uni[val] + " "
+		str += f', {evalHand(self.cards)}'
 		str += ")"
 		return str
 	# get card
+	def getCard(self, card):
+		self.cards.append(card)
+	# empty hand after a game
+	def clearHand(self):
+		self.cards = []
 
 # need table
 class Table:
@@ -59,6 +85,10 @@ class Table:
 	#add player
 	def addPlayer(self, name, elo):
 		self.players.append(Player(name, elo))
+		self.players[-1].getCard(self.deck.drawCard())
+		self.players[-1].getCard(self.deck.drawCard())
+		self.players[-1].getCard(self.deck.drawCard())
+		self.players[-1].getCard(self.deck.drawCard())
 	#print
 	def print(self):
 		print(self.deck)
@@ -82,7 +112,9 @@ if n != 2:
 	quit()
 # Number of players from standard input for testing
 players = int(sys.argv[1])
-if (players < 2 or players > 8):
+
+# to support more players we need to play with more decks
+if (players < 2 or players > 6):
 	quit()
 
 table = Table()
