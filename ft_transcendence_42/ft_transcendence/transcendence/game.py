@@ -11,17 +11,30 @@ class RoomGame:
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
         self.score = {'player1': 0, 'player2': 0}
         self.game_loop_running = False
-        self.speed = 1.0
+        self.ready = {'left': False, 'right': False}
+        self.speed = 2.0
         self.paddle_speed = 20
+        self.win_score = 10
+
+    async def check_and_start_game(self, send_to_group):
+        if self.ready['left'] and self.ready['right']:
+            self.game_loop_running = True
+            await send_to_group({
+                'type': 'game_start',
+                'message': 'Game is starting!'
+            })
+            asyncio.create_task(self.game_loop(send_to_group))
 
     async def game_loop(self, send_update):
         #print("Game loop started")
-        while self.game_loop_running:
+        while self.ready['right'] and self.ready['left']:
             self.update_paddles()
             self.update_ball()
             # print(f"Ball position: {self.ball['x']}, {self.ball['y']}")
             await send_update(self.get_game_state())
+            self.end_game()
             await asyncio.sleep(0.03)
+
             if (self.players['left'] == None and self.players['right'] == None):
                 self.game_loop_running = False
 
@@ -87,7 +100,7 @@ class RoomGame:
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
         self.ball['dx'] = random.choice([-4, 4])
         self.ball['dy'] = random.choice([-3, -2, 2, 3])
-        self.speed = 1
+        self.speed = 2.0
 
     def get_game_state(self):
         return {
@@ -95,6 +108,14 @@ class RoomGame:
             'ball': self.ball,
             'score': self.score,
         }
+    def end_game(self):
+        if self.score['player1']  == self.win_score or self.score['player2'] == self.win_score:
+            self.ready['right'] = False
+            self.ready['left'] = False
+            winner = 'Player 1' if self.score['player1'] == 10 else 'Player 2'
+            return winner
+        return None
+
 
 class RoomManager:
     def __init__(self):

@@ -24,9 +24,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps({'type': 'role_assignment', 'role': self.role}))
 
         # Start the game loop if it is not already running
-        if not self.room_game.game_loop_running:
-            self.room_game.game_loop_running = True
-            asyncio.create_task(self.room_game.game_loop(self.send_game_update))
+
+
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -34,8 +33,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Free up space if a player disconnects
         if self.role == 'player1':
             self.room_game.players['left'] = None
+            self.room_game.ready['left'] = False
         elif self.role == 'player2':
             self.room_game.players['right'] = None
+            self.room_game.ready['right'] = False
         if self.room_game.players['right'] == None and self.room_game.players['left'] == None:
             room_manager.remove_room(self.room_name)
 
@@ -44,6 +45,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         action = data.get('action')
         direction = data.get('direction')
+
+        if action == 'ready':
+            if self.role == 'player1':
+                self.room_game.ready['left'] = True
+            elif self.role == 'player2':
+                self.room_game.ready['right'] = True
+            if self.room_game.ready['right'] and self.room_game.ready['left']:
+                asyncio.create_task(self.room_game.game_loop(self.send_game_update))
+
+
 
         if action == 'move':
             if self.role == 'player1' and direction == 'up':
@@ -62,6 +73,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_game_update(self, game_state):
         # print("Sending game update:", game_state)
+        winner = self.room_game.end_game()
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -69,6 +81,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'game_state': game_state
             }
         )
+        if winner:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_over',
+                    'winner': winner,
+                }
+            )
+
 
     async def game_update(self, event):
         await self.send(text_data=json.dumps({
@@ -76,6 +97,12 @@ class GameConsumer(AsyncWebsocketConsumer):
             'paddles': event['game_state']['paddles'],
             'ball': event['game_state']['ball'],
             'score': event['game_state']['score']
+        }))
+
+    async def game_over(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'game_over',
+            'winner': event['winner']
         }))
 
     async def assign_role(self):
@@ -86,3 +113,4 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_game.players['right'] = self.channel_name
             return 'player2'
         return 'spectator'
+

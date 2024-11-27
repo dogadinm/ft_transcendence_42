@@ -8,7 +8,7 @@ import json
 from django.http import JsonResponse
 from .models import User, Score, Room
 from django.contrib.auth import login
-# Create your views here.
+from django.contrib.auth.decorators import login_required
 
 def index(request):
     return render(request, "pong_app/index.html")
@@ -84,7 +84,7 @@ def logout_view(request):
 def pong(request):
     return render(request, 'pong_app/pong.html')
 
-
+@login_required(login_url='/login/')
 def room(request, room_name):
     return render(request, 'pong_app/room.html', {'room_name': room_name})
 
