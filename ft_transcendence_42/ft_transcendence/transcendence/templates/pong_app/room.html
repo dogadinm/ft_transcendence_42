@@ -20,7 +20,7 @@ socket.onmessage = function(event) {
 
     if (data.type === 'role_assignment') {
         document.getElementById('roleInfo').innerText = `You are ${data.role}`;
-        if (data.role === 'player1' || data.role === 'player2') {
+        if (data.role !== 'spectator') {
             showReadyDialog();
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
@@ -29,6 +29,7 @@ socket.onmessage = function(event) {
         drawGame(data);
     } else if (data.type === 'game_over') {
         alert(`${data.winner} wins!`);
+        showRepeatDialog();
     }
 };
 
@@ -79,13 +80,28 @@ function drawGame(data) {
 
     // Draw score
     ctx.font = '20px Arial';
-    ctx.fillText(`Player 1: ${data.score.player1}`, 20, 20);
-    ctx.fillText(`Player 2: ${data.score.player2}`, 650, 20);
+    const leftPlayer = Object.keys(data.score)[0] || "Player 1";
+    const rightPlayer = Object.keys(data.score)[1] || "Player 2";
+    ctx.fillText(`${leftPlayer}: ${data.score[leftPlayer] || 0}`, 20, 20);
+    ctx.fillText(`${rightPlayer}: ${data.score[rightPlayer] || 0}`, 650, 20);
 }
 function showReadyDialog() {
     const ready = confirm('Are you ready to start the game?');
     if (ready) {
         socket.send(JSON.stringify({ action: 'ready' }));
+    }
+    else {
+        window.location.href = `/`;
+    }
+}
+
+function   showRepeatDialog(){
+    const repeat = confirm('Do you want repeat ?');
+    if (repeat) {
+        socket.send(JSON.stringify({ action: 'repeat' }));
+    }
+    else {
+        window.location.href = `/`;
     }
 }
 </script>

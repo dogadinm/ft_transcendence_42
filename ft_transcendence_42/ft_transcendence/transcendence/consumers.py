@@ -11,6 +11,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'game_{self.room_name}'
         self.user = self.scope['user']
+        self.username = self.user.username
 
         # Connect the user to the WebSocket group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -31,10 +32,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
         # Free up space if a player disconnects
-        if self.role == 'player1':
+        if self.room_game.players['left'] == self.username:
             self.room_game.players['left'] = None
             self.room_game.ready['left'] = False
-        elif self.role == 'player2':
+        elif self.room_game.players['right'] == self.username:
             self.room_game.players['right'] = None
             self.room_game.ready['right'] = False
         if self.room_game.players['right'] == None and self.room_game.players['left'] == None:
@@ -47,29 +48,31 @@ class GameConsumer(AsyncWebsocketConsumer):
         direction = data.get('direction')
 
         if action == 'ready':
-            if self.role == 'player1':
+            if self.role == 'left':
                 self.room_game.ready['left'] = True
-            elif self.role == 'player2':
+            elif self.role == 'right':
                 self.room_game.ready['right'] = True
-            if self.room_game.ready['right'] and self.room_game.ready['left']:
+
+            if self.room_game.ready['left'] and self.room_game.ready['right']:
                 asyncio.create_task(self.room_game.game_loop(self.send_game_update))
 
 
-
-        if action == 'move':
-            if self.role == 'player1' and direction == 'up':
-                self.room_game.paddles['left']['direction'] = -1
-            elif self.role == 'player1' and direction == 'down':
-                self.room_game.paddles['left']['direction'] = 1
-            elif self.role == 'player2' and direction == 'up':
-                self.room_game.paddles['right']['direction'] = -1
-            elif self.role == 'player2' and direction == 'down':
-                self.room_game.paddles['right']['direction'] = 1
+        elif action == 'move':
+            if self.role == 'left':
+                self.room_game.paddles['left']['direction'] = -1 if direction == 'up' else 1
+            elif self.role == 'right':
+                self.room_game.paddles['right']['direction'] = -1 if direction == 'up' else 1
         elif action == 'stop':
-            if self.role == 'player1' and direction in ['up', 'down']:
+            if self.role == 'left' and direction in ['up', 'down']:
                 self.room_game.paddles['left']['direction'] = 0
-            elif self.role == 'player2' and direction in ['up', 'down']:
+            elif self.role == 'right' and direction in ['up', 'down']:
                 self.room_game.paddles['right']['direction'] = 0
+
+        elif action == 'repeat':
+            self.room_game.score = {'left': 0, 'right': 0}
+            await self.send(json.dumps({'type': 'role_assignment', 'role': self.role}))
+
+
 
     async def send_game_update(self, game_state):
         # print("Sending game update:", game_state)
@@ -107,10 +110,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def assign_role(self):
         if not self.room_game.players['left']:
-            self.room_game.players['left'] = self.channel_name
-            return 'player1'
+            self.room_game.players['left'] = self.username
+            return 'left'
         elif not self.room_game.players['right']:
-            self.room_game.players['right'] = self.channel_name
-            return 'player2'
+            self.room_game.players['right'] = self.username
+            return 'right'
         return 'spectator'
-

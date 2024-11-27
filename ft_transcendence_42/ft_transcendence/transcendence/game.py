@@ -1,5 +1,7 @@
 import asyncio
 import random
+from .models import User
+from asgiref.sync import sync_to_async
 
 class RoomGame:
     def __init__(self):
@@ -9,21 +11,12 @@ class RoomGame:
             'right': {'paddleY': 150, 'direction': 0}
         }
         self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
-        self.score = {'player1': 0, 'player2': 0}
+        self.score = {'left': 0, 'right': 0}
         self.game_loop_running = False
         self.ready = {'left': False, 'right': False}
         self.speed = 2.0
         self.paddle_speed = 20
         self.win_score = 10
-
-    async def check_and_start_game(self, send_to_group):
-        if self.ready['left'] and self.ready['right']:
-            self.game_loop_running = True
-            await send_to_group({
-                'type': 'game_start',
-                'message': 'Game is starting!'
-            })
-            asyncio.create_task(self.game_loop(send_to_group))
 
     async def game_loop(self, send_update):
         #print("Game loop started")
@@ -74,15 +67,6 @@ class RoomGame:
                     new_x = self.ball['x'] + self.ball['dx'] * self.speed
                     break
 
-        # Goal check
-        if new_x <= 0:
-            self.score['player2'] += 1
-            self.reset_ball()
-            return
-        elif new_x >= 800:
-            self.score['player1'] += 1
-            self.reset_ball()
-            return
 
         # Update the ball's position
         self.ball['x'] = new_x
@@ -90,10 +74,10 @@ class RoomGame:
 
         # Goal check
         if self.ball['x'] <= 0:
-            self.score['player2'] += 1
+            self.score['left'] += 1
             self.reset_ball()
         elif self.ball['x'] >= 800:
-            self.score['player1'] += 1
+            self.score['right'] += 1
             self.reset_ball()
 
     def reset_ball(self):
@@ -106,13 +90,16 @@ class RoomGame:
         return {
             'paddles': self.paddles,
             'ball': self.ball,
-            'score': self.score,
+            'score': {
+                self.players['left']: self.score['left'] if self.players['left'] else 0,
+                self.players['right']: self.score['right'] if self.players['right'] else 0,
+            }
         }
     def end_game(self):
-        if self.score['player1']  == self.win_score or self.score['player2'] == self.win_score:
-            self.ready['right'] = False
+        if self.score['left'] == self.win_score or self.score['right'] == self.win_score:
             self.ready['left'] = False
-            winner = 'Player 1' if self.score['player1'] == 10 else 'Player 2'
+            self.ready['right'] = False
+            winner = self.players['left'] if self.score['left'] == self.win_score else self.players['right']
             return winner
         return None
 
