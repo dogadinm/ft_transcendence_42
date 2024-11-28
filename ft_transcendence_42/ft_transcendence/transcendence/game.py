@@ -16,16 +16,18 @@ class RoomGame:
         self.ready = {'left': False, 'right': False}
         self.speed = 2.0
         self.paddle_speed = 20
-        self.win_score = 10
+        self.win_score = 1
 
     async def game_loop(self, send_update):
-        #print("Game loop started")
         while self.ready['right'] and self.ready['left']:
             self.update_paddles()
             self.update_ball()
             # print(f"Ball position: {self.ball['x']}, {self.ball['y']}")
             await send_update(self.get_game_state())
-            self.end_game()
+            winner = self.end_game()
+            if winner:
+                loser = self.players['right'] if winner == self.players['left'] else self.players['left']
+                await self.update_scores(winner, loser)
             await asyncio.sleep(0.03)
 
             if (self.players['left'] == None and self.players['right'] == None):
@@ -53,10 +55,9 @@ class RoomGame:
             paddle_y_end = paddle['paddleY'] + 100
 
             # Check if ball crosses paddle's X position
-            if (
-                    (self.ball['x'] < paddle_x <= new_x and side == 'right') or
-                    (self.ball['x'] > paddle_x >= new_x and side == 'left')
-            ):
+            if ((self.ball['x'] < paddle_x <= new_x and side == 'right') or
+                (self.ball['x'] > paddle_x >= new_x and side == 'left')):
+
                 # Check if ball is within the paddle's Y range
                 ball_cross_y = self.ball['y'] + (new_y - self.ball['y']) * \
                                ((paddle_x - self.ball['x']) / (new_x - self.ball['x']))
@@ -74,10 +75,10 @@ class RoomGame:
 
         # Goal check
         if self.ball['x'] <= 0:
-            self.score['left'] += 1
+            self.score['right'] += 1
             self.reset_ball()
         elif self.ball['x'] >= 800:
-            self.score['right'] += 1
+            self.score['left'] += 1
             self.reset_ball()
 
     def reset_ball(self):
@@ -95,6 +96,7 @@ class RoomGame:
                 self.players['right']: self.score['right'] if self.players['right'] else 0,
             }
         }
+
     def end_game(self):
         if self.score['left'] == self.win_score or self.score['right'] == self.win_score:
             self.ready['left'] = False
@@ -102,6 +104,17 @@ class RoomGame:
             winner = self.players['left'] if self.score['left'] == self.win_score else self.players['right']
             return winner
         return None
+
+    @sync_to_async
+    def update_scores(self, winner_username, loser_username):
+        winner = User.objects.get(username=winner_username)
+        loser = User.objects.get(username=loser_username)
+
+        winner.score += 10
+        loser.score += 2
+
+        winner.save()
+        loser.save()
 
 
 class RoomManager:
