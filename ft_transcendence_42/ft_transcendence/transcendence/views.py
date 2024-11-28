@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.urls import reverse
@@ -57,6 +57,8 @@ def register(request):
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
+            score_entry = Score.objects.create(user=user, score=10)
+            score_entry.save()
         except IntegrityError:
             return render(request, "pong_app/register.html", {
                 "message": "Username already taken."
@@ -68,15 +70,14 @@ def register(request):
 
 
 def account(request, user_id):
-    username = User.objects.get(pk=user_id)
-    score = Score.objects.filter(user=username) #doesnt work
+    user = User.objects.get(pk=user_id)
+    score = Score.objects.get(user=user)
 
     return render(request, "pong_app/account.html", {
-        "username": username,
-        "score": score,
-        "user_account": username
+        "username": user.username,
+        "score": score.score,
+        "user_account": user,
     })
-
 def logout_view(request):
     logout(request)
     return redirect("index")

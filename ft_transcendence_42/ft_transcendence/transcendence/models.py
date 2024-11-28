@@ -5,14 +5,14 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class User(AbstractUser):
-    score = models.IntegerField(default=0)
     pass
 
 class Score (models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
     score = models.IntegerField(default=0)
+
     def __str__(self):
-        return f"Score{self.score}"
+        return f"User: {self.user.username}, Score: {self.score}"
 
 
 class Room(models.Model):

@@ -1,6 +1,6 @@
 import asyncio
 import random
-from .models import User
+from .models import User, Score
 from asgiref.sync import sync_to_async
 
 class RoomGame:
@@ -16,7 +16,7 @@ class RoomGame:
         self.ready = {'left': False, 'right': False}
         self.speed = 2.0
         self.paddle_speed = 20
-        self.win_score = 1
+        self.win_score = 10
 
     async def game_loop(self, send_update):
         while self.ready['right'] and self.ready['left']:
@@ -110,12 +110,13 @@ class RoomGame:
         winner = User.objects.get(username=winner_username)
         loser = User.objects.get(username=loser_username)
 
-        winner.score += 10
-        loser.score += 2
+        winner_score = Score.objects.get(user=winner)
+        loser_score = Score.objects.get(user=loser)
+        winner_score.score += 10
+        loser_score.score += 2
 
-        winner.save()
-        loser.save()
-
+        winner_score.save()
+        loser_score.save()
 
 class RoomManager:
     def __init__(self):
