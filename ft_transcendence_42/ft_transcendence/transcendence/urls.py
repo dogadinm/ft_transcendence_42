@@ -13,5 +13,6 @@ urlpatterns = [
     path('account/<int:user_id>', views.account, name='account'),
     path('room/<str:room_name>/', views.room, name='room'),
     path("bot/", views.bot, name='bot'),
+	path("doublejack/", views.doublejack, name='doublejack'),
     re_path(r'pong/', views.pong, name="pong"),
 ]

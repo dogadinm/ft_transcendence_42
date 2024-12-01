@@ -1,0 +1,45 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+    <h1>WebSocket Background Color Changer</h1>
+    <button id="sendButton">Send Signal to WebSocket</button>
+    <p>Status: <span id="status">Not connected</span></p>
+
+    <script>
+        // Establish WebSocket connection
+        const ws = new WebSocket(`ws://${window.location.host}/ws/doublejack/`);
+
+        // Set status message when WebSocket opens
+        ws.onopen = function(event) {
+            document.getElementById('status').textContent = 'Connected to WebSocket';
+        };
+
+        // Handle messages received from the WebSocket
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data && data.color) {
+                // Change the background color when a message is received
+                document.body.style.backgroundColor = data.color;
+            }
+        };
+
+        // Handle WebSocket error
+        ws.onerror = function(error) {
+            console.error('WebSocket Error:', error);
+            document.getElementById('status').textContent = 'WebSocket Error';
+        };
+
+        // Handle WebSocket closure
+        ws.onclose = function(event) {
+            document.getElementById('status').textContent = 'WebSocket connection closed';
+        };
+
+        // Send a signal when the button is clicked
+        document.getElementById('sendButton').onclick = function() {
+            const message = {
+                action: 'change_color'  // This is the action we'll send to the WebSocket
+            };
+            ws.send(JSON.stringify(message));  // Send the action to WebSocket
+        };
+    </script>
+{% endblock %}

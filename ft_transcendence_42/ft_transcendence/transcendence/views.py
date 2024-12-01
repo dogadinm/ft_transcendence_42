@@ -94,3 +94,6 @@ def bot(request):
 
 def chat(request):
     return render(request, 'pong_app/chat.html')
+
+def doublejack(request):
+    return render(request, 'pong_app/doublejack.html')
