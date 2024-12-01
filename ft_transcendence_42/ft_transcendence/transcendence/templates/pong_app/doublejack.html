@@ -2,7 +2,8 @@
 
 {% block body %}
     <h1>WebSocket Background Color Changer</h1>
-    <button id="sendButton">Send Signal to WebSocket</button>
+    <button id="sendButtonA">Random colour me</button>
+	<button id="sendButtonB">Random colour all</button>
     <p>Status: <span id="status">Not connected</span></p>
 
     <script>
@@ -35,9 +36,15 @@
         };
 
         // Send a signal when the button is clicked
-        document.getElementById('sendButton').onclick = function() {
+        document.getElementById('sendButtonA').onclick = function() {
             const message = {
                 action: 'change_color'  // This is the action we'll send to the WebSocket
+            };
+            ws.send(JSON.stringify(message));  // Send the action to WebSocket
+        };
+		document.getElementById('sendButtonB').onclick = function() {
+            const message = {
+                action: 'change_color_for_all'  // This is the action we'll send to the WebSocket
             };
             ws.send(JSON.stringify(message));  // Send the action to WebSocket
         };
