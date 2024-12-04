@@ -1,9 +1,19 @@
 {% extends "pong_app/layout.html" %}
 
 {% block body %}
-    <h1>WebSocket Background Color Changer</h1>
-    <button id="sendButtonA">Random colour me</button>
-	<button id="sendButtonB">Random colour all</button>
+    <h1>Doublejack</h1>
+	<canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;">
+		
+	</canvas>
+	<p></p>
+	<button id="hit">HIT !</button>
+	<button id="stay">STAY!</button>
+	<p></p>
+	<div id="name">name</div>
+	<div id="role">role (spectator)</div>
+	<div id="hand">hand</div>
+	<div id="score">score</div>
+
     <p>Status: <span id="status">Not connected</span></p>
 
     <script>
@@ -22,6 +32,22 @@
                 // Change the background color when a message is received
                 document.body.style.backgroundColor = data.color;
             }
+			if (data && data.name) {
+                // Change the background color when a message is received
+				document.getElementById('name').innerHTML = data.name;
+            }
+			if (data && data.role) {
+                // Change the background color when a message is received
+				document.getElementById('role').innerHTML = data.role;
+            }
+			if (data && data.hand) {
+                // Change the background color when a message is received
+				document.getElementById('hand').innerHTML = data.hand;
+            }
+			if (data && data.score) {
+                // Change the background color when a message is received
+				document.getElementById('score').innerHTML = data.score;
+            }
         };
 
         // Handle WebSocket error
@@ -36,15 +62,15 @@
         };
 
         // Send a signal when the button is clicked
-        document.getElementById('sendButtonA').onclick = function() {
+        document.getElementById('hit').onclick = function() {
             const message = {
-                action: 'change_color'  // This is the action we'll send to the WebSocket
+                action: 'hit'  // This is the action we'll send to the WebSocket
             };
             ws.send(JSON.stringify(message));  // Send the action to WebSocket
         };
-		document.getElementById('sendButtonB').onclick = function() {
+		document.getElementById('stay').onclick = function() {
             const message = {
-                action: 'change_color_for_all'  // This is the action we'll send to the WebSocket
+                action: 'stay'  // This is the action we'll send to the WebSocket
             };
             ws.send(JSON.stringify(message));  // Send the action to WebSocket
         };
