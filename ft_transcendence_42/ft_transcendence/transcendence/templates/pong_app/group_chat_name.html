@@ -1,0 +1,47 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+{% csrf_token %}
+
+<h5>{{ channel_nick }}</h5>
+<h5>hello page</h5>
+
+<h1>Lets chat</h1>
+    <form id="form">
+        <input type="text" name="message"/>
+    </form>
+
+    <div id="messages"></div>
+<script type="text/javascript">
+
+    let url = `ws://${window.location.host}/ws/chat/{{ channel_nick }}/`
+    const chatSocket = new WebSocket(url)
+
+    chatSocket.onmessage = function (e) {
+      let data = JSON.parse(e.data);
+      console.log('Data:', data);
+
+      if (data.type === 'chat') {
+        displayMessages(data.message)
+        }
+    let form = document.getElementById('form')
+    form.addEventListener('submit', (e)=> {
+        e.preventDefault()
+        let message = e.target.message.value
+        chatSocket.send(JSON.stringify({
+            'message':message
+        }))
+        form.reset()
+    })
+    function displayMessages(messages) {
+        const messagesElement = document.getElementById('messages');
+        messages.forEach(message => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${message.sender}: ${message.message}`;
+            messagesElement.appendChild(messageElement);
+        });
+    }
+}
+</script>
+
+{% endblock %}

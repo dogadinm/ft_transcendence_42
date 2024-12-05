@@ -113,7 +113,7 @@ class RoomGame:
         winner_score = Score.objects.get(user=winner)
         loser_score = Score.objects.get(user=loser)
         winner_score.score += 10
-        loser_score.score += 2
+        loser_score.score -= 2
 
         winner_score.save()
         loser_score.save()

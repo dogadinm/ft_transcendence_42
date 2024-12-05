@@ -22,21 +22,6 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 import transcendence.routing
 
-
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ft_transcendence.settings')
-# # django.setup()
-
-# # application = get_asgi_application()
-
-# application = ProtocolTypeRouter({
-#   "http": AsgiHandler(),
-#   "websocket": AuthMiddlewareStack(
-#         URLRouter(
-#             transcendence.routing.websocket_urlpatterns
-#         )
-#   ),
-# })
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ft_transcendence.settings")
 
 application = ProtocolTypeRouter({

@@ -18,6 +18,8 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'account' user_id=user.id %}"><strong>{{ user.username }}</strong></a>
                 <a href="{% url 'logout' %}">Log out</a>
+                <a href="{% url 'chat' user_id=user.id %}">Chat</a>
+                <a href="{% url 'group_chat' %}">Group chat</a>
             {% endif %}
             {% if not user.is_authenticated %}
                 <a href="{% url 'login' %}" >Login</a>
@@ -25,7 +27,7 @@
             {% endif %}
                 <a href="{% url 'pong' %}">Pong</a>
                 <a href="{% url 'bot' %}">Play Pong With Bot</a>
-                <a href="{% url 'chat' %}">Chat</a>
+
           </nav>
     
         <div id="pong-game-section" class="section">

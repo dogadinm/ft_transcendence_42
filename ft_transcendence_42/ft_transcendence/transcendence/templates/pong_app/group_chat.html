@@ -1,0 +1,16 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+
+<h1>Chat groups</h1>
+<a href="{% url 'create_group_chat' %}">Create chat</a>
+
+<ul>
+    {% for g in groups  %}
+        <li><a href="{% url 'group_chat_name' g  %}">{{ g }}</a></li>
+    {% endfor %}
+</ul>
+
+
+
+{% endblock %}

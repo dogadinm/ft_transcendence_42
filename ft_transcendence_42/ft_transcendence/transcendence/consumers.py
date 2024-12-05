@@ -6,6 +6,7 @@ from .models import Room
 from django.contrib.auth import get_user_model
 from .game import room_manager
 from asgiref.sync import async_to_sync
+from .models import User, Score, Friend, Message, ChatGroup
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -122,7 +123,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        self.room_group_name = 'test'
+        self.user = self.scope['user']
+        self.username = self.user.username
+
+        second_user_id = 10
+        self.room_group_name = self.create_room_name(self.user.id, second_user_id)
+
+
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
@@ -130,13 +137,40 @@ class ChatConsumer(WebsocketConsumer):
 
         self.accept()
 
+
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-        
+        message = text_data_json.get('message')
+        who = text_data_json.get('who')
+
+
+
+
+        if who:
+            try:
+                me = User.objects.get(username=self.user)
+                friend = User.objects.get(username=who)
+            except User.DoesNotExist:
+                print(f"User {who} does not exist")
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message
+                    }
+                )
+                return
+
+            friends_list_first = Friend.objects.get(owner=me)
+            friends_list_second = Friend.objects.get(owner=friend)
+            friends_list_first.friends.add(friend)
+            friends_list_first.save()
+            friends_list_second.friends.add(me)
+            friends_list_second.save()
+
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -144,10 +178,76 @@ class ChatConsumer(WebsocketConsumer):
                 'message':message
             }
         )
+
+
     def chat_message(self, event):
         message = event['message']
 
         self.send(text_data=json.dumps({
             'type':'chat',
-            'message':message
+            'message':message,
+        }))
+
+    @staticmethod
+    def create_room_name(user1_id, user2_id):
+        return f"chat_{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
+
+class ChatGroupConsumer(WebsocketConsumer):
+    def connect(self):
+        self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
+
+        self.channel_group_name = f'game_{self.channel_nick}'
+        self.user = self.scope['user']
+        self.username = self.user.username
+
+        # Connect the user to the WebSocket group
+        async_to_sync(self.channel_layer.group_add)(self.channel_group_name, self.channel_name)
+        self.accept()
+
+        self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
+        messagesql = Message.objects.filter(chat=self.chat_group)
+
+        messages_data = [
+            {"time":message.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
+             "sender": message.sender.username,
+             "message": message.text}
+            for message in messagesql
+        ]
+
+
+        self.send(text_data=json.dumps({
+            'type': 'chat',
+            'message': messages_data,
+        }))
+
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(self.channel_group_name, self.channel_name)
+
+    def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json.get('message', '').strip()
+
+        if not message:
+            return
+
+        messagesql = Message.objects.create(chat=self.chat_group, sender=self.user, text=message)
+        messagesql.save()
+        messages_data = [{"sender": messagesql.sender.username, "message": messagesql.text}]
+
+
+        async_to_sync(self.channel_layer.group_send)(
+            self.channel_group_name,
+            {
+                'type': 'chat_message',
+                'message': messages_data,
+            }
+        )
+
+    def chat_message(self, event):
+        message = event['message']
+
+        self.send(text_data=json.dumps({
+            'type': 'chat',
+            'message': message,
         }))

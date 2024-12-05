@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from .models import User, Score, Room
+from .models import User, Score, Room, Friend, ChatGroup
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 
@@ -59,6 +59,10 @@ def register(request):
             user.save()
             score_entry = Score.objects.create(user=user, score=10)
             score_entry.save()
+            friends_list = Friend.objects.create(owner=user)
+            friends_list.save()
+
+
         except IntegrityError:
             return render(request, "pong_app/register.html", {
                 "message": "Username already taken."
@@ -92,5 +96,51 @@ def room(request, room_name):
 def bot(request):
     return render(request, 'pong_app/bot.html')
 
-def chat(request):
-    return render(request, 'pong_app/chat.html')
+@login_required(login_url='/login/')
+def chat(request, user_id):
+    user = User.objects.get(pk=user_id)
+    friends_list = Friend.objects.get(owner=user)
+    list_f = friends_list.friends.all()
+
+
+    return render(request, 'pong_app/chat.html', {
+        "username": user.username,
+        "list_f": list_f,
+        "user_account": user,
+    })
+
+@login_required(login_url='/login/')
+def group_chat(request):
+    groups = ChatGroup.objects.all()
+
+    return render(request, 'pong_app/group_chat.html',{
+        'groups':groups,
+    })
+
+@login_required(login_url='/login/')
+def group_chat_name(request, channel_nick):
+    return render(request, 'pong_app/group_chat_name.html',{
+        'channel_nick':channel_nick,
+    })
+
+@login_required(login_url='/login/')
+def create_group_chat(request):
+    if request.method == "POST":
+
+        username = request.user.username
+        group_name = request.POST["group_name"]
+        user = User.objects.get(username=username)
+
+        # Attempt to create new user
+        try:
+            group = ChatGroup.objects.create(owner=user, name=group_name)
+            group.save()
+        except IntegrityError:
+            return render(request, "pong_app/create_group_chat.html", {
+                "message": "Group name already taken."
+            })
+        return redirect('group_chat_name', group_name)
+    else:
+        return render(request, "pong_app/create_group_chat.html")
+
+
