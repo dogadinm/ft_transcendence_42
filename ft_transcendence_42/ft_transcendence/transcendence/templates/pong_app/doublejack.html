@@ -6,18 +6,24 @@
 		
 	</canvas>
 	<p></p>
-	<button id="hit">HIT !</button>
-	<button id="stay">STAY!</button>
+	<div id="buttons">
+		<button id="join">JOIN !</button>
+	</div>
+	<div id="test"></div>
 	<p></p>
 	<div id="name">name</div>
 	<div id="role">role (spectator)</div>
 	<div id="hand">hand</div>
 	<div id="score">score</div>
+	<div id="Oponent">oponent</div>
+	<div id="other_hand">hand</div>
+	<div id="other_score">score</div>
 
     <p>Status: <span id="status">Not connected</span></p>
 
     <script>
         // Establish WebSocket connection
+		id = 0;
         const ws = new WebSocket(`ws://${window.location.host}/ws/doublejack/`);
 
         // Set status message when WebSocket opens
@@ -28,25 +34,61 @@
         // Handle messages received from the WebSocket
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            if (data && data.color) {
+			if (data && data.joined) {
+				id = data.joined;
+			}
+			if (data && data.reset) {
+				document.getElementById('buttons').innerHTML = '<button id="reset">RESET !</button>'
+				document.getElementById('reset').onclick = function() {
+					const message = {
+						action: 'reset'  // This is the action we'll send to the WebSocket
+					};
+					ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				};
+			}
+			if (data && data.set) {
+				document.getElementById('buttons').innerHTML = '<button id="hit">HIT !</button><button id="stay">STAY!</button>'
+				document.getElementById('hit').onclick = function() {
+					const message = {
+						action: 'hit'  // This is the action we'll send to the WebSocket
+					};
+					ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				};
+				document.getElementById('stay').onclick = function() {
+					const message = {
+						action: 'stay'  // This is the action we'll send to the WebSocket
+					};
+					ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				};
+			}
+            if (data && data.color && data.role && id == data.role) {
                 // Change the background color when a message is received
                 document.body.style.backgroundColor = data.color;
             }
-			if (data && data.name) {
+			if (data && data.name && data.role && id == data.role) {
                 // Change the background color when a message is received
 				document.getElementById('name').innerHTML = data.name;
             }
-			if (data && data.role) {
+			if (data && data.role && data.role && id == data.role) {
                 // Change the background color when a message is received
 				document.getElementById('role').innerHTML = data.role;
+				
             }
-			if (data && data.hand) {
+			if (data && data.hand && data.role && id == data.role) {
                 // Change the background color when a message is received
 				document.getElementById('hand').innerHTML = data.hand;
             }
-			if (data && data.score) {
+			if (data && data.score && data.role && id == data.role) {
                 // Change the background color when a message is received
 				document.getElementById('score').innerHTML = data.score;
+            }
+			if (data && data.hand && data.role && id != data.role) {
+                // Change the background color when a message is received
+				document.getElementById('other_hand').innerHTML = data.hand;
+            }
+			if (data && data.score && data.role && id != data.role) {
+                // Change the background color when a message is received
+				document.getElementById('other_score').innerHTML = data.score;
             }
         };
 
@@ -62,15 +104,9 @@
         };
 
         // Send a signal when the button is clicked
-        document.getElementById('hit').onclick = function() {
+		document.getElementById('join').onclick = function() {
             const message = {
-                action: 'hit'  // This is the action we'll send to the WebSocket
-            };
-            ws.send(JSON.stringify(message));  // Send the action to WebSocket
-        };
-		document.getElementById('stay').onclick = function() {
-            const message = {
-                action: 'stay'  // This is the action we'll send to the WebSocket
+                action: 'join'  // This is the action we'll send to the WebSocket
             };
             ws.send(JSON.stringify(message));  // Send the action to WebSocket
         };
