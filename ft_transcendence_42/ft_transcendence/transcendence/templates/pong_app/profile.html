@@ -1,0 +1,37 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+<div class="container">
+    {% if is_owner %}
+        <h1 class="mx-5">Username:{{ user.username }}</h1>
+        <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+    {% else %}
+        <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+    {% endif %}
+
+    <div class="text-center my-3">
+        <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
+    </div>
+
+        <p>{{ user.description }}</p>
+    <div class="text-center mb-4">
+    </div>
+
+    <div class="row d-flex justify-content-center mb-4">
+        <h3 class="col-4">Score: {{ score }}</h3>
+    </div>
+
+
+    <div class="d-flex justify-content-center">
+        {% if is_owner %}
+            <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
+        {% else %}
+            <form action="{% url 'add_friend'  %}" method="post" class="me-3">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">Add to friends</button>
+            </form>
+            <a href="{% url 'invite_to_game' %}" class="btn btn-warning">Invite to pong game</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

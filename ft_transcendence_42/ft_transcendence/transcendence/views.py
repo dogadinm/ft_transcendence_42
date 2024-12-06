@@ -9,6 +9,8 @@ from django.http import JsonResponse
 from .models import User, Score, Room, Friend, ChatGroup
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.core.files.storage import FileSystemStorage
+
 
 def index(request):
     return render(request, "pong_app/index.html")
@@ -45,6 +47,7 @@ def register(request):
     if request.method == "POST":
 
         username = request.POST["username"]
+        nickname = request.POST["nickname"]
         email = request.POST["email"]
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
@@ -53,41 +56,95 @@ def register(request):
                 "message": "Passwords must match."
             })
 
-        # Attempt to create new user
-        try:
-            user = User.objects.create_user(username, email, password)
-            user.save()
-            score_entry = Score.objects.create(user=user, score=10)
-            score_entry.save()
-            friends_list = Friend.objects.create(owner=user)
-            friends_list.save()
-
-
-        except IntegrityError:
+        if User.objects.filter(username=username).exists():
             return render(request, "pong_app/register.html", {
                 "message": "Username already taken."
             })
+
+        if User.objects.filter(nickname=nickname).exists():
+            return render(request, "pong_app/register.html", {
+                "message": "Nickname already taken."
+            })
+        # if User.objects.filter(email=email).exists():
+        #     return render(request, "pong_app/register.html", {
+        #         "message": "Email already taken."
+        #     })
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            nickname=nickname
+        )
+        user.save()
+        score_entry = Score.objects.create(user=user, score=10)
+        score_entry.save()
+        friends_list = Friend.objects.create(owner=user)
+        friends_list.save()
+
         login(request, user)
         return redirect('index')
     else:
         return render(request, "pong_app/register.html")
 
 
-def account(request, user_id):
-    user = User.objects.get(pk=user_id)
+def profile(request, nickname):
+    user = User.objects.get(nickname=nickname)
     score = Score.objects.get(user=user)
+    is_owner = False
+    print(user.nickname)
+    if request.user == user:
+        is_owner = True
 
-    return render(request, "pong_app/account.html", {
+
+
+    return render(request, "pong_app/profile.html", {
         "username": user.username,
+        "nickname": user.nickname,
+        "photo": user.photo.url,
         "score": score.score,
         "user_account": user,
+        "is_owner": is_owner,
     })
 def logout_view(request):
     logout(request)
     return redirect("index")
 
+
+@login_required
+def profile_settings(request):
+    user = request.user
+
+    if request.method == "POST":
+        nickname = request.POST.get("nickname")
+        description = request.POST.get("description")
+        photo = request.FILES.get("photo")
+
+        try:
+            user.nickname = nickname
+            user.description = description
+            if photo:
+                user.photo = photo
+            user.save()
+        except IntegrityError:
+            return render(request, "pong_app/profile_settings.html", {
+                "message": "Username already taken."
+            })
+
+
+
+        return redirect("profile_settings")
+
+    return render(request, "pong_app/profile_settings.html", {"user": user})
+
+def add_friend(request):
+    return render(request, 'pong_app/add_friend.html')
+
 def pong(request):
     return render(request, 'pong_app/pong.html')
+
+def invite_to_game(request):
+    return render(request, 'pong_app/invite_to_game.html')
 
 @login_required(login_url='/login/')
 def room(request, room_name):

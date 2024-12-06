@@ -1,11 +1,28 @@
 from django.db import models
 # from django.contrib.auth.models import AbstractUser
-
+import os
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 # Create your models here.
 class User(AbstractUser):
-    pass
+    nickname = models.CharField(max_length=30, unique=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+    photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_photo = User.objects.filter(pk=self.pk).first().photo
+            if old_photo and old_photo != self.photo:
+                default_photo_path = os.path.join(
+                    settings.MEDIA_ROOT, "profile_photos/profile_standard.jpg"
+                )
+
+                # Удаляем старую фотографию только если она не шаблонная
+                if os.path.isfile(old_photo.path) and old_photo.path != default_photo_path:
+                    os.remove(old_photo.path)
+
+        super(User, self).save(*args, **kwargs)
 
 class Score (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
