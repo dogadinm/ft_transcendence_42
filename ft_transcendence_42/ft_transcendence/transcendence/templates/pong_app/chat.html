@@ -2,37 +2,53 @@
 
 {% block body %}
 
-<h1>Let's Chat</h1>
+<div class="chat-wrapper">
+    <div class="chat-sidebar">
+        <h2>Your Groups</h2>
+        <ul class="group-list">
+            {% for group in groups %}
+            <li>
+                <a href="#" class="group-item" data-group="{{ group.name }}">
+                    {{ group.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
 
+        <h2>Your Friends</h2>
+        <ul class="friend-list">
+            {% for friend in friends %}
+            <li>
+                <a href="#" class="friend-item" data-friend="{{ friend.username }}">
+                    {{ friend.username }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 
-<ul>
-    {% for l in list_f %}
-    <li>
-        <h2>{{ l }}</h2>
-    </li>
-    {% endfor %}
-</ul>
-<h2>Who</h2>
-<form id="who-form">
-    <input type="text" id="who-input" name="who" placeholder="Enter username" required />
-    <button type="submit">Add friend</button>
-</form>
+    <div class="chat-content">
+        <h2 id="chat-header">Select a Group or Friend</h2>
 
+        <div id="messages" class="message-area"></div>
 
-<h2>Chat</h2>
-<form id="message-form">
-    <input type="text" id="message-input" name="message" placeholder="Enter your message" required />
-    <button type="submit">Send</button>
-</form>
-
-
-<div id="messages"></div>
+        <form id="message-form" class="chat-form">
+            <input
+                type="text"
+                id="message-input"
+                name="message"
+                placeholder="Enter your message"
+                autocomplete="off"
+                required
+            />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</div>
 
 <script type="text/javascript">
-
-    const url = `ws://${window.location.host}/ws/socet-server/`;
+    const url = `ws://${window.location.host}/ws/socket-server/`;
     const chatSocket = new WebSocket(url);
-
 
     chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
@@ -47,22 +63,6 @@
         }
     };
 
-
-    const whoForm = document.getElementById('who-form');
-    whoForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const whoInput = document.getElementById('who-input').value;
-
-        chatSocket.send(
-            JSON.stringify({
-                who: whoInput,
-            })
-        );
-
-        whoForm.reset();
-    });
-
-
     const messageForm = document.getElementById('message-form');
     messageForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -76,6 +76,98 @@
 
         messageForm.reset();
     });
+
+    const groupLinks = document.querySelectorAll('.group-item');
+    const friendLinks = document.querySelectorAll('.friend-item');
+
+    groupLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const groupName = link.dataset.group;
+            document.getElementById('chat-header').textContent = `Group: ${groupName}`;
+        });
+    });
+
+    friendLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const friendName = link.dataset.friend;
+            document.getElementById('chat-header').textContent = `Chat with: ${friendName}`;
+        });
+    });
 </script>
+
+<style>
+    .chat-wrapper {
+        display: flex;
+        height: 100vh;
+    }
+
+    .chat-sidebar {
+        flex: 0.3;
+        padding: 20px;
+        border-right: 1px solid #ccc;
+        background-color: #f8f9fa;
+    }
+
+    .chat-content {
+        flex: 0.7;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .group-list, .friend-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .group-item, .friend-item {
+        display: block;
+        margin: 10px 0;
+        text-decoration: none;
+        color: #007bff;
+        cursor: pointer;
+    }
+
+    .group-item:hover, .friend-item:hover {
+        text-decoration: underline;
+    }
+
+    .message-area {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #fff;
+    }
+
+    .chat-form {
+        display: flex;
+        gap: 10px;
+    }
+
+    #message-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+</style>
 
 {% endblock %}

@@ -6,19 +6,18 @@ from django.conf import settings
 
 # Create your models here.
 class User(AbstractUser):
+
     nickname = models.CharField(max_length=30, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
+    blocked_users = models.ManyToManyField('self', blank=True, related_name='blocking_users')
 
     def save(self, *args, **kwargs):
         if self.pk:
             old_photo = User.objects.filter(pk=self.pk).first().photo
             if old_photo and old_photo != self.photo:
                 default_photo_path = os.path.join(
-                    settings.MEDIA_ROOT, "profile_photos/profile_standard.jpg"
-                )
-
-                # Удаляем старую фотографию только если она не шаблонная
+                    settings.MEDIA_ROOT, "profile_photos/profile_standard.jpg")
                 if os.path.isfile(old_photo.path) and old_photo.path != default_photo_path:
                     os.remove(old_photo.path)
 
@@ -36,6 +35,10 @@ class Friend(models.Model):
     friends = models.ManyToManyField(User, related_name='friends_of', blank=True)
     def __str__(self):
         return self.owner.username
+
+# class User_to_User(models.Model):
+#     user =
+#     friend =
 
 class ChatGroup(models.Model):
     name = models.CharField(max_length=200)

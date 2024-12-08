@@ -149,28 +149,6 @@ class ChatConsumer(WebsocketConsumer):
 
 
 
-        if who:
-            try:
-                me = User.objects.get(username=self.user)
-                friend = User.objects.get(username=who)
-            except User.DoesNotExist:
-                print(f"User {who} does not exist")
-                async_to_sync(self.channel_layer.group_send)(
-                    self.room_group_name,
-                    {
-                        'type': 'chat_message',
-                        'message': message
-                    }
-                )
-                return
-
-            friends_list_first = Friend.objects.get(owner=me)
-            friends_list_second = Friend.objects.get(owner=friend)
-            friends_list_first.friends.add(friend)
-            friends_list_first.save()
-            friends_list_second.friends.add(me)
-            friends_list_second.save()
-
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -195,57 +173,87 @@ class ChatConsumer(WebsocketConsumer):
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):
         self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
-
         self.channel_group_name = f'game_{self.channel_nick}'
         self.user = self.scope['user']
         self.username = self.user.username
 
-        # Connect the user to the WebSocket group
-        async_to_sync(self.channel_layer.group_add)(self.channel_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(
+            self.channel_group_name, self.channel_name
+        )
         self.accept()
 
+
         self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
-        messagesql = Message.objects.filter(chat=self.chat_group)
+
+        if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
+            self.send(text_data=json.dumps({
+                'type': 'join',
+                'messages': 'Join to the chat',
+            }))
+            return
+
+        blocked_users = self.user.blocked_users.all()
+        messagesql = Message.objects.filter(chat=self.chat_group).exclude(sender__in=blocked_users).order_by("created_at")
 
         messages_data = [
-            {"time":message.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
-             "sender": message.sender.username,
-             "message": message.text}
+            {
+                "time": message.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
+                "sender": message.sender.nickname,
+                "message": message.text,
+                "photo": message.sender.photo.url if message.sender.photo else 'profile_photos/profile_standard.jpg',
+            }
             for message in messagesql
         ]
 
-
         self.send(text_data=json.dumps({
             'type': 'chat',
-            'message': messages_data,
+            'messages': messages_data,
         }))
 
-
     def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(self.channel_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            self.channel_group_name, self.channel_name
+        )
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json.get('message', '').strip()
+        action = text_data_json.get('action')
 
-        if not message:
+        if action == 'join':
+            self.chat_group.members.add(self.user)
+            return
+        elif action == 'leave':
+            self.chat_group.members.remove(self.user)
+            return
+        message_text = text_data_json.get('message', '').strip()
+
+        if not message_text:
             return
 
-        messagesql = Message.objects.create(chat=self.chat_group, sender=self.user, text=message)
-        messagesql.save()
-        messages_data = [{"sender": messagesql.sender.username, "message": messagesql.text}]
+        messagesql = Message.objects.create(chat=self.chat_group, sender=self.user, text=message_text)
 
+        message_data = {
+            "time": messagesql.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
+            "sender": messagesql.sender.nickname,
+            "message": messagesql.text,
+            "photo": messagesql.sender.photo.url if messagesql.sender.photo else 'profile_photos/profile_standard.jpg',
+        }
 
         async_to_sync(self.channel_layer.group_send)(
             self.channel_group_name,
             {
                 'type': 'chat_message',
-                'message': messages_data,
+                'message': message_data,
             }
         )
 
     def chat_message(self, event):
         message = event['message']
+
+        sender_nickname = message['sender']
+        sender_user = User.objects.filter(nickname=sender_nickname).first()
+        if sender_user in self.user.blocked_users.all():
+            return
 
         self.send(text_data=json.dumps({
             'type': 'chat',

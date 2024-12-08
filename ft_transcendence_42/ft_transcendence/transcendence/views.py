@@ -88,33 +88,58 @@ def register(request):
         return render(request, "pong_app/register.html")
 
 
+
 def profile(request, nickname):
-    user = User.objects.get(nickname=nickname)
-    score = Score.objects.get(user=user)
-    is_owner = False
-    print(user.nickname)
-    if request.user == user:
-        is_owner = True
+    page_user = User.objects.get(nickname=nickname)
+    main_user = request.user
+    score = Score.objects.get(user=page_user)
 
+    main_user_friends= Friend.objects.get(owner=main_user)
+    page_user_friends = Friend.objects.get(owner=page_user)
+    list_m = main_user_friends.friends.all()
+    list_p = page_user_friends.friends.all()
+    block_list = main_user.blocked_users.all()
 
+    if request.method == "POST":
+        action = request.POST.get('action')
+        if  action == 'add_friend':
+            main_user_friends.friends.add(page_user)
+            main_user_friends.save()
+            page_user_friends.friends.add(main_user)
+            page_user_friends.save()
+        elif action == 'block_user':
+            main_user.blocked_users.add(page_user)
+            main_user.save()
+        elif action == 'unblock_user':
+            main_user.blocked_users.remove(page_user)
+            main_user.save()
+        elif action == 'delete':
+            main_user_friends.friends.remove(page_user)
+            main_user_friends.save()
+            page_user_friends.friends.remove(main_user)
+            page_user_friends.save()
 
     return render(request, "pong_app/profile.html", {
-        "username": user.username,
-        "nickname": user.nickname,
-        "photo": user.photo.url,
-        "score": score.score,
-        "user_account": user,
-        "is_owner": is_owner,
-    })
+    "username": page_user.username,
+    "nickname": page_user.nickname,
+    "photo": page_user.photo.url,
+    "score": score.score,
+    "user_account": page_user,
+    "is_owner": request.user == page_user,
+    "list_m": list_m,
+    "list_p": list_p,
+    "friend": page_user in main_user_friends.friends.all(),
+    "block_user": page_user in main_user.blocked_users.all(),
+
+})
+
 def logout_view(request):
     logout(request)
     return redirect("index")
 
-
 @login_required
 def profile_settings(request):
     user = request.user
-
     if request.method == "POST":
         nickname = request.POST.get("nickname")
         description = request.POST.get("description")
@@ -130,9 +155,6 @@ def profile_settings(request):
             return render(request, "pong_app/profile_settings.html", {
                 "message": "Username already taken."
             })
-
-
-
         return redirect("profile_settings")
 
     return render(request, "pong_app/profile_settings.html", {"user": user})
@@ -178,6 +200,7 @@ def group_chat(request):
 def group_chat_name(request, channel_nick):
     return render(request, 'pong_app/group_chat_name.html',{
         'channel_nick':channel_nick,
+
     })
 
 @login_required(login_url='/login/')

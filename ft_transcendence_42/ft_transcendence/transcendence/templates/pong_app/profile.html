@@ -5,9 +5,17 @@
     {% if is_owner %}
         <h1 class="mx-5">Username:{{ user.username }}</h1>
         <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+        <h2 class="mx-5">Friends:</h2>
+        {% for l in list_p %}
+        <li>
+            {{ l }}
+        </li>
+        {% endfor %}
     {% else %}
         <h2 class="mx-5">Nickname:{{ nickname }}</h2>
     {% endif %}
+
+
 
     <div class="text-center my-3">
         <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
@@ -22,16 +30,34 @@
     </div>
 
 
-    <div class="d-flex justify-content-center">
-        {% if is_owner %}
-            <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
-        {% else %}
-            <form action="{% url 'add_friend'  %}" method="post" class="me-3">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">Add to friends</button>
-            </form>
+<div class="d-flex justify-content-center profile-actions-container">
+    {% if is_owner %}
+        <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
+    {% else %}
+        {% if friend %}
             <a href="{% url 'invite_to_game' %}" class="btn btn-warning">Invite to pong game</a>
+            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" name="action" value="delete">Delete from friends</button>
+            </form>
+        {% else %}
+            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success" name="action" value="add_friend">Add to friends</button>
+            </form>
         {% endif %}
-    </div>
+        {% if block_user %}
+            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
+            </form>
+        {% else %}
+            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
+            </form>
+        {% endif %}
+    {% endif %}
 </div>
+
 {% endblock %}
