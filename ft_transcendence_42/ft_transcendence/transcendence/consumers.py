@@ -125,51 +125,47 @@ class GameConsumer(AsyncWebsocketConsumer):
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope['user']
-        self.username = self.user.username
+        self.friend_username = self.scope['url_route']['kwargs']['friend_username']
 
-        second_user_id = 10
-        self.room_group_name = self.create_room_name(self.user.id, second_user_id)
-
-
+        self.room_name = self.create_room_name(self.user.username, self.friend_username)
         async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
+            self.room_name,
+            self.channel_name
+        )
+        self.accept()
+
+    def disconnect(self, close_code):
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_name,
             self.channel_name
         )
 
-        self.accept()
-
-
-    def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(self.room_group_name, self.channel_name)
-
     def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json.get('message')
-        who = text_data_json.get('who')
+        data = json.loads(text_data)
+        message = data.get('message')
 
-
-
-
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                'type':'chat_message',
-                'message':message
-            }
-        )
-
+        if message:
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'username': self.user.username,
+                }
+            )
 
     def chat_message(self, event):
-        message = event['message']
-
         self.send(text_data=json.dumps({
-            'type':'chat',
-            'message':message,
+            'type': 'chat',
+            'username': event['username'],
+            'message': event['message'],
         }))
 
     @staticmethod
-    def create_room_name(user1_id, user2_id):
-        return f"chat_{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
+    def create_room_name(user1, user2):
+        return f"private_{min(user1, user2)}_{max(user1, user2)}"
+
+
 
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):

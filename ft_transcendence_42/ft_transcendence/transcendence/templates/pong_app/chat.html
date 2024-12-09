@@ -3,18 +3,8 @@
 {% block body %}
 
 <div class="chat-wrapper">
+    <!-- Список друзей -->
     <div class="chat-sidebar">
-        <h2>Your Groups</h2>
-        <ul class="group-list">
-            {% for group in groups %}
-            <li>
-                <a href="#" class="group-item" data-group="{{ group.name }}">
-                    {{ group.name }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-
         <h2>Your Friends</h2>
         <ul class="friend-list">
             {% for friend in friends %}
@@ -27,8 +17,9 @@
         </ul>
     </div>
 
+    <!-- Чат -->
     <div class="chat-content">
-        <h2 id="chat-header">Select a Group or Friend</h2>
+        <h2 id="chat-header">Select a Friend</h2>
 
         <div id="messages" class="message-area"></div>
 
@@ -47,26 +38,56 @@
 </div>
 
 <script type="text/javascript">
-    const url = `ws://${window.location.host}/ws/socket-server/`;
-    const chatSocket = new WebSocket(url);
+    let chatSocket = null;
+    let currentFriend = null;
 
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        console.log('Data:', data);
-
-        if (data.type === 'chat') {
-            const messages = document.getElementById('messages');
-            messages.insertAdjacentHTML(
-                'beforeend',
-                `<div><p><strong>${data.username}:</strong> ${data.message}</p></div>`
-            );
+    function openChat(friendName) {
+        if (chatSocket) {
+            chatSocket.close();
         }
-    };
 
+        currentFriend = friendName;
+
+        document.getElementById('chat-header').textContent = `Chat with: ${friendName}`;
+        document.getElementById('messages').innerHTML = '';
+
+        chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat_privet/${friendName}/`);
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            if (data.type === 'chat') {
+                const messages = document.getElementById('messages');
+                messages.insertAdjacentHTML(
+                    'beforeend',
+                    `<div><p><strong>${data.username}:</strong> ${data.message}</p></div>`
+                );
+                messages.scrollTop = messages.scrollHeight; // Автопрокрутка
+            }
+        };
+
+        chatSocket.onclose = function () {
+            console.log('Chat socket closed');
+        };
+    }
+
+    // Обработка клика по другу
+    const friendLinks = document.querySelectorAll('.friend-item');
+    friendLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const friendName = link.dataset.friend;
+            openChat(friendName);
+        });
+    });
+
+    // Отправка сообщения
     const messageForm = document.getElementById('message-form');
     messageForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const messageInput = document.getElementById('message-input').value;
+
+        const messageInput = document.getElementById('message-input').value.trim();
+        if (!messageInput || !currentFriend) return;
 
         chatSocket.send(
             JSON.stringify({
@@ -75,25 +96,6 @@
         );
 
         messageForm.reset();
-    });
-
-    const groupLinks = document.querySelectorAll('.group-item');
-    const friendLinks = document.querySelectorAll('.friend-item');
-
-    groupLinks.forEach((link) => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const groupName = link.dataset.group;
-            document.getElementById('chat-header').textContent = `Group: ${groupName}`;
-        });
-    });
-
-    friendLinks.forEach((link) => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const friendName = link.dataset.friend;
-            document.getElementById('chat-header').textContent = `Chat with: ${friendName}`;
-        });
     });
 </script>
 
@@ -117,12 +119,12 @@
         padding: 20px;
     }
 
-    .group-list, .friend-list {
+    .friend-list {
         list-style: none;
         padding: 0;
     }
 
-    .group-item, .friend-item {
+    .friend-item {
         display: block;
         margin: 10px 0;
         text-decoration: none;
@@ -130,7 +132,7 @@
         cursor: pointer;
     }
 
-    .group-item:hover, .friend-item:hover {
+    .friend-item:hover {
         text-decoration: underline;
     }
 

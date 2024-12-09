@@ -36,9 +36,11 @@ class Friend(models.Model):
     def __str__(self):
         return self.owner.username
 
-# class User_to_User(models.Model):
-#     user =
-#     friend =
+class PrivateMessage(models.Model):
+    sender = models.ForeignKey(User, related_name="sent_messages", on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name="received_messages", on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class ChatGroup(models.Model):
     name = models.CharField(max_length=200)
@@ -48,7 +50,7 @@ class ChatGroup(models.Model):
     password = models.CharField(max_length=100, blank=True)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_chats')
-    members = models.ManyToManyField(User, related_name='chats')
+    members = models.ManyToManyField(User, related_name='chats', symmetrical=False)
 
     def save(self, *args, **kwargs):
         if self.password and not self.password.startswith('pbkdf2_'):

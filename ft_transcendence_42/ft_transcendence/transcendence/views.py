@@ -176,16 +176,11 @@ def bot(request):
     return render(request, 'pong_app/bot.html')
 
 @login_required(login_url='/login/')
-def chat(request, user_id):
-    user = User.objects.get(pk=user_id)
-    friends_list = Friend.objects.get(owner=user)
-    list_f = friends_list.friends.all()
-
+def chat(request):
+    friends = Friend.objects.get(owner=request.user)
 
     return render(request, 'pong_app/chat.html', {
-        "username": user.username,
-        "list_f": list_f,
-        "user_account": user,
+        'friends': friends.friends.all()
     })
 
 @login_required(login_url='/login/')
@@ -199,7 +194,7 @@ def group_chat(request):
 @login_required(login_url='/login/')
 def group_chat_name(request, channel_nick):
     group = ChatGroup.objects.get(name=channel_nick)
-    print(group.members.all())
+
     return render(request, 'pong_app/group_chat_name.html',{
         'channel_nick':channel_nick,
         'members': group.members.all()
