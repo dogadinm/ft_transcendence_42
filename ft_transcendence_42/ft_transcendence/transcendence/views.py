@@ -193,14 +193,16 @@ def group_chat(request):
     groups = ChatGroup.objects.all()
 
     return render(request, 'pong_app/group_chat.html',{
-        'groups':groups,
+        'groups': groups,
     })
 
 @login_required(login_url='/login/')
 def group_chat_name(request, channel_nick):
+    group = ChatGroup.objects.get(name=channel_nick)
+    print(group.members.all())
     return render(request, 'pong_app/group_chat_name.html',{
         'channel_nick':channel_nick,
-
+        'members': group.members.all()
     })
 
 @login_required(login_url='/login/')
@@ -210,10 +212,16 @@ def create_group_chat(request):
         username = request.user.username
         group_name = request.POST["group_name"]
         user = User.objects.get(username=username)
+        password = request.POST["password"]
+        confirmation = request.POST["confirmation"]
+        if password != confirmation:
+            return render(request, "pong_app/register.html", {
+                "message": "Passwords must match."
+            })
 
         # Attempt to create new user
         try:
-            group = ChatGroup.objects.create(owner=user, name=group_name)
+            group = ChatGroup.objects.create(owner=user, name=group_name, password=password)
             group.save()
         except IntegrityError:
             return render(request, "pong_app/create_group_chat.html", {

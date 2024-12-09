@@ -4,8 +4,13 @@
 {% csrf_token %}
 
 <h5>{{ channel_nick }}</h5>
+{% for m in members  %}
+    <li><a href="{% url 'profile' m  %}">{{ m }}</a></li>
+{% endfor %}
 
 <h1>Lets chat</h1>
+
+
 
 <button  id="leave-button" class="leave-button">Leave</button>
 
@@ -24,26 +29,22 @@
     const chatSocket = new WebSocket(url);
 
     chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        console.log('Data:', data);
+    const data = JSON.parse(e.data);
+    console.log('Data:', data);
 
-        if (data.type === 'chat') {
-            if (Array.isArray(data.messages)) {
-
-                data.messages.forEach((msg) => {
-                    displayMessage(msg.message, msg.sender, msg.photo);
-                });
-            } else if (data.message) {
-                const msg = data.message;
+    if (data.type === 'join') {
+        displayJoinPrompt(data.password);
+    } else if (data.type === 'chat') {
+        if (Array.isArray(data.messages)) {
+            data.messages.forEach((msg) => {
                 displayMessage(msg.message, msg.sender, msg.photo);
-            }
+            });
+        } else if (data.message) {
+            const msg = data.message;
+            displayMessage(msg.message, msg.sender, msg.photo);
         }
-        if (data.type === 'join') {
-            displayJoinPrompt();
-        }
-
-    };
-
+    }
+};
     const form = document.getElementById('form');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -52,6 +53,7 @@
         if (!messageText) return;
 
         chatSocket.send(JSON.stringify({
+            action: 'massege',
             message: messageText,
         }));
         form.reset();
@@ -80,27 +82,33 @@
         messagesElement.scrollTop = messagesElement.scrollHeight;
     }
 
-    function displayJoinPrompt() {
+    function displayJoinPrompt(requiresPassword) {
+        console.log(requiresPassword);
         const messagesElement = document.getElementById('messages');
         messagesElement.innerHTML = '';
         const joinPrompt = document.createElement('div');
         joinPrompt.classList.add('join-prompt');
+        console.log(requiresPassword);
         joinPrompt.innerHTML = `
-            <p> Join to this chat!</p>
+            <p>Join this chat!</p>
+            ${requiresPassword ? '<input type="password" id="chat-password" placeholder="Enter chat password..." />' : ''}
             <button id="join-button" class="join-button">Join</button>
         `;
         messagesElement.appendChild(joinPrompt);
 
         const joinButton = document.getElementById('join-button');
         joinButton.addEventListener('click', () => {
+            const password = requiresPassword ? document.getElementById('chat-password').value.trim() : null;
+
             chatSocket.send(JSON.stringify({
                 action: 'join',
+                password: password,
             }));
 
             messagesElement.innerHTML = '<p>Loading chat...</p>';
             setTimeout(() => location.reload(), 500);
-        });
-    }
+    });
+}
 
     const leaveButton = document.getElementById('leave-button');
     leaveButton.addEventListener('click', () => {
@@ -113,7 +121,7 @@
         messagesElement.innerHTML = '<p>You have left the chat.</p>';
         setTimeout(() => {
             window.location.href = '/';
-        }, 1000);
+        });
     });
 </script>
 <style>

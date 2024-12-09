@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from .game import room_manager
 from asgiref.sync import async_to_sync
 from .models import User, Score, Friend, Message, ChatGroup
+from django.contrib.auth.hashers import check_password
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -177,21 +178,24 @@ class ChatGroupConsumer(WebsocketConsumer):
         self.user = self.scope['user']
         self.username = self.user.username
 
-        async_to_sync(self.channel_layer.group_add)(
-            self.channel_group_name, self.channel_name
-        )
         self.accept()
-
 
         self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
 
         if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
+            passw = self.chat_group.password != ''
+
             self.send(text_data=json.dumps({
                 'type': 'join',
                 'messages': 'Join to the chat',
+                'password': passw,
+
             }))
             return
 
+        async_to_sync(self.channel_layer.group_add)(
+            self.channel_group_name, self.channel_name
+        )
         blocked_users = self.user.blocked_users.all()
         messagesql = Message.objects.filter(chat=self.chat_group).exclude(sender__in=blocked_users).order_by("created_at")
 
@@ -220,32 +224,51 @@ class ChatGroupConsumer(WebsocketConsumer):
         action = text_data_json.get('action')
 
         if action == 'join':
-            self.chat_group.members.add(self.user)
+            password = text_data_json.get('password')
+            if self.chat_group.password == '':
+                self.chat_group.members.add(self.user)
+                self.send(text_data=json.dumps({
+                    'type': 'right_pass',
+                    'messages': 'Joining to the chat',
+                }))
+            elif check_password(password, self.chat_group.password):
+                self.chat_group.members.add(self.user)
+                self.send(text_data=json.dumps({
+                    'type': 'right_pass',
+                    'messages': 'Joining to the chat',
+                }))
+            else:
+                self.send(text_data=json.dumps({
+                    'type': 'wrong_pass',
+                    'messages': 'Wrong password',
+                }))       
             return
         elif action == 'leave':
             self.chat_group.members.remove(self.user)
             return
-        message_text = text_data_json.get('message', '').strip()
+        elif action == 'massege':
+            if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
+                return
+            message_text = text_data_json.get('message', '').strip()
+            if not message_text:
+                return
 
-        if not message_text:
-            return
+            messagesql = Message.objects.create(chat=self.chat_group, sender=self.user, text=message_text)
 
-        messagesql = Message.objects.create(chat=self.chat_group, sender=self.user, text=message_text)
-
-        message_data = {
-            "time": messagesql.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
-            "sender": messagesql.sender.nickname,
-            "message": messagesql.text,
-            "photo": messagesql.sender.photo.url if messagesql.sender.photo else 'profile_photos/profile_standard.jpg',
-        }
-
-        async_to_sync(self.channel_layer.group_send)(
-            self.channel_group_name,
-            {
-                'type': 'chat_message',
-                'message': message_data,
+            message_data = {
+                "time": messagesql.created_at.strftime("%Y-%m-%d %H:%M:%S:%f")[:-3],
+                "sender": messagesql.sender.nickname,
+                "message": messagesql.text,
+                "photo": messagesql.sender.photo.url if messagesql.sender.photo else 'profile_photos/profile_standard.jpg',
             }
-        )
+
+            async_to_sync(self.channel_layer.group_send)(
+                self.channel_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message_data,
+                }
+            )
 
     def chat_message(self, event):
         message = event['message']
@@ -259,3 +282,22 @@ class ChatGroupConsumer(WebsocketConsumer):
             'type': 'chat',
             'message': message,
         }))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        

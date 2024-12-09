@@ -3,7 +3,7 @@ from django.db import models
 import os
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-
+from django.contrib.auth.hashers import make_password
 # Create your models here.
 class User(AbstractUser):
 
@@ -45,9 +45,15 @@ class ChatGroup(models.Model):
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    password = models.CharField(max_length=100, blank=True)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_chats')
     members = models.ManyToManyField(User, related_name='chats')
+
+    def save(self, *args, **kwargs):
+        if self.password and not self.password.startswith('pbkdf2_'):
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
