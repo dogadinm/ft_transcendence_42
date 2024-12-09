@@ -145,7 +145,7 @@ class Table:
 				self.players[n].getCard(self.deck.drawCard())
 				print(f'{n} draws a card')
 				print(self.players[n])
-			if (self.players[n].standing == False and evalHand(self.players[n].cards) < 0):
+			if (self.players[n].standing == False and (evalHand(self.players[n].cards) < 0 or evalHand(self.players[n].cards) == 42)):
 				self.players[n].standing = True
 				self.standing += 1
 				print(f'{n} is standing')
@@ -303,15 +303,17 @@ class TableGame:
 			self.table.playerStand(n - 1)
 			if (len(self.table.players) == self.table.standing):
 				self.status = 4
+	def	isPlayerStanding(self, n):
+		return self.table.players[n -1].standing
 	def	playerHand(self, n):
 		print("status")
 		print(self.status)
-		if (self.status == 2):
+		if (self.status == 2 or self.status == 4):
 			return self.table.playerHand(n - 1)
 		else :
 			return "game not in progress"
 	def	playerScore(self, n):
-		if (self.status == 2):
+		if (self.status == 2  or self.status == 4):
 			return self.table.playerScore(n - 1)
 		else :
 			return "game not in progress"

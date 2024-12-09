@@ -110,11 +110,15 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             bg_color = "#FFFF3F"
             self.table_game.playerHit(self.role)
             # Send the color to the WebSocket
+            if self.table_game.isPlayerStanding(self.role):
+                bg_color = "#AAAA11"
+                await self.send(text_data=json.dumps({
+                    'disable': 'true'
+                }))
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'stay',
-                    'name': self.username,
+                    'type': 'update',
                     'role': self.role,
                     'hand': self.table_game.playerHand(self.role),
                     'score': self.table_game.playerScore(self.role),
@@ -133,17 +137,21 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         elif data.get("action") == "stay":
             print("stay")
             print(self.role)
-            bg_color = "#FF3333"
+            # print(self.table_game.isPlayerStanding(self.role))
+            bg_color = "#CC3333"
             self.table_game.playerStand(self.role)
             # Send the color to the WebSocket
             # await self.send(text_data=json.dumps({
             #     'color': bg_color
             # }))
+            if self.table_game.isPlayerStanding(self.role):
+                await self.send(text_data=json.dumps({
+                    'disable': 'true'
+                }))
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'stay',
-                    'name': self.username,
+                    'type': 'update',
                     'role': self.role,
                     'hand': self.table_game.playerHand(self.role),
                     'score': self.table_game.playerScore(self.role),
@@ -167,24 +175,24 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             'score': event['score'],
             'color': event['color']
         }))
-    async def hit(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'hit',
-            'name': event['name'],
-            'role': event['role'],
-            'hand': event['hand'],
-            'score': event['score'],
-            'color': event['color']
-        }))
-    async def stay(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'stay',
-            'name': event['name'],
-            'role': event['role'],
-            'hand': event['hand'],
-            'score': event['score'],
-            'color': event['color']
-        }))
+    # async def hit(self, event):
+    #     await self.send(text_data=json.dumps({
+    #         'type': 'hit',
+    #         'name': event['name'],
+    #         'role': event['role'],
+    #         'hand': event['hand'],
+    #         'score': event['score'],
+    #         'color': event['color']
+    #     }))
+    # async def stay(self, event):
+    #     await self.send(text_data=json.dumps({
+    #         'type': 'stay',
+    #         'name': event['name'],
+    #         'role': event['role'],
+    #         'hand': event['hand'],
+    #         'score': event['score'],
+    #         'color': event['color']
+    #     }))
     async def reset(self, event):
         await self.send(text_data=json.dumps({
             'type': 'reset',

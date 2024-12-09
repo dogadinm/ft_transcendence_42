@@ -6,7 +6,10 @@
 		
 	</canvas>
 	<p></p>
-	<div id="buttons">
+	<!-- waiting on others -> start-> waiting on others -> reset -> hit ->reset -->
+	 <!-- resume? -->
+	<!-- timing send -->
+	<div id="buttons" style="height: 70px; align-content: center;">
 		<button id="join">JOIN !</button>
 	</div>
 	<div id="test"></div>
@@ -60,6 +63,22 @@
 					};
 					ws.send(JSON.stringify(message));  // Send the action to WebSocket
 				};
+			}
+			if (data && data.disable) {
+				document.getElementById('buttons').innerHTML = '<p>Waiting for the other player...</p>'
+				// document.getElementById('buttons').innerHTML = '<button id="hit" disabled>HIT !</button><button id="stay" disabled>STAY!</button>'
+				// document.getElementById('hit').onclick = function() {
+				// 	const message = {
+				// 		action: 'hit'  // This is the action we'll send to the WebSocket
+				// 	};
+				// 	ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				// };
+				// document.getElementById('stay').onclick = function() {
+				// 	const message = {
+				// 		action: 'stay'  // This is the action we'll send to the WebSocket
+				// 	};
+				// 	ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				// };
 			}
             if (data && data.color && data.role && id == data.role) {
                 // Change the background color when a message is received
