@@ -1,3 +1,4 @@
 django
 channels[daphne]
 psycopg2-binary
+Pillow
