@@ -2,7 +2,7 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Room
+from .models import Room, PrivateMessage
 from django.contrib.auth import get_user_model
 from .game import room_manager
 from asgiref.sync import async_to_sync
@@ -121,7 +121,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         return 'spectator'
 
 
-
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope['user']
@@ -134,6 +133,26 @@ class ChatConsumer(WebsocketConsumer):
         )
         self.accept()
 
+        friend = User.objects.get(username=self.friend_username)
+        messages = PrivateMessage.objects.filter(
+            sender__in=[self.user, friend],
+            receiver__in=[self.user, friend]
+        ).order_by('created_at')
+
+        messages_data = [
+            {
+                'username': message.sender.nickname,
+                'message': message.text,
+                'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            for message in messages
+        ]
+
+        self.send(text_data=json.dumps({
+            'type': 'chat_history',
+            'messages': messages_data,
+        }))
+
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_name,
@@ -145,6 +164,15 @@ class ChatConsumer(WebsocketConsumer):
         message = data.get('message')
 
         if message:
+            # Сохранение сообщения в базу данных
+            friend = User.objects.get(username=self.friend_username)
+            PrivateMessage.objects.create(
+                sender=self.user,
+                receiver=friend,
+                text=message
+            )
+
+            # Отправка нового сообщения в группу
             async_to_sync(self.channel_layer.group_send)(
                 self.room_name,
                 {
@@ -155,6 +183,7 @@ class ChatConsumer(WebsocketConsumer):
             )
 
     def chat_message(self, event):
+        # Отправка нового сообщения клиенту
         self.send(text_data=json.dumps({
             'type': 'chat',
             'username': event['username'],
@@ -164,8 +193,6 @@ class ChatConsumer(WebsocketConsumer):
     @staticmethod
     def create_room_name(user1, user2):
         return f"private_{min(user1, user2)}_{max(user1, user2)}"
-
-
 
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):

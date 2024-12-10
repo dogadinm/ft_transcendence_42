@@ -1,4 +1,4 @@
-{% extends "pong_app/layout.html" %}
+{{% extends "pong_app/layout.html" %}
 
 {% block body %}
 
@@ -10,6 +10,7 @@
             {% for friend in friends %}
             <li>
                 <a href="#" class="friend-item" data-friend="{{ friend.username }}">
+                    <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
                     {{ friend.username }}
                 </a>
             </li>
@@ -19,7 +20,12 @@
 
     <!-- Чат -->
     <div class="chat-content">
-        <h2 id="chat-header">Select a Friend</h2>
+        <div class="chat-header">
+            <h2 id="chat-header">Select a Friend</h2>
+            <div id="friend-info">
+                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg"/>
+            </div>
+        </div>
 
         <div id="messages" class="message-area"></div>
 
@@ -38,6 +44,8 @@
 </div>
 
 <script type="text/javascript">
+    const currentUser = "{{ current_user }}";
+     const profileBaseUrl = "{% url 'profile' 'username_placeholder' %}".replace('username_placeholder', '');
     let chatSocket = null;
     let currentFriend = null;
 
@@ -48,8 +56,16 @@
 
         currentFriend = friendName;
 
-        document.getElementById('chat-header').textContent = `Chat with: ${friendName}`;
+        const friendLink = document.querySelector(`.friend-item[data-friend="${friendName}"]`);
+        const friendPhoto = friendLink.querySelector('.friend-photo').src;
+
+
+document.getElementById('chat-header').innerHTML = `Chat with: <a href="${profileBaseUrl}${friendName}" target="_blank">${friendName}</a>`;
+document.getElementById('friend-photo').src = friendPhoto;
+
+
         document.getElementById('messages').innerHTML = '';
+
 
         chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat_privet/${friendName}/`);
 
@@ -58,20 +74,37 @@
 
             if (data.type === 'chat') {
                 const messages = document.getElementById('messages');
+                const messageClass = data.username === currentUser ? 'message-right' : 'message-left';
                 messages.insertAdjacentHTML(
                     'beforeend',
-                    `<div><p><strong>${data.username}:</strong> ${data.message}</p></div>`
+                    `<div class="message ${messageClass}">
+                        <p>${data.message}</p>
+                    </div>`
                 );
-                messages.scrollTop = messages.scrollHeight; // Автопрокрутка
+                messages.scrollTop = messages.scrollHeight;
+            } else if (data.type === 'chat_history') {
+                const messages = document.getElementById('messages');
+                messages.innerHTML = '';
+                data.messages.forEach((msg) => {
+                    console.log(msg.username === currentUser)
+                    const messageClass = msg.username === currentUser ? 'message-right' : 'message-left';
+                    messages.insertAdjacentHTML(
+                        'beforeend',
+                        `<div class="message ${messageClass}">
+                            <p>${msg.message}</p>
+                        </div>`
+                    );
+                });
+                messages.scrollTop = messages.scrollHeight;
             }
         };
+
 
         chatSocket.onclose = function () {
             console.log('Chat socket closed');
         };
     }
 
-    // Обработка клика по другу
     const friendLinks = document.querySelectorAll('.friend-item');
     friendLinks.forEach((link) => {
         link.addEventListener('click', (e) => {
@@ -81,7 +114,7 @@
         });
     });
 
-    // Отправка сообщения
+
     const messageForm = document.getElementById('message-form');
     messageForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -125,7 +158,8 @@
     }
 
     .friend-item {
-        display: block;
+        display: flex;
+        align-items: center;
         margin: 10px 0;
         text-decoration: none;
         color: #007bff;
@@ -136,6 +170,13 @@
         text-decoration: underline;
     }
 
+    .friend-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+
     .message-area {
         flex: 1;
         overflow-y: auto;
@@ -144,6 +185,31 @@
         padding: 10px;
         margin-bottom: 10px;
         background-color: #fff;
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .message {
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 60%;
+    }
+
+    .message-left {
+        background-color: #f1f1f1;
+        align-self: flex-start;
+    }
+
+    .message-right {
+        background-color: #007bff;
+        color: white;
+        align-self: flex-end;
     }
 
     .chat-form {

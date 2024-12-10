@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Score, Room, Friend, ChatGroup, Message
+from .models import User, Score, Room, Friend, ChatGroup, Message, PrivateMessage
 from django import forms
 
 
@@ -10,3 +10,4 @@ admin.site.register(Room)
 admin.site.register(Friend)
 admin.site.register(ChatGroup)
 admin.site.register(Message)
+admin.site.register(PrivateMessage)
