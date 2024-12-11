@@ -27,14 +27,25 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         # Connect the user to the WebSocket group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+        # Start the countdown task
+        # self.countdown_task = asyncio.create_task(self.start_countdown())
 
     async def disconnect(self, close_code):
         # Leave the WebSocket group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        # Cancel the countdown task if it's still running
+        # if self.countdown_task:
+        #     self.countdown_task.cancel()
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data.get("action") == "join":
+            if not self.table_game.is_running:
+                asyncio.create_task(self.table_game.start_countdown())
+            await self.send(text_data=json.dumps({
+                'countdown': self.table_game.get_countdown_time()
+            }))
+            # get role here
             print("join")
             bg_color = "#007F00"
             await self.send(text_data=json.dumps({
@@ -68,6 +79,8 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                     })
         if data.get("action") == "reset":
             print("reset")
+            if not self.table_game.is_running:
+                asyncio.create_task(self.table_game.start_countdown())
             bg_color = "#337F00"
             self.table_game.reset()
             await self.channel_layer.group_send(
@@ -175,24 +188,6 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             'score': event['score'],
             'color': event['color']
         }))
-    # async def hit(self, event):
-    #     await self.send(text_data=json.dumps({
-    #         'type': 'hit',
-    #         'name': event['name'],
-    #         'role': event['role'],
-    #         'hand': event['hand'],
-    #         'score': event['score'],
-    #         'color': event['color']
-    #     }))
-    # async def stay(self, event):
-    #     await self.send(text_data=json.dumps({
-    #         'type': 'stay',
-    #         'name': event['name'],
-    #         'role': event['role'],
-    #         'hand': event['hand'],
-    #         'score': event['score'],
-    #         'color': event['color']
-    #     }))
     async def reset(self, event):
         await self.send(text_data=json.dumps({
             'type': 'reset',
@@ -203,7 +198,18 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             'type': 'set',
             'set': event['set']
         }))
-
+    async def send_countdown(self, event):
+        # """Receive a message from the group and send it to the WebSocket client."""
+        # The event will contain the countdown time and possibly a message
+        countdown = event['countdown']
+        message = event.get('message', '')
+        room_name = event['room_name']
+        print("SEND_COUNTDOWN")
+        if room_name == self.room_name:
+            # Send the countdown message to the client (only for the relevant room)
+            await self.send(text_data=json.dumps({
+                'countdown': countdown
+            }))
     async def assign_dj_role(self):
         if self.username not in dj_users:
             dj_users.append(self.username)

@@ -6,10 +6,13 @@
 		
 	</canvas>
 	<p></p>
-	<!-- waiting on others -> start-> waiting on others -> reset -> hit ->reset -->
+	<!-- waiting on others -> start-> waiting on others -> reset -> hit ->reset / end -->
 	 <!-- resume? -->
-	<!-- timing send -->
-	<div id="buttons" style="height: 70px; align-content: center;">
+	<!-- timing send // disconnect handling-->
+	<div id="time" style="height: 30px; align-content: center;">
+		<p>Time...</p>
+	</div>
+	<div id="buttons" style="height: 60px; align-content: center;">
 		<button id="join">JOIN !</button>
 	</div>
 	<div id="test"></div>
@@ -108,6 +111,10 @@
 			if (data && data.score && data.role && id != data.role) {
                 // Change the background color when a message is received
 				document.getElementById('other_score').innerHTML = data.score;
+            }
+			if (data && data.countdown) {
+                // Change the background color when a message is received
+				document.getElementById('time').innerHTML = data.countdown;
             }
         };
 

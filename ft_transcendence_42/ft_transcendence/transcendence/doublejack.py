@@ -1,14 +1,16 @@
 import asyncio
+import json
 import random
 from .models import User, Score
 from asgiref.sync import sync_to_async
+from channels.layers import get_channel_layer
 import random
 import signal
 # import time
 
 # Function to handle the timeout
 def timeout_handler(signum, frame):
-    raise TimeoutError("Input timed out")
+	raise TimeoutError("Input timed out")
 
 #def value of hand - move to player?
 def	evalHand(cards):
@@ -171,7 +173,6 @@ class Table:
 		for player in self.players:
 			if evalHand(player.cards) == best:
 				player.wins += 1 / count
-
 # # player can take card (until over 20)
 
 
@@ -276,7 +277,7 @@ class Table:
 # status 2 game in progress
 # status 4 game finished
 class TableGame:
-	def __init__(self):
+	def __init__(self, room_name):
 		self.uni = ["🂡", "🂢", "🂣", "🂤", "🂥", "🂦", "🂧", "🂨", "🂩", "🂪", "🂫", "🂭", "🂮",
 				"🂱", "🂲", "🂳", "🂴", "🂵", "🂶", "🂷", "🂸", "🂹", "🂺", "🂻", "🂽", "🂾",
 				"🃁", "🃂", "🃃", "🃄", "🃅", "🃆", "🃇", "🃈", "🃉", "🃊", "🃋", "🃍", "🃎",
@@ -284,6 +285,9 @@ class TableGame:
 		self.table = Table()
 		self.status = 0
 		self.players = 0
+		self.countdown_time = 30  # Start from 30
+		self.is_running = False
+		self.room_name = room_name
 	def addPlayer(self, name, elo):
 		if (self.status != 2):
 			self.table.addPlayer(name, elo)
@@ -321,6 +325,46 @@ class TableGame:
 		if (self.status == 4):
 			self.table.reset()
 			self.status = 2
+			self.countdown_time = 30
+			self.is_running = False
+	async def start_countdown(self):
+		# """Start the countdown for this specific room and broadcast to all clients in the room every second."""
+		self.is_running = True
+		channel_layer = get_channel_layer()
+		print("STARTING COUNTDOWN")
+		while self.countdown_time >= 0:
+			# Broadcast the current countdown time to the group (room)
+			print(self.countdown_time)
+			await channel_layer.group_send(
+				f"ws_{self.room_name}",  # Unique group name based on the room
+				{
+					"type": "send_countdown",
+					"countdown": self.countdown_time,
+					"room_name": self.room_name
+				}
+			)
+			# Wait for 1 second
+			await asyncio.sleep(1)
+			self.countdown_time -= 1
+
+		# After countdown reaches 0, broadcast a "Countdown Finished" message
+		await channel_layer.group_send(
+			f"ws_{self.room_name}",
+			{
+				"type": "send_countdown",
+				"countdown": "Countdown finished!",
+				"room_name": self.room_name
+			}
+		)
+		self.is_running = False
+	def reset_countdown(self):
+		# """Reset the countdown to 30."""
+		self.countdown_time = 30
+		self.is_running = False
+	def get_countdown_time(self):
+		# """Return the current countdown time."""
+		return self.countdown_time
+
 
 class DoubleJackTableManager:
 	def __init__(self):
@@ -328,7 +372,7 @@ class DoubleJackTableManager:
 
 	def get_or_create_table(self, table_name):
 		if table_name not in self.tables:
-			self.tables[table_name] = TableGame()
+			self.tables[table_name] = TableGame(table_name)
 		return self.tables[table_name]
 
 	def remove_table(self, table_name):
