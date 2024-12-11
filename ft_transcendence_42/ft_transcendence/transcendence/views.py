@@ -89,8 +89,8 @@ def register(request):
 
 
 
-def profile(request, nickname):
-    page_user = User.objects.get(nickname=nickname)
+def profile(request, username):
+    page_user = User.objects.get(username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
 

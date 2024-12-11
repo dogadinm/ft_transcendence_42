@@ -36,23 +36,23 @@
     {% else %}
         {% if friend %}
             <a href="{% url 'invite_to_game' %}" class="btn btn-warning">Invite to pong game</a>
-            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger" name="action" value="delete">Delete from friends</button>
             </form>
         {% else %}
-            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-success" name="action" value="add_friend">Add to friends</button>
             </form>
         {% endif %}
         {% if block_user %}
-            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
             </form>
         {% else %}
-            <form action="{% url 'profile' nickname=nickname %}" method="post" class="me-3 profile-action-form">
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
             </form>

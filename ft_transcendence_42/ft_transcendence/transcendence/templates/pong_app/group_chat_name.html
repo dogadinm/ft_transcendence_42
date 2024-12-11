@@ -62,10 +62,10 @@
     function displayMessage(message, sender, photo) {
         const messagesElement = document.getElementById('messages');
         const messageElement = document.createElement('div');
-        messageElement.classList.add('message', sender === nickname ? 'message-right' : 'message-left');
+        messageElement.classList.add('message', sender === username ? 'message-right' : 'message-left');
 
 
-        messageElement.innerHTML = sender === nickname
+        messageElement.innerHTML = sender === username
             ? `<div class="message-text">${message}</div>`
             : `
                 <div class="avatar">

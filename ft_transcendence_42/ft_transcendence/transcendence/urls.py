@@ -11,7 +11,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
 
     path('chat/', views.chat, name='chat'),
-    path('profile/<str:nickname>', views.profile, name='profile'),
+    path('profile/<str:username>', views.profile, name='profile'),
     path('profile_settings/', views.profile_settings, name='profile_settings'),
 
     path('room/<str:room_name>/', views.room, name='room'),
