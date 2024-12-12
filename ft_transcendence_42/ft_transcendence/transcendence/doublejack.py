@@ -296,17 +296,17 @@ class TableGame:
 			self.status = 1
 		if self.status == 1:
 			self.status = 2
+			self._start_countdown_if_needed()
 		print(self.status)
+		return len(self.table.players)
 	def	playerHit(self, n):
 		if (self.status == 2):
 			self.table.playerHit(n - 1)
-			if (len(self.table.players) == self.table.standing):
-				self.status = 4
+			self._check_game_status()
 	def	playerStand(self, n):
 		if (self.status == 2):
 			self.table.playerStand(n - 1)
-			if (len(self.table.players) == self.table.standing):
-				self.status = 4
+			self._check_game_status()
 	def	isPlayerStanding(self, n):
 		return self.table.players[n -1].standing
 	def	playerHand(self, n):
@@ -324,9 +324,20 @@ class TableGame:
 	def	reset(self):
 		if (self.status == 4):
 			self.table.reset()
+			if self.is_running :
+				self.task.cancel()
 			self.status = 2
-			self.countdown_time = 30
-			self.is_running = False
+			self.reset_countdown()
+			self._start_countdown_if_needed()
+	def _check_game_status(self):
+		if len(self.table.players) == self.table.standing:
+			self.status = 4  # Game finished
+			if self.is_running:
+				self.task.cancel()
+
+	def _start_countdown_if_needed(self):
+		if not self.is_running:
+			self.task = asyncio.create_task(self.start_countdown())
 	async def start_countdown(self):
 		# """Start the countdown for this specific room and broadcast to all clients in the room every second."""
 		self.is_running = True

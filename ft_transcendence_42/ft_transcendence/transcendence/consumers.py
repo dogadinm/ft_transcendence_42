@@ -9,7 +9,7 @@ from .doublejack import double_jack_table_manager
 
 User = get_user_model()
 
-dj_users = ['']
+# dj_users = ['']
 
 class DoubleJackConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -21,9 +21,9 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         print(self.username)
         # Get or create a room object
         self.table_game = double_jack_table_manager.get_or_create_table(self.room_name)
-        self.role = await self.assign_dj_role()
-        self.table_game.addPlayer(self.username, 1000)
-        print(self.role)
+        # self.role = await self.assign_dj_role()
+        
+        # print(self.role)
         # Connect the user to the WebSocket group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
@@ -40,12 +40,11 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data.get("action") == "join":
-            if not self.table_game.is_running:
-                asyncio.create_task(self.table_game.start_countdown())
             await self.send(text_data=json.dumps({
                 'countdown': self.table_game.get_countdown_time()
             }))
             # get role here
+            self.role = self.table_game.addPlayer(self.username, 1000)
             print("join")
             bg_color = "#007F00"
             await self.send(text_data=json.dumps({
@@ -210,10 +209,10 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'countdown': countdown
             }))
-    async def assign_dj_role(self):
-        if self.username not in dj_users:
-            dj_users.append(self.username)
-        return dj_users.index(self.username)
+    # async def assign_dj_role(self):
+    #     if self.username not in dj_users:
+    #         dj_users.append(self.username)
+    #     return dj_users.index(self.username)
 
 class GameLogic(AsyncWebsocketConsumer):
     players = {'left': None, 'right': None}
