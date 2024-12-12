@@ -16,6 +16,7 @@ urlpatterns = [
 
     path('room/<str:room_name>/', views.room, name='room'),
     path("bot/", views.bot, name='bot'),
+	path("doublejack/", views.doublejack, name='doublejack'),
     path('group_chat/', views.group_chat, name='group_chat'),
     path('group_chat/<str:channel_nick>', views.group_chat_name, name='group_chat_name'),
     path('create_group_chat/', views.create_group_chat, name='create_group_chat'),
