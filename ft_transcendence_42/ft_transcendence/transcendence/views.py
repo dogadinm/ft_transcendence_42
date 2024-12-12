@@ -227,4 +227,6 @@ def create_group_chat(request):
     else:
         return render(request, "pong_app/create_group_chat.html")
 
+def doublejack(request):
 
+    return render(request, 'pong_app/doublejack.html')
