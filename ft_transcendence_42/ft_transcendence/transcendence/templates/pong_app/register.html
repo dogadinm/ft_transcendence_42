@@ -1,6 +1,9 @@
 {% extends "pong_app/layout.html" %}
-
+{% load static %}
 {% block body %}
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
 
     <h2>Register</h2>
     {% if message %}
