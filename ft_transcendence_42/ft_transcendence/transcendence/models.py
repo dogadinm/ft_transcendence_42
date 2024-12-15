@@ -30,6 +30,15 @@ class Score (models.Model):
     def __str__(self):
         return f"User: {self.user.username}, Score: {self.score}"
 
+
+class FriendRequest(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_requests")
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_requests")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender.username} -> {self.receiver.username}"
+
 class Friend(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='friends_list')
     friends = models.ManyToManyField(User, related_name='friends_of', blank=True)

@@ -4,6 +4,57 @@
 <head>
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
+{% if is_owner or friend %}
+    <h2 class="mx-5">Friends:</h2>
+
+    {% for l in list_p %}
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <img src="{{ l.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
+            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' l  %}">{{ l }}</a></li>
+        </div>
+    {% endfor %}
+
+{% endif %}
+{% if is_owner and block_list %}
+    <h2 class="mx-5">Blocked people:</h2>
+    {% for b in block_list %}
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <img src="{{ b.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
+            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' b  %}">{{ b }}</a></li>
+        </div>
+    {% endfor %}
+{% endif %}
+
+
+
+{% if is_owner and friend_requests %}
+<h2 class="mx-5">Friends requests:</h2>
+<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+    {% for request in friend_requests %}
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+
+            <span style="font-size: 18px; margin-right: 20px;">{{ request.sender.username }}</span>
+
+            <form method="post" style="margin-right: 10px;">
+                {% csrf_token %}
+                <input type="hidden" name="sender_request" value="{{ request.sender}}">
+                <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                    Accept
+                </button>
+            </form>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="sender_request" value="{{ request.sender }}">
+                <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                    Reject
+                </button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="container">
     {% if is_owner %}
         <h1 class="mx-5">Username:{{ user.username }}</h1>
@@ -15,26 +66,44 @@
     <div class="text-center my-3">
         <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
     </div>
-
         <p>{{ user.description }}</p>
-    <div class="text-center mb-4">
-    </div>
+    <div class="text-center mb-4"></div>
 
     <div class="row d-flex justify-content-center mb-4">
         <h3 class="col-4">Score: {{ score }}</h3>
     </div>
+</div>
 
+<div class="d-flex justify-content-center profile-actions-container">
 
-    <div class="d-flex justify-content-center">
-        {% if is_owner %}
-            <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
-        {% else %}
-            <form action="{% url 'add_friend'  %}" method="post" class="me-3">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">Add to friends</button>
-            </form>
-            <a href="{% url 'invite_to_game' %}" class="btn btn-warning">Invite to pong game</a>
+    {% if is_owner %}
+        <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>`
+    {% else %}
+        {% if friend %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="delete">Remove from friends</button>
+                </form>
+        {% elif not friend_request_sent %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="send_request">Send friend request</button>
+                </form>
+            {% else %}
+             <p>Request sent</p>
         {% endif %}
-    </div>
+
+        {% if block_user %}
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
+            </form>
+        {% else %}
+            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
+            </form>
+        {% endif %}
+    {% endif %}
 </div>
 {% endblock %}

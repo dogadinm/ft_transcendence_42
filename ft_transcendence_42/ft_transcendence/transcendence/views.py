@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from .models import User, Score, Room, Friend, ChatGroup
+from .models import User, Score, Room, Friend, ChatGroup, FriendRequest
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
@@ -89,12 +89,56 @@ def register(request):
 
 
 
+# def profile(request, username):
+#     page_user = User.objects.get(username=username)
+#     main_user = request.user
+#     score = Score.objects.get(user=page_user)
+#
+#     main_user_friends= Friend.objects.get(owner=main_user)
+#     page_user_friends = Friend.objects.get(owner=page_user)
+#     list_m = main_user_friends.friends.all()
+#     list_p = page_user_friends.friends.all()
+#     block_list = main_user.blocked_users.all()
+#
+#     if request.method == "POST":
+#         action = request.POST.get('action')
+#         if  action == 'add_friend':
+#             main_user_friends.friends.add(page_user)
+#             main_user_friends.save()
+#             page_user_friends.friends.add(main_user)
+#             page_user_friends.save()
+#         elif action == 'block_user':
+#             main_user.blocked_users.add(page_user)
+#             main_user.save()
+#         elif action == 'unblock_user':
+#             main_user.blocked_users.remove(page_user)
+#             main_user.save()
+#         elif action == 'delete':
+#             main_user_friends.friends.remove(page_user)
+#             main_user_friends.save()
+#             page_user_friends.friends.remove(main_user)
+#             page_user_friends.save()
+#
+#     return render(request, "pong_app/profile.html", {
+#     "username": page_user.username,
+#     "nickname": page_user.nickname,
+#     "photo": page_user.photo.url,
+#     "score": score.score,
+#     "user_account": page_user,
+#     "is_owner": request.user == page_user,
+#     "list_m": list_m,
+#     "list_p": list_p,
+#     "friend": page_user in main_user_friends.friends.all(),
+#     "block_user": page_user in main_user.blocked_users.all(),
+#
+# })
+
 def profile(request, username):
-    page_user = User.objects.get(username=username)
+    page_user = get_object_or_404(User, username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
 
-    main_user_friends= Friend.objects.get(owner=main_user)
+    main_user_friends = Friend.objects.get(owner=main_user)
     page_user_friends = Friend.objects.get(owner=page_user)
     list_m = main_user_friends.friends.all()
     list_p = page_user_friends.friends.all()
@@ -102,36 +146,56 @@ def profile(request, username):
 
     if request.method == "POST":
         action = request.POST.get('action')
-        if  action == 'add_friend':
-            main_user_friends.friends.add(page_user)
+        if (request.POST.get('sender_request')):
+            sender_request = User.objects.get(username=request.POST.get('sender_request'))
+            sender_request_friends = Friend.objects.get(owner=sender_request)
+
+        if action == 'send_request':
+            if not (page_user in main_user_friends.friends.all() and FriendRequest.objects.filter(sender=main_user, receiver=page_user).exists()):
+                FriendRequest.objects.create(sender=main_user, receiver=page_user)
+        elif action == 'delete':
+            main_user_friends.friends.remove(page_user)
             main_user_friends.save()
-            page_user_friends.friends.add(main_user)
+            page_user_friends.friends.remove(main_user)
             page_user_friends.save()
+        elif action == 'accept_request':
+            friend_request = FriendRequest.objects.filter(sender=sender_request, receiver=page_user).first()
+            if friend_request:
+                main_user_friends.friends.add(sender_request)
+                sender_request_friends.friends.add(main_user)
+                friend_request.delete()
+        elif action == 'decline_request':
+            friend_request = FriendRequest.objects.filter(sender=sender_request, receiver=main_user).first()
+            if friend_request:
+                friend_request.delete()
         elif action == 'block_user':
             main_user.blocked_users.add(page_user)
             main_user.save()
         elif action == 'unblock_user':
             main_user.blocked_users.remove(page_user)
             main_user.save()
-        elif action == 'delete':
-            main_user_friends.friends.remove(page_user)
-            main_user_friends.save()
-            page_user_friends.friends.remove(main_user)
-            page_user_friends.save()
+
+        return redirect("profile", username=username)
+
+    friend_request_sent = FriendRequest.objects.filter(sender=main_user, receiver=page_user).exists()
+    friend_requests = FriendRequest.objects.filter(receiver=page_user)
+
 
     return render(request, "pong_app/profile.html", {
-    "username": page_user.username,
-    "nickname": page_user.nickname,
-    "photo": page_user.photo.url,
-    "score": score.score,
-    "user_account": page_user,
-    "is_owner": request.user == page_user,
-    "list_m": list_m,
-    "list_p": list_p,
-    "friend": page_user in main_user_friends.friends.all(),
-    "block_user": page_user in main_user.blocked_users.all(),
-
-})
+        "username": page_user.username,
+        "nickname": page_user.nickname,
+        "photo": page_user.photo.url,
+        "score": score.score,
+        "user_account": page_user,
+        "is_owner": request.user == page_user,
+        "list_m": list_m,
+        "list_p": list_p,
+        "friend": page_user in main_user_friends.friends.all(),
+        "block_user": page_user in main_user.blocked_users.all(),
+        "friend_request_sent": friend_request_sent,
+        "friend_requests": friend_requests,
+        "block_list":block_list,
+    })
 
 def logout_view(request):
     logout(request)
@@ -230,3 +294,9 @@ def create_group_chat(request):
 def doublejack(request):
 
     return render(request, 'pong_app/doublejack.html')
+
+def get_friend_requests_count(request):
+    if request.user.is_authenticated:
+        count = FriendRequest.objects.filter(receiver=request.user).count()
+        return JsonResponse({"count": count})
+    return JsonResponse({"count": 0})

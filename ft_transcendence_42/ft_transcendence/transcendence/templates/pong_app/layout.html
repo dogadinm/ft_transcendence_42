@@ -23,7 +23,10 @@
         <nav>
             <a href="{% url 'index' %}">Main page</a>
             {% if user.is_authenticated %}
-                <a href="{% url 'profile' username=user.username %}"><strong>{{ user.username }}</strong></a>
+                <a href="{% url 'profile' username=user.username %}">
+                    <strong>{{ user.username }}</strong>
+                    <span id="friend-requests-badge"></span>
+                </a>
                 <a href="{% url 'logout' %}">Log out</a>
                 <a href="{% url 'chat'%}">Chat</a>
                 <a href="{% url 'group_chat' %}">Group chat</a>
@@ -50,5 +53,16 @@
         </div>
         <script src="{% static 'js/script.js' %}"></script>
         <script src="{% static 'js/pongScript.js' %}"></script>
+        <script src="{% static 'js/FriendRequestsCount.js' %}"></script>
     </body>
+<style>
+    #friend-requests-badge {
+        background-color: green;
+        color: white;
+        border-radius: 50%;
+        padding: 5px 10px;
+        font-size: 14px;
+        margin-left: 5px;
+    }
+</style>
 </html>

@@ -21,7 +21,7 @@ urlpatterns = [
     path('group_chat/<str:channel_nick>', views.group_chat_name, name='group_chat_name'),
     path('create_group_chat/', views.create_group_chat, name='create_group_chat'),
 
-
+    path('api/friend_requests_count/', views.get_friend_requests_count, name='friend_requests_count'),
     path('add_friend/<str:nickname>', views.add_friend, name='add_friend'),
     path('invite_to_game/', views.invite_to_game, name='invite_to_game'),
     re_path(r'pong/', views.pong, name="pong"),
