@@ -1,14 +1,13 @@
 function updateFriendRequestsCount() {
-    fetch('/api/friend_requests_count/') // URL вашего API
+    fetch('/api/friend_requests_count/')
         .then(response => response.json())
         .then(data => {
-            const count = data.count; // Ожидается, что API возвращает объект { "count": число }
+            const count = data.count;
             const profileLink = document.querySelector('a[href*="profile"]');
             if (profileLink) {
                 let badge = document.getElementById('friend-requests-badge');
 
                 if (count > 0) {
-                    // Создаём <span>, если его ещё нет
                     if (!badge) {
                         badge = document.createElement('span');
                         badge.id = 'friend-requests-badge';
@@ -22,10 +21,8 @@ function updateFriendRequestsCount() {
                         `;
                         profileLink.appendChild(badge);
                     }
-                    // Обновляем текст внутри <span>
                     badge.textContent = count;
                 } else if (badge) {
-                    // Если больше нет запросов, удаляем <span>
                     badge.remove();
                 }
             } else {
