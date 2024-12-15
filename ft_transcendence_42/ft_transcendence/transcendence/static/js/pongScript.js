@@ -31,8 +31,8 @@ var Paddle = {
         return {
             width: 18,
             height: 180,
-            x: side === 'left' ? 150 : Game.canvas.width - 150,
-            y: (Game.canvas.height / 2) - 35,
+            x: side === 'left' ? 15 : Game.canvas.width - 33, // Position the paddles at the edges
+            y: (Game.canvas.height / 2) - (180 / 2),
             score: 0,
             move: DIRECTION.IDLE,
             speed: 8
@@ -70,8 +70,9 @@ var Game = {
     menu: function() {
         this.draw();
 
-        this.context.font = '50px Courier New';
+        this.context.font = '50px Arial';
         this.context.fillStyle = this.color;
+        this.context.textAlign = 'center';
 
         this.context.fillRect(
             this.canvas.width / 2 - 350,
@@ -87,28 +88,52 @@ var Game = {
         );
     },
 
-    // End game and display message
-    endGameMenu: function(text) {
-        this.context.font = '45px Courier New';
-        this.context.fillStyle = this.color;
+// End game and display message, launch restart button
+endGameMenu: function() {
+    // Ensure the game loop stops
+    this.over = true;
 
-        this.context.fillRect(
-            this.canvas.width / 2 - 350,
-            this.canvas.height / 2 - 48,
-            700,
-            100
-        );
+    // Clear the canvas
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.context.fillStyle = '#ffffff';
-        this.context.fillText(text,
-            this.canvas.width / 2,
-            this.canvas.height / 2 + 15
-        );
+    // Draw the background
+    this.context.fillStyle = this.color;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        setTimeout(() => {
-            Game.initialize();
-        }, 3000);
-    },
+    // Display the winner message
+    this.context.font = '50px Arial';
+    this.context.fillStyle = '#ffffff';
+    this.context.textAlign = 'center';
+    this.context.fillText(this.winnerText, this.canvas.width / 2, this.canvas.height / 2 - 60);
+
+    // Create and center the restart button below the winner text
+    const restartButton = document.createElement('button');
+    restartButton.textContent = 'Restart Game';
+    restartButton.style.position = 'absolute';
+
+    // Calculate the button's top position based on the canvas height and winner message
+    const winnerTextHeight = 50; // Height of the winner text
+    const winnerTextYPosition = this.canvas.height / 2 - 60;
+    const buttonOffset = 5; // Space between the winner text and the button
+    const buttonTop = winnerTextYPosition + winnerTextHeight + buttonOffset;
+
+    restartButton.style.top = buttonTop + 'px';  // Positioning below the winner text
+    restartButton.style.left = '50%';
+    restartButton.style.transform = 'translateX(-50%)';
+    restartButton.style.padding = '10px 20px';
+    restartButton.style.fontSize = '16px';
+    restartButton.style.cursor = 'pointer';
+    restartButton.style.zIndex = '1000';
+
+    // Append the button to the body
+    document.body.appendChild(restartButton);
+
+    // Restart the game when the button is clicked
+    restartButton.addEventListener('click', () => {
+        document.body.removeChild(restartButton); // Remove the button
+        this.initialize(); // Restart the game
+    });
+},
 
     // Main game loop
     loop: function() {
@@ -184,13 +209,20 @@ var Game = {
         }
     },
 
-    // Reset the ball position and update the score
+    // Reset the ball position and update the score. Check for the winning condition.
     _resetTurn: function(victor, loser) {
         this.ball = Ball.new(this.ball.speed);
         this.turn = loser;
         this.timer = (new Date()).getTime();
 
         victor.score++;
+
+        // Check if the game has a winner
+        if (victor.score >= 1) {
+            this.over = true; // Stop the game loop
+            this.winnerText = victor === this.player ? 'You won!' : 'Bot won!'; // Set the winner message
+            this.endGameMenu(); // Call endGameMenu to display both the message and the button
+        }
     },
 
     // Delay before the next turn
@@ -217,15 +249,30 @@ var Game = {
             this.context.fillRect((this.canvas.width / 2) - 1, i, 2, 20);
         }
 
-        this.context.font = '40px Arial';
+        this.context.font = '40px Arial';  // Increase font size here
         this.context.textAlign = 'center';
         this.context.fillText(this.player.score.toString(), this.canvas.width / 2 - 50, 50);
         this.context.fillText(this.paddle.score.toString(), this.canvas.width / 2 + 50, 50);
+
+        // Draw "You" and "Bot" labels with a larger font size
+        this.context.font = '40px Arial';
+        this.context.textAlign = 'left';
+        this.context.fillText('You', 20, 40);
+        this.context.textAlign = 'right';
+        this.context.fillText('Bot', this.canvas.width - 20, 40);
+
+        // Display winner message if the game is over
+        if (this.over) {
+            this.context.font = '50px Arial';
+            this.context.textAlign = 'center';
+            this.context.fillStyle = '#ffffff';
+            this.context.fillText(this.winnerText, this.canvas.width / 2, this.canvas.height / 2);
+        }
     }
+
 };
 
 // Start the game when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     Game.initialize();
 });
-

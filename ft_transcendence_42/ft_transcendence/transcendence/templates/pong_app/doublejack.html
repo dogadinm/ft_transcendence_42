@@ -1,9 +1,13 @@
 {% extends "pong_app/layout.html" %}
-
+{% load static %}
+{% block title %}Double Jack{% endblock %}
 {% block body %}
+	<head>
+		<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+	</head>
     <h1>Doublejack</h1>
 	<canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;">
-		
+
 	</canvas>
 	<p></p>
 	<!-- waiting on others -> start-> waiting on others -> reset -> hit ->reset / end -->
@@ -94,7 +98,7 @@
 			if (data && data.role && data.role && id == data.role) {
                 // Change the background color when a message is received
 				document.getElementById('role').innerHTML = data.role;
-				
+
             }
 			if (data && data.hand && data.role && id == data.role) {
                 // Change the background color when a message is received
