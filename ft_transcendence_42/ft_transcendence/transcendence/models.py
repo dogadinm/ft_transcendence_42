@@ -30,6 +30,16 @@ class Score (models.Model):
     def __str__(self):
         return f"User: {self.user.username}, Score: {self.score}"
 
+class MatchHistory (models.Model):
+    winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="winner")
+    loser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loser")
+    winner_match_score = models.IntegerField(default=0)
+    loser_match_score = models.IntegerField(default=0)
+    winner_change_score = models.IntegerField(default=0)
+    loser_change_score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"Match: {self.winner.username}-{self.loser.username}:{self.winner_match_score}-{self.loser_match_score}"
 
 class FriendRequest(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_requests")

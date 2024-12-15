@@ -1,6 +1,6 @@
 import asyncio
 import random
-from .models import User, Score
+from .models import User, Score, MatchHistory
 from asgiref.sync import sync_to_async
 
 class RoomGame:
@@ -17,6 +17,8 @@ class RoomGame:
         self.speed = 2.0
         self.paddle_speed = 20
         self.win_score = 10
+        self.win = 10
+        self.los = -5
 
     async def game_loop(self, send_update):
         while self.ready['right'] and self.ready['left']:
@@ -28,6 +30,7 @@ class RoomGame:
             if winner:
                 loser = self.players['right'] if winner == self.players['left'] else self.players['left']
                 await self.update_scores(winner, loser)
+                await self.save_match(winner, loser)
             await asyncio.sleep(0.03)
 
             if (self.players['left'] == None and self.players['right'] == None):
@@ -106,14 +109,28 @@ class RoomGame:
         return None
 
     @sync_to_async
+    def save_match(self, winner_username, loser_username):
+        winner = User.objects.get(username=winner_username)
+        loser = User.objects.get(username=loser_username)
+        win = 'left' if self.score['left'] == self.win_score else'right'
+        los = 'left' if self.score['left'] != self.win_score else'right'
+        MatchHistory.objects.create(winner=winner,
+                                    loser=loser,
+                                    winner_match_score=self.score[win],
+                                    loser_match_score=self.score[los],
+                                    winner_change_score=self.win,
+                                    loser_change_score=self.los
+                                    )
+
+    @sync_to_async
     def update_scores(self, winner_username, loser_username):
         winner = User.objects.get(username=winner_username)
         loser = User.objects.get(username=loser_username)
 
         winner_score = Score.objects.get(user=winner)
         loser_score = Score.objects.get(user=loser)
-        winner_score.score += 10
-        loser_score.score -= 2
+        winner_score.score += self.win
+        loser_score.score -= self.los
 
         winner_score.save()
         loser_score.save()

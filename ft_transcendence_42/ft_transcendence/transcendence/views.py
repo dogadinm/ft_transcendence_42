@@ -2,11 +2,12 @@ from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.db.models import Q
 from django.urls import reverse
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from .models import User, Score, Room, Friend, ChatGroup, FriendRequest
+from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import FileSystemStorage
@@ -88,55 +89,13 @@ def register(request):
         return render(request, "pong_app/register.html")
 
 
-
-# def profile(request, username):
-#     page_user = User.objects.get(username=username)
-#     main_user = request.user
-#     score = Score.objects.get(user=page_user)
-#
-#     main_user_friends= Friend.objects.get(owner=main_user)
-#     page_user_friends = Friend.objects.get(owner=page_user)
-#     list_m = main_user_friends.friends.all()
-#     list_p = page_user_friends.friends.all()
-#     block_list = main_user.blocked_users.all()
-#
-#     if request.method == "POST":
-#         action = request.POST.get('action')
-#         if  action == 'add_friend':
-#             main_user_friends.friends.add(page_user)
-#             main_user_friends.save()
-#             page_user_friends.friends.add(main_user)
-#             page_user_friends.save()
-#         elif action == 'block_user':
-#             main_user.blocked_users.add(page_user)
-#             main_user.save()
-#         elif action == 'unblock_user':
-#             main_user.blocked_users.remove(page_user)
-#             main_user.save()
-#         elif action == 'delete':
-#             main_user_friends.friends.remove(page_user)
-#             main_user_friends.save()
-#             page_user_friends.friends.remove(main_user)
-#             page_user_friends.save()
-#
-#     return render(request, "pong_app/profile.html", {
-#     "username": page_user.username,
-#     "nickname": page_user.nickname,
-#     "photo": page_user.photo.url,
-#     "score": score.score,
-#     "user_account": page_user,
-#     "is_owner": request.user == page_user,
-#     "list_m": list_m,
-#     "list_p": list_p,
-#     "friend": page_user in main_user_friends.friends.all(),
-#     "block_user": page_user in main_user.blocked_users.all(),
-#
-# })
-
 def profile(request, username):
     page_user = get_object_or_404(User, username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
+    user_match_history = MatchHistory.objects.filter(
+        Q(winner=page_user) | Q(loser=page_user)
+    )
 
     main_user_friends = Friend.objects.get(owner=main_user)
     page_user_friends = Friend.objects.get(owner=page_user)
@@ -159,7 +118,7 @@ def profile(request, username):
             page_user_friends.friends.remove(main_user)
             page_user_friends.save()
         elif action == 'accept_request':
-            friend_request = FriendRequest.objects.filter(sender=sender_request, receiver=page_user).first()
+            friend_request = FriendRequest.objects.filter(sender=sender_request, receiver=main_user).first()
             if friend_request:
                 main_user_friends.friends.add(sender_request)
                 sender_request_friends.friends.add(main_user)
@@ -178,6 +137,7 @@ def profile(request, username):
         return redirect("profile", username=username)
 
     friend_request_sent = FriendRequest.objects.filter(sender=main_user, receiver=page_user).exists()
+    friend_request_taker = FriendRequest.objects.filter(sender=page_user, receiver=main_user).exists()
     friend_requests = FriendRequest.objects.filter(receiver=page_user)
 
 
@@ -193,8 +153,10 @@ def profile(request, username):
         "friend": page_user in main_user_friends.friends.all(),
         "block_user": page_user in main_user.blocked_users.all(),
         "friend_request_sent": friend_request_sent,
+        "friend_request_taker":friend_request_taker,
         "friend_requests": friend_requests,
         "block_list":block_list,
+        "user_match_history":user_match_history,
     })
 
 def logout_view(request):

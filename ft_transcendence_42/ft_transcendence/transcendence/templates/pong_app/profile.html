@@ -4,16 +4,15 @@
 <head>
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
+
 {% if is_owner or friend %}
     <h2 class="mx-5">Friends:</h2>
-
     {% for l in list_p %}
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
             <img src="{{ l.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
             <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' l  %}">{{ l }}</a></li>
         </div>
     {% endfor %}
-
 {% endif %}
 
 {% if is_owner and block_list %}
@@ -27,16 +26,13 @@
 {% endif %}
 
 
-
 {% if is_owner and friend_requests %}
 <h2 class="mx-5">Friends requests:</h2>
 <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
     {% for request in friend_requests %}
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
             <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-
-            <span style="font-size: 18px; margin-right: 20px;">{{ request.sender.username }}</span>
-
+            <span style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' request.sender.username  %}">{{ request.sender.username }}</a></span>
             <form method="post" style="margin-right: 10px;">
                 {% csrf_token %}
                 <input type="hidden" name="sender_request" value="{{ request.sender}}">
@@ -81,16 +77,35 @@
         <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>`
     {% else %}
         {% if friend %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="action" value="delete">Remove from friends</button>
+            </form>
+        {% elif friend_request_taker %}
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+
                 <form method="post">
                     {% csrf_token %}
-                    <button type="submit" name="action" value="delete">Remove from friends</button>
+                    <input type="hidden" name="sender_request" value="{{ username }}">
+                    <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                        Accept
+                    </button>
                 </form>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="sender_request" value="{{ username }}">
+                    <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                        Reject
+                    </button>
+                </form>
+            </div>
         {% elif not friend_request_sent %}
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" name="action" value="send_request">Send friend request</button>
-                </form>
-            {% else %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="action" value="send_request">Send friend request</button>
+            </form>
+        {% else %}
              <p>Request sent</p>
         {% endif %}
 
@@ -107,4 +122,60 @@
         {% endif %}
     {% endif %}
 </div>
+{% if is_owner or friend %}
+  <h1>Match History</h1>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Winner</th>
+          <th>Loser</th>
+          <th>Winner Score</th>
+          <th>Loser Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in user_match_history %}
+        <tr>
+          <td>{{ match.winner.username }}</td>
+          <td>{{ match.loser.username }}</td>
+          <td>{{ match.winner_match_score }}</td>
+          <td>{{ match.loser_match_score }}</td>
+          <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">No matches found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <style>
+    .table-container {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+{% endif %}
 {% endblock %}
