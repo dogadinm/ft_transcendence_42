@@ -1,6 +1,10 @@
 {% extends "pong_app/layout.html" %}
-
+{% load static %}
 {% block body %}
+
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
 
 <h1>Chat groups</h1>
 <a href="{% url 'create_group_chat' %}">Create chat</a>

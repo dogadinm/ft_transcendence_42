@@ -1,7 +1,11 @@
 {% extends "pong_app/layout.html" %}
-
+{% load static %}
 {% block body %}
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
 
+<link type="text/css"  href="{% static 'transcendence/style.css' %}" rel="stylesheet">
 <div id="roleInfo"></div>
 <canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;"></canvas>
 
@@ -105,5 +109,12 @@ function   showRepeatDialog(){
     }
 }
 </script>
-
+<style>
+    #pong-game-section canvas {
+        background-color: #333;
+        width: 700px;
+        height: 500px;
+        margin-top: 20px;
+    }
+    </style>
 {% endblock %}
