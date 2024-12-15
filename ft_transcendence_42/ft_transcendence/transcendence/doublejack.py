@@ -69,12 +69,12 @@ class Player:
 		self.name = name
 		self.elo = elo
 		self.standing = False
-		self.wins = 0
+		self.points = 0
 	def __str__(self):
 		str = "(N: " + self.name + ", "
 		str += f'E: {self.elo}, '
 		str += f'S: {self.standing}, '
-		str += f'W: {self.wins}, H: '
+		str += f'W: {self.points}, H: '
 		for val in self.cards:
 			str += self.uni[val] + " "
 		str += f', {evalHand(self.cards)}'
@@ -96,6 +96,10 @@ class Table:
 				"🂱", "🂲", "🂳", "🂴", "🂵", "🂶", "🂷", "🂸", "🂹", "🂺", "🂻", "🂽", "🂾",
 				"🃁", "🃂", "🃃", "🃄", "🃅", "🃆", "🃇", "🃈", "🃉", "🃊", "🃋", "🃍", "🃎",
 				"🃑", "🃒", "🃓", "🃔", "🃕", "🃖", "🃗", "🃘", "🃙", "🃚", "🃛", "🃝", "🃞"]
+		self.img = ["A-S.png", "2-S.png", "3-S.png", "4-S.png", "5-S.png", "6-S.png", "7-S.png", "8-S.png", "9-S.png", "T-S.png", "J-S.png", "Q-S.png", "K-S.png",
+				"A-H.png", "2-H.png", "3-H.png", "4-H.png", "5-H.png", "6-H.png", "7-H.png", "8-H.png", "9-H.png", "T-H.png", "J-H.png", "Q-H.png", "K-H.png",
+				"A-D.png", "2-D.png", "3-D.png", "4-D.png", "5-D.png", "6-D.png", "7-D.png", "8-D.png", "9-D.png", "T-D.png", "J-D.png", "Q-D.png", "K-D.png",
+				"A-C.png", "2-C.png", "3-C.png", "4-C.png", "5-C.png", "6-C.png", "7-C.png", "8-C.png", "9-C.png", "T-C.png", "J-C.png", "Q-C.png", "K-C.png"]
 		self.deck = Deck()
 		self.players = []
 		self.games = 0
@@ -115,11 +119,28 @@ class Table:
 		for player in self.players:
 			print(player)
 		print()
+	def	playerName(self, n):
+		if (n >= 0 and n < len(self.players)):
+			return (self.players[n].name)
+		else:
+			return "not a player"
+	def	playerPoints(self, n):
+		if (n >= 0 and n < len(self.players)):
+			return (self.players[n].points)
+		else:
+			return "not a player"
+	def	playerStatus(self, n):
+		if (n >= 0 and n < len(self.players)):
+			print("STANDING:")
+			print(self.players[n].standing)
+			return (self.players[n].standing)
+		else:
+			return "not a player"
 	def	playerHand(self, n):
 		if (n >= 0 and n < len(self.players)):
 			str = ""
 			for val in self.players[n].cards:
-				str += self.uni[val]
+				str += self.img[val]
 			return (str)
 		else:
 			return "not a player"
@@ -163,7 +184,9 @@ class Table:
 	def	eval(self):
 		best = -420
 		count = 0
+		total = 0
 		self.games += 1
+		print("EVAL")
 		for player in self.players:
 			if evalHand(player.cards) > best:
 				best = evalHand(player.cards)
@@ -171,8 +194,16 @@ class Table:
 			elif evalHand(player.cards) == best:
 				count += 1
 		for player in self.players:
+			if evalHand(player.cards) != best:
+				player.points -= best - evalHand(player.cards)
+				print("loser")
+				print(best - evalHand(player.cards))
+				total += best - evalHand(player.cards)
+		for player in self.players:
 			if evalHand(player.cards) == best:
-				player.wins += 1 / count
+				player.points += total
+				print("winner")
+				print(total)
 # # player can take card (until over 20)
 
 
@@ -288,7 +319,12 @@ class TableGame:
 		self.countdown_time = 30  # Start from 30
 		self.is_running = False
 		self.room_name = room_name
+		self.dj_users = ['']
 	def addPlayer(self, name, elo):
+		if name not in self.dj_users:
+			self.dj_users.append(name)
+		else :
+			return self.dj_users.index(name)
 		if (self.status != 2):
 			self.table.addPlayer(name, elo)
 			self.players += 1
@@ -316,9 +352,27 @@ class TableGame:
 			return self.table.playerHand(n - 1)
 		else :
 			return "game not in progress"
+		
+	def	playerStatus(self, n):
+		if (self.status == 2 or self.status == 4):
+			return self.table.playerStatus(n - 1)
+		else :
+			return "game not in progress"
+	def	playerPoints(self, n):
+		if (self.status == 2 or self.status == 4):
+			return self.table.playerPoints(n - 1)
+		else :
+			return "game not in progress"
+	def	playerName(self, n):
+		return self.table.playerName(n - 1)
 	def	playerScore(self, n):
-		if (self.status == 2  or self.status == 4):
+		if (self.status == 2 or self.status == 4):
 			return self.table.playerScore(n - 1)
+		else :
+			return "game not in progress"
+	def	tableGames(self, n):
+		if (self.status == 2  or self.status == 4):
+			return self.table.games
 		else :
 			return "game not in progress"
 	def	reset(self):
@@ -332,6 +386,7 @@ class TableGame:
 	def _check_game_status(self):
 		if len(self.table.players) == self.table.standing:
 			self.status = 4  # Game finished
+			self.table.eval()
 			if self.is_running:
 				self.task.cancel()
 
@@ -345,7 +400,7 @@ class TableGame:
 		print("STARTING COUNTDOWN")
 		while self.countdown_time >= 0:
 			# Broadcast the current countdown time to the group (room)
-			print(self.countdown_time)
+			# print(self.countdown_time)
 			await channel_layer.group_send(
 				f"ws_{self.room_name}",  # Unique group name based on the room
 				{
