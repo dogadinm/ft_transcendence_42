@@ -13,6 +13,7 @@
             <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' l  %}">{{ l }}</a></li>
         </div>
     {% endfor %}
+    <a href="{% url 'full_friends_list' username %}">Show More</a>
 {% endif %}
 
 {% if is_owner and block_list %}
@@ -72,7 +73,6 @@
 </div>
 
 <div class="d-flex justify-content-center profile-actions-container">
-
     {% if is_owner %}
         <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>`
     {% else %}
@@ -122,42 +122,41 @@
         {% endif %}
     {% endif %}
 </div>
+
+
 {% if is_owner or friend %}
   <h1>Match History</h1>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Winner</th>
-          <th>Loser</th>
-          <th>Winner Score</th>
-          <th>Loser Score</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for match in user_match_history %}
-        <tr>
-          <td>{{ match.winner.username }}</td>
-          <td>{{ match.loser.username }}</td>
-          <td>{{ match.winner_match_score }}</td>
-          <td>{{ match.loser_match_score }}</td>
-          <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6">No matches found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <h1>Recent Matches</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Winner</th>
+        <th>Winner Score</th>
+        <th>Loser</th>
+        <th>Loser Score</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in recent_matches %}
+      <tr>
+        <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
+        <td>{{ match.winner_match_score }}</td>
+        <td>{{ match.loser.username }}</td>
+        <td>{{ match.loser_match_score }}</td>
+        <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No matches found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{% url 'full_match_history' username %}">Show More</a>
+
   <style>
-    .table-container {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-    }
     table {
       width: 100%;
       border-collapse: collapse;

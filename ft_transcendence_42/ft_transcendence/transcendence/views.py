@@ -1,16 +1,19 @@
 from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from django.db import IntegrityError
-from django.db.models import Q
 from django.urls import reverse
 from django.core.paginator import Paginator
 import json
+from django.core.files.storage import FileSystemStorage
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.db import IntegrityError
 from django.http import JsonResponse
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.core.files.storage import FileSystemStorage
+from django.db.models import Q
+from django.core.paginator import Paginator
+
 
 
 def index(request):
@@ -93,14 +96,14 @@ def profile(request, username):
     page_user = get_object_or_404(User, username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
-    user_match_history = MatchHistory.objects.filter(
+    recent_matches = MatchHistory.objects.filter(
         Q(winner=page_user) | Q(loser=page_user)
-    )
+    ).order_by('-created_at')[:3]
 
     main_user_friends = Friend.objects.get(owner=main_user)
     page_user_friends = Friend.objects.get(owner=page_user)
-    list_m = main_user_friends.friends.all()
-    list_p = page_user_friends.friends.all()
+    list_m = main_user_friends.friends.all()[:3]
+    list_p = page_user_friends.friends.all()[:3]
     block_list = main_user.blocked_users.all()
 
     if request.method == "POST":
@@ -156,7 +159,7 @@ def profile(request, username):
         "friend_request_taker":friend_request_taker,
         "friend_requests": friend_requests,
         "block_list":block_list,
-        "user_match_history":user_match_history,
+        "recent_matches":recent_matches,
     })
 
 def logout_view(request):
@@ -262,3 +265,28 @@ def get_friend_requests_count(request):
         count = FriendRequest.objects.filter(receiver=request.user).count()
         return JsonResponse({"count": count})
     return JsonResponse({"count": 0})
+
+
+def full_match_history(request, username):
+    user = get_object_or_404(User, username=username)
+
+    matches = MatchHistory.objects.filter(
+        Q(winner=user) | Q(loser=user)
+    ).order_by('-created_at')
+
+    paginator = Paginator(matches, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'pong_app/full_match_history.html', {'page_obj': page_obj})
+
+def full_friends_list(request, username):
+    user = get_object_or_404(User, username=username)
+    friend_objct = get_object_or_404(Friend, owner=user)
+    friends = friend_objct.friends.all()
+
+    paginator = Paginator(friends, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'pong_app/full_friends_list.html', {'page_obj': page_obj})
