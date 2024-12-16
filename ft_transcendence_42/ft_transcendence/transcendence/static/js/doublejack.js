@@ -95,7 +95,7 @@ ws.onmessage = function(event) {
 		// Create image elements for each card in the hand
 		cards.forEach(card => {
 			const img = document.createElement('img');
-			img.src = `/static/js/cards/${card}`; // Path to the images
+			img.src = `/media/cards/${card}`; // Path to the images
 			img.alt = card;
 			img.style.width = '50px'; // Optional: Adjust image size
 			img.style.margin = '5px'; // Optional: Add spacing between images
