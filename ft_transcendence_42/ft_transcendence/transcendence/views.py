@@ -147,6 +147,7 @@ def profile(request, username):
     return render(request, "pong_app/profile.html", {
         "username": page_user.username,
         "nickname": page_user.nickname,
+        "description": page_user.description,
         "photo": page_user.photo.url,
         "score": score.score,
         "user_account": page_user,
@@ -289,4 +290,7 @@ def full_friends_list(request, username):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'pong_app/full_friends_list.html', {'page_obj': page_obj})
+    return render(request, 'pong_app/full_friends_list.html', {
+        'page_obj': page_obj,
+        'username': user.username
+    })

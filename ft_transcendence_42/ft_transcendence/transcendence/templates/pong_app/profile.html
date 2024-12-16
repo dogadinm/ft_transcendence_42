@@ -64,7 +64,7 @@
     <div class="text-center my-3">
         <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
     </div>
-        <p>{{ user.description }}</p>
+        <p>{{ description }}</p>
     <div class="text-center mb-4"></div>
 
     <div class="row d-flex justify-content-center mb-4">
@@ -125,7 +125,6 @@
 
 
 {% if is_owner or friend %}
-  <h1>Match History</h1>
   <h1>Recent Matches</h1>
   <table>
     <thead>
