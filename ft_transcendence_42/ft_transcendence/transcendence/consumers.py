@@ -10,7 +10,6 @@ from .models import User, Score, Friend, Message, ChatGroup
 from django.contrib.auth.hashers import check_password
 from .doublejack import double_jack_table_manager
 
-
 class DoubleJackConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Accept the WebSocket connection
@@ -37,45 +36,50 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         # if self.countdown_task:
         #     self.countdown_task.cancel()
 
+    async def send_player_info(self, role, bg_color):
+        # """Helper method to send player information to the WebSocket group."""
+        player_info = {
+            'role': role,
+            'name': self.table_game.playerName(role),
+            'status': self.table_game.playerStatus(role),
+            'points': self.table_game.playerPoints(role),
+            'hand': self.table_game.playerHand(role),
+            'score': self.table_game.playerScore(role),
+            'color': bg_color
+        }
+        await self.channel_layer.group_send(self.room_group_name, {'type': 'update', **player_info})
+    async def handle_role_and_send_info(self, bg_color, adjacent_role=None):
+        await self.send_player_info(self.role, bg_color)
+        if adjacent_role is not None:
+            await self.send_player_info(adjacent_role, bg_color)
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data.get("action") == "join":
+            if (self.username == ''): # maybe, need to check that guest cannot join the game
+                return
             await self.send(text_data=json.dumps({
                 'countdown': self.table_game.get_countdown_time()
             }))
             # get role here
             self.role = self.table_game.addPlayer(self.username, 1000)
             print("join")
+            print(self.role)
             bg_color = "#007F00"
             await self.send(text_data=json.dumps({
-            'type': 'join',
-            'joined': self.role,
-            'set' : 'set',
-            'name': self.username,
-            'role': self.role,
-            'hand': self.table_game.playerHand(self.role),
-            'score': self.table_game.playerScore(self.role),
-            'color': bg_color
-            }))
+                'type': 'join',
+                'joined': self.role,
+                'set': 'set',
+                'role': self.role,
+                'name': self.table_game.playerName(self.role),
+                'status': self.table_game.playerStatus(self.role),
+                'points': self.table_game.playerPoints(self.role),
+                'hand': self.table_game.playerHand(self.role),
+                'score': self.table_game.playerScore(self.role),
+                'color': bg_color
+                }))
             if self.role == 2 :
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'update',
-                        'role': self.role,
-                        'hand': self.table_game.playerHand(self.role),
-                        'score': self.table_game.playerScore(self.role),
-                        'color': bg_color
-                    })
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'update',
-                        'role': self.role - 1,
-                        'hand': self.table_game.playerHand(self.role - 1),
-                        'score': self.table_game.playerScore(self.role - 1),
-                        'color': bg_color
-                    })
+                await self.send_player_info(self.role, bg_color)
+                await self.send_player_info(self.role - 1, bg_color)
         if data.get("action") == "reset":
             print("reset")
             if not self.table_game.is_running:
@@ -88,35 +92,8 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                 'type': 'set',
                 'set' : 'set'
             })
-            await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'update',
-                'role': self.role,
-                'hand': self.table_game.playerHand(self.role),
-                'score': self.table_game.playerScore(self.role),
-                'color': bg_color
-            })
-            if self.role == 2 :
-                await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'update',
-                    'role': self.role - 1,
-                    'hand': self.table_game.playerHand(self.role - 1),
-                    'score': self.table_game.playerScore(self.role - 1),
-                    'color': bg_color
-                })
-            else :
-                await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'update',
-                    'role': self.role + 1,
-                    'hand': self.table_game.playerHand(self.role + 1),
-                    'score': self.table_game.playerScore(self.role + 1),
-                    'color': bg_color
-                })
+            await self.send_player_info(self.role, bg_color)
+            await self.handle_role_and_send_info(bg_color, self.role - 1 if self.role == 2 else self.role + 1)
         if data.get("action") == "hit":
             print("hit")
             bg_color = "#FFFF3F"
@@ -127,16 +104,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({
                     'disable': 'true'
                 }))
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'update',
-                    'role': self.role,
-                    'hand': self.table_game.playerHand(self.role),
-                    'score': self.table_game.playerScore(self.role),
-                    'color': bg_color
-                }
-            )
+            await self.send_player_info(self.role, bg_color)
             if (self.table_game.status == 4) :
                 print("hit 4")
                 await self.channel_layer.group_send(
@@ -145,7 +113,8 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                         'type': 'reset',
                         'reset': 'reset'
                     }
-            )
+                )
+                await self.handle_role_and_send_info(bg_color, self.role - 1 if self.role == 2 else self.role + 1)
         elif data.get("action") == "stay":
             print("stay")
             print(self.role)
@@ -160,16 +129,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                 await self.send(text_data=json.dumps({
                     'disable': 'true'
                 }))
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'update',
-                    'role': self.role,
-                    'hand': self.table_game.playerHand(self.role),
-                    'score': self.table_game.playerScore(self.role),
-                    'color': bg_color
-                }
-            )
+            await self.send_player_info(self.role, bg_color)
             if (self.table_game.status == 4) :
                 print("stay 4")
                 await self.channel_layer.group_send(
@@ -178,11 +138,15 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                         'type': 'reset',
                         'reset': 'reset'
                     }
-            )
+                )
+                await self.handle_role_and_send_info(bg_color, self.role - 1 if self.role == 2 else self.role + 1)
     async def update(self, event):
         await self.send(text_data=json.dumps({
             'type': 'update',
             'role': event['role'],
+            'name': event['name'],
+            'status': event['status'],
+            'points': event['points'],
             'hand': event['hand'],
             'score': event['score'],
             'color': event['color']
@@ -201,18 +165,12 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         # """Receive a message from the group and send it to the WebSocket client."""
         # The event will contain the countdown time and possibly a message
         countdown = event['countdown']
-        message = event.get('message', '')
         room_name = event['room_name']
-        print("SEND_COUNTDOWN")
         if room_name == self.room_name:
             # Send the countdown message to the client (only for the relevant room)
             await self.send(text_data=json.dumps({
                 'countdown': countdown
             }))
-    # async def assign_dj_role(self):
-    #     if self.username not in dj_users:
-    #         dj_users.append(self.username)
-    #     return dj_users.index(self.username)
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
