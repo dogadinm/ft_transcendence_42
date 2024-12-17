@@ -294,5 +294,8 @@ def full_friends_list(request, username):
         'username': user.username
     })
 
-    return render(request, 'pong_app/doublejack.html')
+
+
+def pong_loby(request, room_loby):
+    return render(request, 'pong_app/pong_loby.html', {'room_loby': room_loby})
 

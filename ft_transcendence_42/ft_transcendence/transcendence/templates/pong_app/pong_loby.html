@@ -1,0 +1,95 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+{% block body %}
+{% csrf_token %}
+
+
+<script type="text/javascript">
+    const url = `ws://${window.location.host}/ws/loby/{{ room_loby }}/`;
+    const chatSocket = new WebSocket(url);
+
+    let username;
+    let role;
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+
+        // Handle connection confirmation
+        if (data.type === "connection") {
+            username = data.username;
+            role = data.role;
+            updateRoleDisplay(role);
+        }
+
+        // Handle lobby state updates
+        if (data.type === "lobby_state") {
+            updateLobbyState(data.players, data.spectators, data.ready_players);
+        }
+        // Handle timer start
+        if (data.type === "timer_start") {
+            startCountdown(data.countdown);
+        }
+
+
+        // Handle game start
+        if (data.type === "game_start") {
+            window.location.href = `/room/${data.room}/`;
+
+        }
+    };
+
+    function sendReadySignal() {
+        chatSocket.send(JSON.stringify({
+            action: "ready",
+        }));
+    }
+
+    function updateRoleDisplay(role) {
+        const roleElement = document.getElementById("role");
+        roleElement.innerText = `You are: ${role}`;
+    }
+
+    function updateLobbyState(players, spectators, readyPlayers) {
+        const playerList = document.getElementById("players");
+        const spectatorList = document.getElementById("spectators");
+
+        playerList.innerHTML = players.map(player => 
+            `${player} ${readyPlayers.includes(player) ? '(Ready)' : ''}`
+        ).join("<br>");
+
+        spectatorList.innerHTML = spectators.join("<br>");
+    }
+
+    function startCountdown(seconds) {
+        const timerElement = document.getElementById("timer");
+        timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+        const countdown = setInterval(() => {
+            seconds -= 1;
+            timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                timerElement.innerText = "Starting game...";
+            }
+        }, 1000);
+    }
+</script>
+
+<h1>Lobby</h1>
+<div>
+    <h2 id="role"></h2>
+    <h3>Players</h3>
+    <div id="players"></div>
+    <button onclick="sendReadySignal()">Ready</button>
+
+    <h3>Spectators</h3>
+    <div id="spectators"></div>
+
+    <h3 id="timer">Waiting for players...</h3>
+</div>
+
+{% endblock %}

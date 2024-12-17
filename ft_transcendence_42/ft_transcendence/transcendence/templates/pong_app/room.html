@@ -21,19 +21,20 @@ socket.onopen = function() {
 
 socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-
+    const roomName = {{ room_name }};
+    
     if (data.type === 'role_assignment') {
         document.getElementById('roleInfo').innerText = `You are ${data.role}`;
         if (data.role !== 'spectator') {
-            showReadyDialog();
+            socket.send(JSON.stringify({ action: 'ready' }));
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
         }
     } else if (data.type === 'game_update') {
         drawGame(data);
     } else if (data.type === 'game_over') {
-        alert(`${data.winner} wins!`);
-        showRepeatDialog();
+        window.location.href = `/pong_loby/${roomName}/`;
+
     }
 };
 

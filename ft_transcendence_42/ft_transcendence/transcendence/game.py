@@ -16,7 +16,7 @@ class RoomGame:
         self.ready = {'left': False, 'right': False}
         self.speed = 2.0
         self.paddle_speed = 20
-        self.win_score = 10
+        self.win_score = 1
         self.win = 10
         self.los = -5
 
