@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import JsonResponse
-from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
+from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory, ScoreDoubleJack
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -83,6 +83,8 @@ def register(request):
         user.save()
         score_entry = Score.objects.create(user=user, score=10)
         score_entry.save()
+        score_double_jack_entry = ScoreDoubleJack.objects.create(user=user, score=1000)
+        score_double_jack_entry.save()
         friends_list = Friend.objects.create(owner=user)
         friends_list.save()
 
@@ -96,10 +98,11 @@ def profile(request, username):
     page_user = get_object_or_404(User, username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
+    score_double_jack = ScoreDoubleJack.objects.get(user=page_user)
     recent_matches = MatchHistory.objects.filter(
         Q(winner=page_user) | Q(loser=page_user)
     ).order_by('-created_at')[:3]
-
+    print(score_double_jack)
     main_user_friends = Friend.objects.get(owner=main_user)
     page_user_friends = Friend.objects.get(owner=page_user)
     list_m = main_user_friends.friends.all()[:3]
@@ -150,6 +153,7 @@ def profile(request, username):
         "description": page_user.description,
         "photo": page_user.photo.url,
         "score": score.score,
+        "score_double_jack": score_double_jack.score,
         "user_account": page_user,
         "is_owner": request.user == page_user,
         "list_m": list_m,

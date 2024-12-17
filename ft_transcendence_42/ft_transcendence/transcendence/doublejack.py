@@ -1,7 +1,7 @@
 import asyncio
 import json
 import random
-from .models import User, Score
+from .models import User, Score, MatchHistory, ScoreDoubleJack
 from asgiref.sync import sync_to_async
 from channels.layers import get_channel_layer
 import random
@@ -430,6 +430,19 @@ class TableGame:
 	def get_countdown_time(self):
 		# """Return the current countdown time."""
 		return self.countdown_time
+	
+	@sync_to_async
+	def update_scores(self, winner_username, loser_username):
+		winner = User.objects.get(username=winner_username)
+		loser = User.objects.get(username=loser_username)
+
+		winner_score = ScoreDoubleJack.objects.get(user=winner)
+		loser_score = ScoreDoubleJack.objects.get(user=loser)
+		winner_score.score += 10
+		loser_score.score -= 5
+
+		winner_score.save()
+		loser_score.save()
 
 
 class DoubleJackTableManager:
