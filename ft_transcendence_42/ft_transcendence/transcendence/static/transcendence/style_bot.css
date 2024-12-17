@@ -13,3 +13,18 @@ body {
     margin: 0;
     padding: 0;
 }
+
+.pong-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.pong-section canvas {
+    margin-top: 20px;
+    border: 2px solid black;
+}

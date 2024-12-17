@@ -258,7 +258,6 @@ def create_group_chat(request):
         return render(request, "pong_app/create_group_chat.html")
 
 def doublejack(request):
-
     return render(request, 'pong_app/doublejack.html')
 
 def get_friend_requests_count(request):
@@ -294,3 +293,6 @@ def full_friends_list(request, username):
         'page_obj': page_obj,
         'username': user.username
     })
+
+    return render(request, 'pong_app/doublejack.html')
+
