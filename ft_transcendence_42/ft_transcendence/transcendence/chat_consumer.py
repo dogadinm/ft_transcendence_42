@@ -31,7 +31,7 @@ class ChatConsumer(WebsocketConsumer):
 
         messages_data = [
             {
-                'username': message.sender.username,
+                'sender': message.sender.username,
                 'message': message.text,
                 'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             }
@@ -66,19 +66,19 @@ class ChatConsumer(WebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': message,
-                    'username': self.user.username,
+                    'sender': self.user.username,
                 }
             )
 
     def chat_message(self, event):
-        sender_nickname = event['username']
+        sender_nickname = event['sender']
         sender_user = User.objects.filter(username=sender_nickname).first()
         if sender_user in self.user.blocked_users.all():
             return
 
         self.send(text_data=json.dumps({
             'type': 'chat',
-            'username': event['username'],
+            'sender': event['sender'],
             'message': event['message'],
         }))
 

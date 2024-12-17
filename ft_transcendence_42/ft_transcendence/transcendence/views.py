@@ -207,11 +207,13 @@ def bot(request):
 
 @login_required(login_url='/login/')
 def chat(request):
+    groups = ChatGroup.objects.filter(Q(owner=request.user) | Q(members=request.user))
     friends = Friend.objects.get(owner=request.user)
 
     return render(request, 'pong_app/chat.html', {
-        'friends': friends.friends.all(),
+        "friends": friends.friends.all(),
         "current_user": request.user.username,
+        "groups":groups,
     })
 
 @login_required(login_url='/login/')
