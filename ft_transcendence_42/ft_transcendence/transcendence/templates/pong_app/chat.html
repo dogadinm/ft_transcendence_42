@@ -6,41 +6,39 @@
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
 
-<head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
 
-<div class="chat-sidebar">
-    <h2>Your Friends</h2>
-    <ul class="friend-list">
-        {% for friend in friends %}
-        <li>
-            <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
-                <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
-                {{ friend.username }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
+<div class="chat-wrapper">
+    <div class="chat-sidebar">
+        <h2>Your Friends</h2>
+        <ul class="friend-list">
+            {% for friend in friends %}
+            <li>
+                <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
+                    <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
+                    {{ friend.username }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
 
-    <h2>Your Groups</h2>
-    <ul class="group-list">
-        {% for group in groups %}
-        <li>
-            <a href="#" class="group-item" data-type="group" data-name="{{ group.name }}">
-                <img src="{{ group.photo.url }}" alt="{{ group.name }}" class="friend-photo" />
-                {{ group.name }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-</div>
+        <h2>Your Groups</h2>
+        <ul class="group-list">
+            {% for group in groups %}
+            <li>
+                <a href="#" class="group-item" data-type="group" data-name="{{ group.name }}">
+                    <img src="{{ group.photo.url }}" alt="{{ group.name }}" class="friend-photo" />
+                    {{ group.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 
     <div class="chat-content">
         <div class="chat-header">
-            <h2 id="chat-header">Select a Friend</h2>
+            <h2 id="chat-header">Select a Friend or Group</h2>
             <div id="friend-info">
-                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg"/>
+                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg" />
             </div>
         </div>
 
@@ -149,32 +147,44 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
 </script>
 
 <style>
-    
+
     .chat-wrapper {
         display: flex;
+        flex-direction: row;
+        width: 100%;
         height: 100vh;
     }
 
+
     .chat-sidebar {
-        flex: 0.3;
+        flex: 0.7;
         padding: 20px;
         border-right: 1px solid #ccc;
         background-color: #f8f9fa;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
 
+
     .chat-content {
-        flex: 0.7;
+        flex: 2;
         display: flex;
         flex-direction: column;
         padding: 20px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        background-color: white;
     }
 
-    .friend-list {
+
+    .friend-list,
+    .group-list {
         list-style: none;
         padding: 0;
     }
 
-    .friend-item {
+    .friend-item,
+    .group-item {
         display: flex;
         align-items: center;
         margin: 10px 0;
@@ -183,7 +193,8 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         cursor: pointer;
     }
 
-    .friend-item:hover {
+    .friend-item:hover,
+    .group-item:hover {
         text-decoration: underline;
     }
 
@@ -194,6 +205,7 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         margin-right: 10px;
     }
 
+
     .message-area {
         flex: 1;
         overflow-y: auto;
@@ -202,13 +214,6 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         padding: 10px;
         margin-bottom: 10px;
         background-color: #fff;
-    }
-
-    .chat-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
     }
 
     .message {
@@ -228,6 +233,7 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
         color: white;
         align-self: flex-end;
     }
+
 
     .chat-form {
         display: flex;

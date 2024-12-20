@@ -1,49 +1,54 @@
 {% extends "pong_app/layout.html" %}
 {% load static %}
 <head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
 {% block body %}
 {% csrf_token %}
 
-
 <script type="text/javascript">
     const url = `ws://${window.location.host}/ws/loby/{{ room_loby }}/`;
     const chatSocket = new WebSocket(url);
-
+    const room = {{ room_loby }}
     let username;
-    let role;
+    let role = "spectator"; // Default role is spectator
 
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
+  chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
 
-        // Handle connection confirmation
-        if (data.type === "connection") {
-            username = data.username;
-            role = data.role;
-            updateRoleDisplay(role);
-        }
+    if (data.type === "connection") {
+        username = data.username;
+        role = "spectator";
+        updateRoleDisplay(role);
+    }
 
-        // Handle lobby state updates
-        if (data.type === "lobby_state") {
-            updateLobbyState(data.players, data.spectators, data.ready_players);
-        }
-        // Handle timer start
-        if (data.type === "timer_start") {
-            startCountdown(data.countdown);
-        }
+    if (data.type === "lobby_state") {
+        updateLobbyState(data.state);
+    }
 
+    if (data.type === "timer_start") {
+        startCountdown(data.countdown);
+    }
 
-        // Handle game start
-        if (data.type === "game_start") {
-            window.location.href = `/room/${data.room}/`;
+    if (data.type === "game_start") {
+        window.location.href = `/room/${room}/`;
+    }
 
-        }
-    };
+    if (data.type === "error") {
+        alert(data.message); // Display error message as an alert
+    }
+};
 
     function sendReadySignal() {
         chatSocket.send(JSON.stringify({
             action: "ready",
+        }));
+    }
+
+    function assignRole(newRole) {
+        chatSocket.send(JSON.stringify({
+            action: "assign_role",
+            role: newRole,
         }));
     }
 
@@ -52,16 +57,26 @@
         roleElement.innerText = `You are: ${role}`;
     }
 
-    function updateLobbyState(players, spectators, readyPlayers) {
-        const playerList = document.getElementById("players");
-        const spectatorList = document.getElementById("spectators");
+function updateLobbyState(state) {
+    const playerList = document.getElementById("players");
+    const spectatorList = document.getElementById("spectators");
 
-        playerList.innerHTML = players.map(player => 
-            `${player} ${readyPlayers.includes(player) ? '(Ready)' : ''}`
-        ).join("<br>");
+    // Update players with ready status
+    const player1 = state.player1.name
+        ? `${state.player1.name} ${state.player1.ready ? "(Ready)" : ""}`
+        : "Available";
+    const player2 = state.player2.name
+        ? `${state.player2.name} ${state.player2.ready ? "(Ready)" : ""}`
+        : "Available";
 
-        spectatorList.innerHTML = spectators.join("<br>");
-    }
+    playerList.innerHTML = `
+        Player 1: ${player1}<br>
+        Player 2: ${player2}
+    `;
+
+    // Update spectators list
+    spectatorList.innerHTML = state.spectators.join("<br>");
+}
 
     function startCountdown(seconds) {
         const timerElement = document.getElementById("timer");
@@ -82,8 +97,11 @@
 <h1>Lobby</h1>
 <div>
     <h2 id="role"></h2>
+
     <h3>Players</h3>
     <div id="players"></div>
+    <button onclick="assignRole('player1')">Become Player 1</button>
+    <button onclick="assignRole('player2')">Become Player 2</button>
     <button onclick="sendReadySignal()">Ready</button>
 
     <h3>Spectators</h3>
