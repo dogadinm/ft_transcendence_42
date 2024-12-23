@@ -6,7 +6,14 @@
 {% block body %}
 {% csrf_token %}
 
+<link type="text/css"  href="{% static 'transcendence/style.css' %}" rel="stylesheet">
+<div id="roleInfo"></div>
+<canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;"></canvas>
+
 <script type="text/javascript">
+
+    let movingUp = false;
+    let movingDown = false;
     const url = `ws://${window.location.host}/ws/loby/{{ room_loby }}/`;
     const chatSocket = new WebSocket(url);
     const room = {{ room_loby }}
@@ -15,6 +22,9 @@
 
   chatSocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
+    console.log(data.type)
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
 
     if (data.type === "connection") {
         username = data.username;
@@ -30,9 +40,10 @@
         startCountdown(data.countdown);
     }
 
-    if (data.type === "game_start") {
-        window.location.href = `/room/${room}/`;
-    }
+
+    if (data.type === 'game_update') {
+        drawGame(data);
+        }
 
     if (data.type === "error") {
         alert(data.message); // Display error message as an alert
@@ -62,16 +73,16 @@ function updateLobbyState(state) {
     const spectatorList = document.getElementById("spectators");
 
     // Update players with ready status
-    const player1 = state.player1.name
-        ? `${state.player1.name} ${state.player1.ready ? "(Ready)" : ""}`
+    const left = state.left.name
+        ? `${state.left.name} ${state.left.ready ? "(Ready)" : ""}`
         : "Available";
-    const player2 = state.player2.name
-        ? `${state.player2.name} ${state.player2.ready ? "(Ready)" : ""}`
+    const right = state.right.name
+        ? `${state.right.name} ${state.right.ready ? "(Ready)" : ""}`
         : "Available";
 
     playerList.innerHTML = `
-        Player 1: ${player1}<br>
-        Player 2: ${player2}
+        Player 1: ${left}<br>
+        Player 2: ${right}
     `;
 
     // Update spectators list
@@ -92,6 +103,51 @@ function updateLobbyState(state) {
             }
         }, 1000);
     }
+
+    function handleKeyDown(e) {
+        if (e.key === 'w' && !movingUp) {
+            movingUp = true;
+            chatSocket.send(JSON.stringify({ action: 'move', direction: 'up' }));
+        }
+        if (e.key === 's' && !movingDown) {
+            movingDown = true;
+            chatSocket.send(JSON.stringify({ action: 'move', direction: 'down' }));
+        }
+    }
+
+    function handleKeyUp(e) {
+        if (e.key === 'w' && movingUp) {
+            movingUp = false;
+            chatSocket.send(JSON.stringify({ action: 'stop', direction: 'up' }));
+        }
+        if (e.key === 's' && movingDown) {
+            movingDown = false;
+            chatSocket.send(JSON.stringify({ action: 'stop', direction: 'down' }));
+        }
+    }
+
+    function drawGame(data) {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw paddles
+        ctx.fillStyle = 'black';
+        ctx.fillRect(10, data.paddles.left.paddleY, 10, 100); // Left paddle
+        ctx.fillRect(780, data.paddles.right.paddleY, 10, 100); // Right paddle
+
+        // Draw ball
+        ctx.beginPath();
+        ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw score
+        ctx.font = '20px Arial';
+        const leftPlayer = Object.keys(data.score)[0] || "Player 1";
+        const rightPlayer = Object.keys(data.score)[1] || "Player 2";
+        ctx.fillText(`${leftPlayer}: ${data.score[leftPlayer] || 0}`, 20, 20);
+        ctx.fillText(`${rightPlayer}: ${data.score[rightPlayer] || 0}`, 650, 20);
+    }
 </script>
 
 <h1>Lobby</h1>
@@ -100,8 +156,9 @@ function updateLobbyState(state) {
 
     <h3>Players</h3>
     <div id="players"></div>
-    <button onclick="assignRole('player1')">Become Player 1</button>
-    <button onclick="assignRole('player2')">Become Player 2</button>
+    <button onclick="assignRole('left')">Become left player </button>
+    <button onclick="assignRole('right')">Become right player</button>
+    <button onclick="">Leave</button>
     <button onclick="sendReadySignal()">Ready</button>
 
     <h3>Spectators</h3>

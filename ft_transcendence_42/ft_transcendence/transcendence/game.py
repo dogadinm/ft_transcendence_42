@@ -19,8 +19,11 @@ class RoomGame:
         self.win_score = 1
         self.win = 10
         self.los = -5
+        self.spectators = []
 
     async def game_loop(self, send_update):
+        print(self.ready['left'])
+        print(self.ready['right'])
         while self.ready['right'] and self.ready['left']:
             self.update_paddles()
             self.update_ball()
@@ -134,6 +137,11 @@ class RoomGame:
 
         winner_score.save()
         loser_score.save()
+
+    # def add_spectator(self):
+    #     if self.username not in self.room.spectators:
+    #         self.room.spectators.append(self.username)
+    #     self.update_lobby_state()
 
 class RoomManager:
     def __init__(self):
