@@ -24,7 +24,7 @@ urlpatterns = [
     path('room/<str:room_name>/', views.room, name='room'),
     path("bot/", views.bot, name='bot'),
 	path("doublejack/", views.doublejack, name='doublejack'),
-    path("pong_loby/<str:room_loby>/", views.pong_loby, name='pong_loby'),
+    path("pong_lobby/<str:room_lobby>/", views.pong_lobby, name='pong_lobby'),
 
 
     path('api/friend_requests_count/', views.get_friend_requests_count, name='friend_requests_count'),

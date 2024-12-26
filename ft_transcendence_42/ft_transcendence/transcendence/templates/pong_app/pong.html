@@ -18,7 +18,7 @@
 function joinGame() {
     const roomName = document.getElementById('roomName').value.trim();
     if (roomName) {
-        window.location.href = `/pong_loby/${roomName}/`;
+        window.location.href = `/pong_lobby/${roomName}/`;
     } else {
         alert('Please enter a room name.');
     }

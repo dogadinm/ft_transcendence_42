@@ -298,6 +298,6 @@ def full_friends_list(request, username):
 
 
 
-def pong_loby(request, room_loby):
-    return render(request, 'pong_app/pong_loby.html', {'room_loby': room_loby})
+def pong_lobby(request, room_lobby):
+    return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
 

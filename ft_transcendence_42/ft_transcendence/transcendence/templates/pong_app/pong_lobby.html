@@ -1,0 +1,197 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+<head>
+    <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+{% block body %}
+{% csrf_token %}
+
+<link type="text/css"  href="{% static 'transcendence/style.css' %}" rel="stylesheet">
+<div id="roleInfo"></div>
+<canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;"></canvas>
+
+<script type="text/javascript">
+    let isReady = false;
+    let movingUp = false;
+    let movingDown = false;
+    const url = `ws://${window.location.host}/ws/lobby/{{ room_lobby }}/`;
+    const chatSocket = new WebSocket(url);
+    const room = {{ room_lobby }};
+    let username;
+    let role = "spectator"; // Default role is spectator
+
+    // Add event listeners for key events once
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        console.log(data.type);
+
+        switch (data.type) {
+            case "connection":
+                username = data.username;
+                updateRoleDisplay(data.role);
+                break;
+
+            case "game_over":
+                alert(data.winner);
+                break;
+
+            case "lobby_state":
+                updateLobbyState(data.state);
+
+                // Determine role based on lobby state
+                const { left, right } = data.state;
+
+                if (username === left.name) {
+                    role = "left";
+                } else if (username === right.name) {
+                    role = "right";
+                } else {
+                    role = "spectator";
+                }
+
+                updateRoleDisplay(role);
+                break;
+
+            case "timer_start":
+                startCountdown(data.countdown);
+                break;
+
+            case "game_update":
+                drawGame(data);
+                break;
+
+            case "error":
+                alert(data.message); // Display error message as an alert
+                break;
+
+            default:
+                console.warn(`Unhandled message type: ${data.type}`);
+        }
+    };
+
+    function sendReadySignal() {
+        sendMessage({ action: "ready" });
+    }
+
+    function assignRole(newRole) {
+        sendMessage({ action: "assign_role", role: newRole });
+    }
+
+    function leaveRole() {
+        sendMessage({ action: "leave" });
+    }
+
+    function sendMessage(message) {
+        chatSocket.send(JSON.stringify(message));
+    }
+
+    function updateRoleDisplay(role) {
+        const roleElement = document.getElementById("role");
+        const roleText = role === "left" || role === "right" ? `Player (${role})` : "Spectator";
+        roleElement.innerText = `You are: ${roleText}`;
+    }
+
+    function updateLobbyState(state) {
+        const playerList = document.getElementById("players");
+        const spectatorList = document.getElementById("spectators");
+
+        // Update players with ready status
+        const left = state.left.name
+            ? `${state.left.name} ${state.left.ready ? "(Ready)" : ""}`
+            : "Available";
+        const right = state.right.name
+            ? `${state.right.name} ${state.right.ready ? "(Ready)" : ""}`
+            : "Available";
+
+        playerList.innerHTML = `
+            Player left: ${left}<br>
+            Player right: ${right}
+        `;
+
+        // Update spectators list
+        spectatorList.innerHTML = state.spectators.join("<br>");
+    }
+
+    function startCountdown(seconds) {
+        const timerElement = document.getElementById("timer");
+        timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+        const countdown = setInterval(() => {
+            seconds -= 1;
+            timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                timerElement.innerText = "Starting game...";
+            }
+        }, 1000);
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'w' && !movingUp) {
+            movingUp = true;
+            sendMessage({ action: 'move', direction: 'up' });
+        }
+        if (e.key === 's' && !movingDown) {
+            movingDown = true;
+            sendMessage({ action: 'move', direction: 'down' });
+        }
+    }
+
+    function handleKeyUp(e) {
+        if (e.key === 'w' && movingUp) {
+            movingUp = false;
+            sendMessage({ action: 'stop', direction: 'up' });
+        }
+        if (e.key === 's' && movingDown) {
+            movingDown = false;
+            sendMessage({ action: 'stop', direction: 'down' });
+        }
+    }
+
+    function drawGame(data) {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw paddles
+        ctx.fillStyle = 'black';
+        ctx.fillRect(10, data.paddles.left.paddleY, 10, 100); // Left paddle
+        ctx.fillRect(780, data.paddles.right.paddleY, 10, 100); // Right paddle
+
+        // Draw ball
+        ctx.beginPath();
+        ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw score
+        ctx.font = '20px Arial';
+        const leftPlayer = data.players.left || "Player left";
+        const rightPlayer = data.players.right || "Player right";
+        ctx.fillText(`${leftPlayer}: ${data.score.left || 0}`, 20, 20);
+        ctx.fillText(`${rightPlayer} : ${data.score.right || 0}`, 650, 20);
+    }
+</script>
+
+
+<h1>Lobby</h1>
+<div>
+    <h2 id="role"></h2>
+
+    <h3>Players</h3>
+    <div id="players"></div>
+    <button onclick="assignRole('left')">Become left player </button>
+    <button onclick="assignRole('right')">Become right player</button>
+    <button onclick="leaveRole()">Leave</button>
+    <button onclick="sendReadySignal()">Ready</button>
+
+    <h3>Spectators</h3>
+    <div id="spectators"></div>
+
+    <h3 id="timer">Waiting for players...</h3>
+</div>
+
+{% endblock %}
