@@ -94,6 +94,25 @@
         roleElement.innerText = `You are: ${roleText}`;
     }
 
+        function startCountdown(seconds) {
+        const timerElement = document.getElementById("timer");
+
+        // Initialize the timer display
+        timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+        // Countdown interval
+        const countdown = setInterval(() => {
+            seconds -= 1;
+
+            if (seconds > 0) {
+                timerElement.innerText = `Game starts in: ${seconds} seconds`;
+            } else {
+                clearInterval(countdown); // Stop the timer
+                timerElement.innerText = "Starting game...";
+            }
+        }, 1000);
+    }
+
     function updateLobbyState(state) {
         const playerList = document.getElementById("players");
         const spectatorList = document.getElementById("spectators");
@@ -187,6 +206,7 @@
     <button onclick="assignRole('right')">Become right player</button>
     <button onclick="leaveRole()">Leave</button>
     <button onclick="sendReadySignal()">Ready</button>
+
 
     <h3>Spectators</h3>
     <div id="spectators"></div>

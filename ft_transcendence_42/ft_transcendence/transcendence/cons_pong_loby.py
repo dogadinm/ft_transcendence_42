@@ -74,11 +74,12 @@ class PongLobby(AsyncWebsocketConsumer):
         if self.username in self.room_game.players.values():
             role = 'left' if self.username == self.room_game.players['left'] else 'right'
             self.room_game.ready[role] = True
+
             await self.broadcast_lobby_state()
 
             # Start the game loop if both players are ready
             if self.room_game.ready['left'] and self.room_game.ready['right']:
-                asyncio.create_task(self.room_game.game_loop(self.send_game_update))
+                await self.start_countdown()
 
     async def handle_assign_role(self, data):
         # Prevent assigning multiple roles to the same user
@@ -122,6 +123,30 @@ class PongLobby(AsyncWebsocketConsumer):
         # Assign role to the user
         self.room_game.players[requested_role] = self.username
         return requested_role
+
+    async def start_countdown(self):
+        asyncio.create_task(self.countdown_and_start_game())
+
+    async def countdown_and_start_game(self):
+        for seconds in range(5, 0, -1):
+            await self.channel_layer.group_send(
+                self.room_lobby_name,
+                {
+                    'type': 'timer_start',
+                    'countdown': seconds,
+                }
+            )
+            await asyncio.sleep(1)
+
+        asyncio.create_task(self.room_game.game_loop(self.send_game_update))
+
+
+    async def timer_start(self, event):
+        # Send the countdown value to all connected users
+        await self.send(text_data=json.dumps({
+            'type': 'timer_start',
+            'countdown': event['countdown'],
+        }))
 
     async def broadcast_lobby_state(self):
         # Notify all users about the updated lobby state

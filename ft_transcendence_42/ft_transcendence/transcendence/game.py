@@ -6,7 +6,7 @@ from asgiref.sync import sync_to_async
 class RoomGame:
     # Game constants
     PADDLE_HEIGHT = 100
-    PADDLE_WIDTH = 20
+    PADDLE_WIDTH = 10
     BALL_INITIAL_SPEED = 2.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
@@ -52,33 +52,49 @@ class RoomGame:
             paddle['paddleY'] = max(0, min(RoomGame.BALL_MAX_Y - RoomGame.PADDLE_HEIGHT, paddle['paddleY']))
 
     def update_ball(self):
-        """Update ball position and handle collisions with boundaries and paddles."""
-        new_x = self.ball['x'] + self.ball['dx'] * self.speed
-        new_y = self.ball['y'] + self.ball['dy'] * self.speed
+        step_size = 1
+        dx = self.ball['dx'] * self.speed
+        dy = self.ball['dy'] * self.speed
 
-        # Check collision with top and bottom boundaries
-        if new_y <= 0 or new_y >= RoomGame.BALL_MAX_Y:
-            self.ball['dy'] *= -1
+        # Determine number of steps needed
+        steps = int(max(abs(dx), abs(dy)) / step_size) + 1
+        step_dx = dx / steps
+        step_dy = dy / steps
 
-        # Check collision with paddles
-        for side, paddle in self.paddles.items():
-            paddle_x = 20 if side == 'left' else RoomGame.FIELD_WIDTH - 20
-            if self.check_paddle_collision(side, new_x, new_y, paddle_x):
-                self.ball['dx'] *= -1
-                self.speed += 0.1  # Slightly increase speed after paddle hit
-                break
+        for _ in range(steps):
+            new_x = self.ball['x'] + step_dx
+            new_y = self.ball['y'] + step_dy
 
-        # Update ball position
-        self.ball['x'] = new_x
-        self.ball['y'] = new_y
+            # Check for wall collisions
+            if new_y <= 0 or new_y >= 400:
+                self.ball['dy'] *= -1
+                dy = self.ball['dy'] * self.speed
+                step_dy = dy / steps
+                continue
 
-        # Check for goals
-        if self.ball['x'] <= 0:
-            self.score['right'] += 1
-            self.reset_ball()
-        elif self.ball['x'] >= RoomGame.FIELD_WIDTH:
-            self.score['left'] += 1
-            self.reset_ball()
+            # Check for paddle collisions
+            for side, paddle in self.paddles.items():
+                paddle_x = 20 if side == 'left' else 780
+                if self.check_paddle_collision(side, new_x, new_y, paddle_x):
+                    self.ball['dx'] *= -1
+                    self.speed += 0.1
+                    dx = self.ball['dx'] * self.speed
+                    step_dx = dx / steps
+                    break
+
+            # Update ball position incrementally
+            self.ball['x'] = new_x
+            self.ball['y'] = new_y
+
+            # Goal check
+            if self.ball['x'] <= 0:
+                self.score['right'] += 1
+                self.reset_ball()
+                return
+            elif self.ball['x'] >= 800:
+                self.score['left'] += 1
+                self.reset_ball()
+                return
 
     def check_paddle_collision(self, side, new_x, new_y, paddle_x):
         """Check if the ball collides with the paddle."""
