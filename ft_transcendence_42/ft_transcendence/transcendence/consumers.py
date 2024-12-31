@@ -6,20 +6,29 @@ from .models import Room, PrivateMessage
 from django.contrib.auth import get_user_model
 from .game import room_manager
 from asgiref.sync import async_to_sync
-from .models import User, Score, Friend, Message, ChatGroup
+from asgiref.sync import sync_to_async
+from .models import User, Score, Friend, Message, ChatGroup, ScoreDoubleJack
 from django.contrib.auth.hashers import check_password
 from .doublejack import double_jack_table_manager
+from .doublejack import GameStatus
+
 
 class DoubleJackConsumer(AsyncWebsocketConsumer):
+    @database_sync_to_async
+    def get_elo_for_user(self, username):
+        user = User.objects.get(username=username)  # Fetch the user object
+        score = ScoreDoubleJack.objects.get(user=user)  # Fetch the related ScoreDoubleJack object
+        return score
     async def connect(self):
         # Accept the WebSocket connection
         self.room_name = "double_jack_room"
         self.room_group_name = f"ws_{self.room_name}"
         self.user = self.scope['user']
         self.username = self.user.username
+        self.elo = await self.get_elo_for_user(self.username)
         print(self.username)
         # Get or create a room object
-        self.table_game = double_jack_table_manager.get_or_create_table(self.room_name)
+        self.table_game = double_jack_table_manager.get_or_create_table(self, self.room_name)
         # self.role = await self.assign_dj_role()
         
         # print(self.role)
@@ -55,13 +64,17 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data.get("action") == "join":
+            self.elo = await self.get_elo_for_user(self.username)
+            if (self.table_game.status == GameStatus.ENDED) :
+                double_jack_table_manager.remove_table(self.room_name)
+                self.table_game = double_jack_table_manager.get_or_create_table(self, self.room_name)
             if (self.username == ''): # maybe, need to check that guest cannot join the game
                 return
             await self.send(text_data=json.dumps({
                 'countdown': self.table_game.get_countdown_time()
             }))
             # get role here
-            self.role = self.table_game.addPlayer(self.username, 1000)
+            self.role = self.table_game.addPlayer(self.username, self.elo)
             print("join")
             print(self.role)
             bg_color = "#007F00"
@@ -95,17 +108,17 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             await self.send_player_info(self.role, bg_color)
             await self.handle_role_and_send_info(bg_color, self.role - 1 if self.role == 2 else self.role + 1)
         if data.get("action") == "hit":
-            print("hit")
+            print("HIT Action Triggered")
             bg_color = "#FFFF3F"
-            self.table_game.playerHit(self.role)
-            # Send the color to the WebSocket
+            await self.table_game.playerHit(self.role)
+            print(f"Role after hit: {self.role}")
             if self.table_game.isPlayerStanding(self.role):
                 bg_color = "#AAAA11"
                 await self.send(text_data=json.dumps({
                     'disable': 'true'
                 }))
             await self.send_player_info(self.role, bg_color)
-            if (self.table_game.status == 4) :
+            if (self.table_game.status == GameStatus.FINISHED) :
                 print("hit 4")
                 await self.channel_layer.group_send(
                 self.room_group_name,
@@ -120,7 +133,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             print(self.role)
             # print(self.table_game.isPlayerStanding(self.role))
             bg_color = "#CC3333"
-            self.table_game.playerStand(self.role)
+            await self.table_game.playerStand(self.role)
             # Send the color to the WebSocket
             # await self.send(text_data=json.dumps({
             #     'color': bg_color
@@ -130,7 +143,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                     'disable': 'true'
                 }))
             await self.send_player_info(self.role, bg_color)
-            if (self.table_game.status == 4) :
+            if (self.table_game.status == GameStatus.FINISHED) :
                 print("stay 4")
                 await self.channel_layer.group_send(
                 self.room_group_name,
