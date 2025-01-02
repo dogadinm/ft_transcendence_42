@@ -7,23 +7,26 @@ class RoomGame:
     # Game constants
     PADDLE_HEIGHT = 100
     PADDLE_WIDTH = 10
+
     BALL_INITIAL_SPEED = 2.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
     WIN_SCORE = 10
     WIN_POINTS = 10
     LOSS_POINTS = -5
-    FIELD_WIDTH = 800
+
+    FIELD_WIDTH = 1000
     FIELD_HEIGHT = 400
+
 
     def __init__(self):
         # Game state initialization
         self.players = {'left': None, 'right': None}
         self.paddles = {
-            'left': {'paddleY': 150, 'direction': 0},  # direction: -1 (up), 1 (down), 0 (stationary)
-            'right': {'paddleY': 150, 'direction': 0}
+            'left': {'paddleY': (RoomGame.FIELD_HEIGHT - RoomGame.PADDLE_HEIGHT) // 2, 'direction': 0},  # direction: -1 (up), 1 (down), 0 (stationary)
+            'right': {'paddleY': (RoomGame.FIELD_HEIGHT - RoomGame.PADDLE_HEIGHT) // 2, 'direction': 0}
         }
-        self.ball = {'x': 400, 'y': 200, 'dx': 4, 'dy': 4}
+        self.ball = {'x': RoomGame.FIELD_WIDTH / 2, 'y': RoomGame.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
         self.score = {'left': 0, 'right': 0}
         self.spectators = []
         self.ready = {'left': False, 'right': False}
@@ -66,7 +69,7 @@ class RoomGame:
             new_y = self.ball['y'] + step_dy
 
             # Check for wall collisions
-            if new_y <= 0 or new_y >= 400:
+            if new_y <= 0 or new_y >= RoomGame.FIELD_HEIGHT:
                 self.ball['dy'] *= -1
                 dy = self.ball['dy'] * self.speed
                 step_dy = dy / steps
@@ -74,7 +77,7 @@ class RoomGame:
 
             # Check for paddle collisions
             for side, paddle in self.paddles.items():
-                paddle_x = 20 if side == 'left' else 780
+                paddle_x = 20 if side == 'left' else RoomGame.FIELD_WIDTH - 20
                 if self.check_paddle_collision(side, new_x, new_y, paddle_x):
                     self.ball['dx'] *= -1
                     self.speed += 0.1
@@ -87,11 +90,11 @@ class RoomGame:
             self.ball['y'] = new_y
 
             # Goal check
-            if self.ball['x'] <= 0:
+            if self.ball['x'] <= 5:
                 self.score['right'] += 1
                 self.reset_ball()
                 return
-            elif self.ball['x'] >= 800:
+            elif self.ball['x'] >= RoomGame.FIELD_WIDTH - 5:
                 self.score['left'] += 1
                 self.reset_ball()
                 return
@@ -101,20 +104,21 @@ class RoomGame:
         paddle_y_start = self.paddles[side]['paddleY']
         paddle_y_end = paddle_y_start + RoomGame.PADDLE_HEIGHT
 
-        if ((side == 'left' and new_x <= paddle_x) or (side == 'right' and new_x >= paddle_x)):
-            ball_cross_y = self.ball['y'] + (new_y - self.ball['y']) * \
-                ((paddle_x - self.ball['x']) / (new_x - self.ball['x']))
-            return paddle_y_start <= ball_cross_y <= paddle_y_end
+        if ((side == 'left' and new_x - RoomGame.PADDLE_WIDTH / 2 <= paddle_x + RoomGame.PADDLE_WIDTH) or
+                (side == 'right' and new_x + RoomGame.PADDLE_WIDTH / 2 >= paddle_x - RoomGame.PADDLE_WIDTH)):
+            return paddle_y_start <= new_y <= paddle_y_end
         return False
 
     def reset_ball(self):
         """Reset the ball to the center with random initial direction."""
-        self.ball = {'x': 400, 'y': 200, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}
+        self.ball = {'x': RoomGame.FIELD_WIDTH / 2, 'y': RoomGame.FIELD_HEIGHT / 2, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}
         self.speed = RoomGame.BALL_INITIAL_SPEED
 
     def get_game_state(self):
         """Retrieve the current game state."""
         return {
+            'field': {'width': RoomGame.FIELD_WIDTH, 'height': RoomGame.FIELD_HEIGHT},
+            'paddle': {'width': RoomGame.PADDLE_WIDTH, 'height': RoomGame.PADDLE_HEIGHT},
             'paddles': self.paddles,
             'ball': self.ball,
             'players': self.players,

@@ -2,7 +2,9 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .game import room_manager
-
+from .models import ChatGroup
+from django.shortcuts import get_object_or_404
+from asgiref.sync import sync_to_async
 
 class PongLobby(AsyncWebsocketConsumer):
     async def connect(self):
@@ -42,8 +44,14 @@ class PongLobby(AsyncWebsocketConsumer):
             self.room_game.spectators.remove(self.username)
 
         # Remove room if no players remain
-        if not self.room_game.players['left'] and not self.room_game.players['right']:
-            room_manager.remove_room(self.room_game)
+        if (
+            not self.room_game.players['left'] and
+            not self.room_game.players['right'] and
+            not self.room_game.spectators
+        ):
+            room_manager.remove_room(self.room_lobby)
+            group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
+            await sync_to_async(group.delete)()
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)
@@ -191,7 +199,7 @@ class PongLobby(AsyncWebsocketConsumer):
         # Send an error message to the client
         await self.send(text_data=json.dumps({
             'type': 'error',
-            'message': message,
+            'lobby_message': message,
         }))
 
     # Event handlers for group messages

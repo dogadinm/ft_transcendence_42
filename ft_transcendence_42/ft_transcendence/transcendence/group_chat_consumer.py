@@ -8,7 +8,8 @@ from django.contrib.auth.hashers import check_password
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):
         self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
-        self.channel_group_name = f'game_{self.channel_nick}'
+
+        self.channel_group_name = f'chat_{self.channel_nick}'
         self.user = self.scope['user']
         self.username = self.user.username
 
@@ -30,6 +31,7 @@ class ChatGroupConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self.channel_group_name, self.channel_name
         )
+
         blocked_users = self.user.blocked_users.all()
         messagesql = Message.objects.filter(chat=self.chat_group).exclude(sender__in=blocked_users).order_by("created_at")
 
@@ -47,6 +49,7 @@ class ChatGroupConsumer(WebsocketConsumer):
             'type': 'chat',
             'messages': messages_data,
         }))
+
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
