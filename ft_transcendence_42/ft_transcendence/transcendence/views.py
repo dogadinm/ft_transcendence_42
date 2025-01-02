@@ -280,7 +280,7 @@ def full_match_history(request, username):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'pong_app/full_match_history.html', {'page_obj': page_obj})
+    return render(request, 'pong_app/full_match_history.html', {'page_obj': page_obj, 'username': user.username})
 
 def full_friends_list(request, username):
     user = get_object_or_404(User, username=username)

@@ -68,13 +68,13 @@
     <div class="text-center mb-4"></div>
 
     <div class="row d-flex justify-content-center mb-4">
-        <h3 class="col-4">Score: {{ score }}</h3>
+        <h3 class="col-4">Rating: {{ score }}</h3>
     </div>
 </div>
 
 <div class="d-flex justify-content-center profile-actions-container">
     {% if is_owner %}
-        <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>`
+        <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
     {% else %}
         {% if friend %}
             <form method="post">
@@ -130,20 +130,24 @@
     <thead>
       <tr>
         <th>Winner</th>
-        <th>Winner Score</th>
+        <th>Match Score</th>
         <th>Loser</th>
-        <th>Loser Score</th>
         <th>Date</th>
+        <th>Rating</th>
       </tr>
     </thead>
     <tbody>
       {% for match in recent_matches %}
       <tr>
         <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
-        <td>{{ match.winner_match_score }}</td>
-        <td>{{ match.loser.username }}</td>
-        <td>{{ match.loser_match_score }}</td>
+        <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
+        <td><a href="{% url 'profile' match.loser.username  %}">{{ match.loser.username }}</a></td>
         <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+        {% if username == match.winner.username %}
+          <td>+{{ match.winner_change_score}}</td>
+        {% else %}
+          <td>{{ match.loser_change_score}}</td>
+        {% endif %}
       </tr>
       {% empty %}
       <tr>
