@@ -29,6 +29,7 @@ urlpatterns = [
 
     path('api/friend_requests_count/', views.get_friend_requests_count, name='friend_requests_count'),
     path('invite_to_game/', views.invite_to_game, name='invite_to_game'),
+    path('find-friend/', views.find_fiend, name='find_fiend'),
 
 
     re_path(r'pong/', views.pong, name="pong"),

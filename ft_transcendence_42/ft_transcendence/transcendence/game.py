@@ -15,7 +15,7 @@ class RoomGame:
     WIN_POINTS = 10
     LOSS_POINTS = -5
 
-    FIELD_WIDTH = 1000
+    FIELD_WIDTH = 800
     FIELD_HEIGHT = 400
 
 
@@ -90,11 +90,11 @@ class RoomGame:
             self.ball['y'] = new_y
 
             # Goal check
-            if self.ball['x'] <= 5:
+            if self.ball['x'] <= 20:
                 self.score['right'] += 1
                 self.reset_ball()
                 return
-            elif self.ball['x'] >= RoomGame.FIELD_WIDTH - 5:
+            elif self.ball['x'] >= RoomGame.FIELD_WIDTH - 20:
                 self.score['left'] += 1
                 self.reset_ball()
                 return
@@ -106,9 +106,15 @@ class RoomGame:
 
         if ((side == 'left' and new_x - RoomGame.PADDLE_WIDTH / 2 <= paddle_x + RoomGame.PADDLE_WIDTH) or
                 (side == 'right' and new_x + RoomGame.PADDLE_WIDTH / 2 >= paddle_x - RoomGame.PADDLE_WIDTH)):
-            return paddle_y_start <= new_y <= paddle_y_end
-        return False
+            if paddle_y_start <= new_y <= paddle_y_end:
+                # Adjust ball's vertical direction based on where it hit the paddle
+                paddle_center = paddle_y_start + RoomGame.PADDLE_HEIGHT / 2
+                offset = (new_y - paddle_center) / (RoomGame.PADDLE_HEIGHT / 2)  # Normalize offset (-1 to 1)
+                self.ball['dy'] += offset * 2  # Adjust vertical speed slightly
+                self.ball['dy'] = max(-5, min(5, self.ball['dy']))  # Clamp dy to avoid excessive vertical speed
 
+                return True
+        return False
     def reset_ball(self):
         """Reset the ball to the center with random initial direction."""
         self.ball = {'x': RoomGame.FIELD_WIDTH / 2, 'y': RoomGame.FIELD_HEIGHT / 2, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}

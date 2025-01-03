@@ -1,3 +1,6 @@
+#
+from django.contrib import messages
+
 from django.http import HttpResponse, HttpResponseNotFound, Http404
 from django.urls import reverse
 from django.core.paginator import Paginator
@@ -91,6 +94,21 @@ def register(request):
     else:
         return render(request, "pong_app/register.html")
 
+def find_fiend(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                return redirect('profile', username=user.username)
+            except User.DoesNotExist:
+                messages.error(request, f"User {username} doesn't exist.")
+                return redirect('profile', username=request.user.username)
+        else:
+            messages.error(request, "Enter username")
+            return redirect('profile', username=request.user.username)
+
+    return redirect('index')
 
 def profile(request, username):
     page_user = get_object_or_404(User, username=username)

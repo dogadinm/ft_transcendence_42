@@ -16,6 +16,23 @@
     <a href="{% url 'full_friends_list' username %}">Show More</a>
 {% endif %}
 
+{% if is_owner %}
+    <form action="{% url 'find_fiend' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <input autofocus class="form-control" type="text" name="username" placeholder="Username">
+        </div>
+        <button type="submit" name="action" value="find_friend">Find friend</button>
+    </form>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endif %}
+
 {% if is_owner and block_list %}
     <h2 class="mx-5">Blocked people:</h2>
     {% for b in block_list %}
