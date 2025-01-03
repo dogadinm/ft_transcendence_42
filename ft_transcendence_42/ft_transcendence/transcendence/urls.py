@@ -11,9 +11,6 @@ urlpatterns = [
     path('register/', views.register, name='register'),
 
     path('chat/', views.chat, name='chat'),
-    path('group_chat/', views.group_chat, name='group_chat'),
-    path('group_chat/<str:channel_nick>', views.group_chat_name, name='group_chat_name'),
-    path('create_group_chat/', views.create_group_chat, name='create_group_chat'),
 
     path('profile/<str:username>', views.profile, name='profile'),
     path('profile_settings/', views.profile_settings, name='profile_settings'),
@@ -21,7 +18,6 @@ urlpatterns = [
     path('full_match_history/<str:username>', views.full_match_history, name='full_match_history'),
     path('full_friends_list/<str:username>', views.full_friends_list, name='full_friends_list'),   
 
-    path('room/<str:room_name>/', views.room, name='room'),
     path("bot/", views.bot, name='bot'),
 	path("doublejack/", views.doublejack, name='doublejack'),
     path("pong_lobby/<str:room_lobby>/", views.pong_lobby, name='pong_lobby'),

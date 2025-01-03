@@ -3,8 +3,6 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import User, Score, Friend, Message, ChatGroup, PrivateMessage
 
-
-
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope['user']

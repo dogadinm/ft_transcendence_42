@@ -17,16 +17,6 @@ class ChatGroupConsumer(WebsocketConsumer):
 
         self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
 
-        if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
-            passw = self.chat_group.password != ''
-
-            self.send(text_data=json.dumps({
-                'type': 'join',
-                'messages': 'Join to the chat',
-                'password': passw,
-
-            }))
-            return
 
         async_to_sync(self.channel_layer.group_add)(
             self.channel_group_name, self.channel_name
@@ -60,30 +50,7 @@ class ChatGroupConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         action = text_data_json.get('action')
 
-        if action == 'join':
-            password = text_data_json.get('password')
-            if self.chat_group.password == '':
-                self.chat_group.members.add(self.user)
-                self.send(text_data=json.dumps({
-                    'type': 'right_pass',
-                    'messages': 'Joining to the chat',
-                }))
-            elif check_password(password, self.chat_group.password):
-                self.chat_group.members.add(self.user)
-                self.send(text_data=json.dumps({
-                    'type': 'right_pass',
-                    'messages': 'Joining to the chat',
-                }))
-            else:
-                self.send(text_data=json.dumps({
-                    'type': 'wrong_pass',
-                    'messages': 'Wrong password',
-                }))
-            return
-        elif action == 'leave':
-            self.chat_group.members.remove(self.user)
-            return
-        elif action == 'massege':
+        if action == 'massege':
             if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
                 return
             message_text = text_data_json.get('message', '').strip()

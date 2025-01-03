@@ -1,12 +1,6 @@
 #
 from django.contrib import messages
 
-from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.urls import reverse
-from django.core.paginator import Paginator
-import json
-from django.core.files.storage import FileSystemStorage
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -216,9 +210,7 @@ def pong(request):
 def invite_to_game(request):
     return render(request, 'pong_app/invite_to_game.html')
 
-@login_required(login_url='/login/')
-def room(request, room_name):
-    return render(request, 'pong_app/room.html', {'room_name': room_name})
+
 
 def bot(request):
     return render(request, 'pong_app/bot.html')
@@ -233,49 +225,6 @@ def chat(request):
         "current_user": request.user.username,
         "groups":groups,
     })
-
-@login_required(login_url='/login/')
-def group_chat(request):
-    groups = ChatGroup.objects.all()
-
-    return render(request, 'pong_app/group_chat.html',{
-        'groups': groups,
-    })
-
-@login_required(login_url='/login/')
-def group_chat_name(request, channel_nick):
-    group = ChatGroup.objects.get(name=channel_nick)
-
-    return render(request, 'pong_app/group_chat_name.html',{
-        'channel_nick':channel_nick,
-        'members': group.members.all()
-    })
-
-@login_required(login_url='/login/')
-def create_group_chat(request):
-    if request.method == "POST":
-
-        username = request.user.username
-        group_name = request.POST["group_name"]
-        user = User.objects.get(username=username)
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
-        if password != confirmation:
-            return render(request, "pong_app/register.html", {
-                "message": "Passwords must match."
-            })
-
-        # Attempt to create new user
-        try:
-            group = ChatGroup.objects.create(owner=user, name=group_name, password=password)
-            group.save()
-        except IntegrityError:
-            return render(request, "pong_app/create_group_chat.html", {
-                "message": "Group name already taken."
-            })
-        return redirect('group_chat_name', group_name)
-    else:
-        return render(request, "pong_app/create_group_chat.html")
 
 def doublejack(request):
     return render(request, 'pong_app/doublejack.html')
