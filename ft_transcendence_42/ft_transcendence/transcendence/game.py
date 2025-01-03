@@ -18,7 +18,7 @@ class RoomGame:
         self.paddle_speed = 20
         self.win_score = 10
         self.win = 10
-        self.los = -5
+        self.los = 5
 
     async def game_loop(self, send_update):
         while self.ready['right'] and self.ready['left']:
