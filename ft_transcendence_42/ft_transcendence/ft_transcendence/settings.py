@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'transcendence.apps.TranscendenceConfig',
+    'oauth2_provider',
+    'social_django',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'transcendence.middleware.UpdateLastActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'ft_transcendence.urls'
@@ -88,6 +92,7 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = 'transcendence.User'
+
 
 
 # Password validation
@@ -134,7 +139,7 @@ STATICFILES_DIRS = [BASE_DIR / 'transcendence/static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ASGI_APPLICATION = "ft_transcendence.asgi.application"
+ASGI_APPLICATION = 'ft_transcendence.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {

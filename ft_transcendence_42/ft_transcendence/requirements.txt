@@ -2,3 +2,6 @@ django
 channels[daphne]
 psycopg2-binary
 Pillow
+django-oauth-toolkit
+django-extensions
+social-auth-app-django

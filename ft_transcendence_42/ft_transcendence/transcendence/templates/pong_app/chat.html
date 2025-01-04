@@ -11,11 +11,13 @@
     <div class="chat-sidebar">
         <h2>Your Friends</h2>
         <ul class="friend-list">
+        <ul class="friend-list">
             {% for friend in friends %}
             <li>
                 <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
                     <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
                     {{ friend.username }}
+                    <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
                 </a>
             </li>
             {% endfor %}
@@ -144,6 +146,37 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
     document.getElementById('message-form').reset();
 });
 
+
+const statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+
+statusSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    console.log(data.type);
+
+    if (data.type === 'user_status') {
+        const friendItems = document.querySelectorAll('.friend-item');
+        const onlineUsernames = new Set(data.users || []);
+
+        friendItems.forEach((item) => {
+            const name = item.dataset.name;
+            const statusIndicator = item.querySelector('.status-indicator');
+
+            if (onlineUsernames.has(name)) {
+                statusIndicator.classList.remove('offline');
+                statusIndicator.classList.add('online');
+                statusIndicator.style.backgroundColor = 'green';
+            } else {
+                statusIndicator.classList.remove('online');
+                statusIndicator.classList.add('offline');
+                statusIndicator.style.backgroundColor = 'red';
+            }
+        });
+    }
+};
+
+statusSocket.onclose = function () {
+    console.log("Status WebSocket closed");
+};
 </script>
 
 <style>
@@ -259,6 +292,22 @@ document.getElementById('message-form').addEventListener('submit', (e) => {
     button:hover {
         background-color: #0056b3;
     }
+
+.status-indicator {
+    display: inline-block;
+    width: 10px; /* Диаметр точки */
+    height: 10px;
+    border-radius: 50%; /* Круглая форма */
+    margin-left: 8px; /* Отступ слева от имени */
+}
+
+.status-indicator.online {
+    background-color: green; /* Зеленая точка для онлайн */
+}
+
+.status-indicator.offline {
+    background-color: red; /* Красная точка для оффлайн */
+}
 </style>
 
 {% endblock %}

@@ -218,13 +218,26 @@ def bot(request):
 @login_required(login_url='/login/')
 def chat(request):
     groups = ChatGroup.objects.filter(Q(owner=request.user) | Q(members=request.user))
-    friends = Friend.objects.get(owner=request.user)
+    friend_obj = Friend.objects.get(owner=request.user)
+    # friends = friend_obj.friends.all()
 
+    # online_users = friends.filter(last_activity__gte=now() - timedelta(minutes=1))
+    # friends_with_status = [
+    #     {
+    #         'username': friend.username,
+    #         'photo': friend.photo.url if friend.photo else '/static/default_user_photo.jpg',
+    #         'is_online': friend in online_users
+    #     }
+    #     for friend in friends
+    # ]
+    # print(friends_with_status)
     return render(request, 'pong_app/chat.html', {
-        "friends": friends.friends.all(),
+        "friends": friend_obj.friends.all(),
         "current_user": request.user.username,
-        "groups":groups,
+        "groups": groups,
     })
+
+
 
 def doublejack(request):
     return render(request, 'pong_app/doublejack.html')

@@ -1,16 +1,26 @@
 from django.db import models
-# from django.contrib.auth.models import AbstractUser
 import os
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-# Create your models here.
+
+from django.utils.timezone import now
+from django.db import models
+from datetime import timedelta
+
+from django.contrib.auth.models import BaseUserManager
+
 class User(AbstractUser):
 
     nickname = models.CharField(max_length=30, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
     blocked_users = models.ManyToManyField('self', blank=True, related_name='blocking_users', symmetrical=False)
+    is_online = models.BooleanField(default=False)
+    last_activity = models.DateTimeField(default=now)
+
+
+
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -22,6 +32,9 @@ class User(AbstractUser):
                     os.remove(old_photo.path)
 
         super(User, self).save(*args, **kwargs)
+
+
+
 
 class Score (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
