@@ -294,3 +294,82 @@ def pong_lobby(request, room_lobby):
 
     return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
 
+
+
+import requests
+from django.conf import settings
+from django.shortcuts import redirect, render
+from django.http import JsonResponse
+
+def login_with_42(request):
+    authorize_url = f"{settings.FT_API_AUTHORIZE_URL}?client_id={settings.FT_API_CLIENT_ID}&redirect_uri={settings.FT_API_REDIRECT_URI}&response_type=code"
+    return redirect(authorize_url)
+
+
+
+def callback(request):
+    # Retrieve the authorization code from the request
+    code = request.GET.get('code')
+    if not code:
+        return JsonResponse({'error': 'Authorization code not provided'}, status=400)
+
+    try:
+        # Step 1: Exchange the authorization code for an access token
+        token_response = requests.post(settings.FT_API_TOKEN_URL, data={
+            'grant_type': 'authorization_code',
+            'client_id': settings.FT_API_CLIENT_ID,
+            'client_secret': settings.FT_API_CLIENT_SECRET,
+            'code': code,
+            'redirect_uri': settings.FT_API_REDIRECT_URI,
+        })
+        token_response.raise_for_status()  # Raise an exception for HTTP errors
+
+        token_data = token_response.json()
+        access_token = token_data.get('access_token')
+        if not access_token:
+            return JsonResponse({'error': 'Access token not provided in response'}, status=400)
+
+        # Step 2: Fetch user information using the access token
+        user_info_response = requests.get(f"{settings.FT_API_BASE_URL}/v2/me", headers={
+            'Authorization': f'Bearer {access_token}'
+        })
+        user_info_response.raise_for_status()  # Raise an exception for HTTP errors
+
+        user_data = user_info_response.json()
+
+        # Step 3: Create or get the user in the database
+        user, created = User.objects.get_or_create(
+            username=user_data['login'],
+            nickname= user_data['first_name'] + ' ' + user_data['last_name'],
+            email=user_data['email'],
+        )
+
+
+        if created:
+            # If the user was created, set an unusable password and save related objects
+            user.set_unusable_password()
+            user.save()
+
+            # Create related objects such as Score and Friend
+            Score.objects.create(user=user, score=10)
+            Friend.objects.create(owner=user)
+
+        # Step 4: Log the user in
+        login(request, user)
+
+        # Redirect the user to the homepage
+        return redirect('index')
+
+    except requests.exceptions.RequestException as e:
+        # Handle HTTP request errors
+        return JsonResponse({'error': 'Failed to communicate with 42 API', 'details': str(e)}, status=500)
+
+    except IntegrityError as e:
+        # Handle database integrity errors (e.g., unique constraint violations)
+        return JsonResponse({'error': 'Database integrity error', 'details': str(e)}, status=500)
+
+    except Exception as e:
+        # Handle unexpected errors
+        return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
+
