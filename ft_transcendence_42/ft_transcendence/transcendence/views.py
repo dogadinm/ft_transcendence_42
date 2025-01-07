@@ -280,7 +280,8 @@ def full_friends_list(request, username):
 @login_required(login_url='/login/')
 def pong_lobby(request, room_lobby):
     user = request.user
-    admin_user = get_object_or_404(User, username="admin")
+    username = user.username
+    admin_user = get_object_or_404(User, username=username)
     group, created = ChatGroup.objects.get_or_create(owner = admin_user, name=room_lobby)
     group.save()
 
