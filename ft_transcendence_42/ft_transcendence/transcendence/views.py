@@ -217,7 +217,7 @@ def bot(request):
 
 @login_required(login_url='/login/')
 def chat(request):
-    groups = ChatGroup.objects.filter(Q(owner=request.user) | Q(members=request.user))
+    groups = ChatGroup.objects.filter(members=request.user)
     friend_obj = Friend.objects.get(owner=request.user)
     # friends = friend_obj.friends.all()
 
