@@ -83,7 +83,6 @@ class ChatGroup(models.Model):
     password = models.CharField(max_length=100, blank=True)
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
     
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_chats')
     members = models.ManyToManyField(User, related_name='chats', symmetrical=False)
 
     def save(self, *args, **kwargs):
