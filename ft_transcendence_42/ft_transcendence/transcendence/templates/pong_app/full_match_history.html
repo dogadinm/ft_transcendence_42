@@ -7,20 +7,24 @@
     <thead>
       <tr>
         <th>Winner</th>
-        <th>Winner Score</th>
+        <th>Match Score</th>
         <th>Loser</th>
-        <th>Loser Score</th>
         <th>Date</th>
+        <th>Rating</th>
       </tr>
     </thead>
     <tbody>
       {% for match in page_obj %}
       <tr>
         <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
-        <td>{{ match.winner_match_score }}</td>
-        <td>{{ match.loser.username }}</td>
-        <td>{{ match.loser_match_score }}</td>
+        <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
+        <td><a href="{% url 'profile' match.loser.username  %}">{{ match.loser.username }}</a></td>
         <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+        {% if username == match.winner.username %}
+          <td>+{{ match.winner_change_score}}</td>
+        {% else %}
+          <td>{{ match.loser_change_score}}</td>
+        {% endif %}
       </tr>
       {% empty %}
       <tr>

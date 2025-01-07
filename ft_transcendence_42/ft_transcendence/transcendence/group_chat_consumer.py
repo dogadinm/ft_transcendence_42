@@ -8,7 +8,8 @@ from django.contrib.auth.hashers import check_password
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):
         self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
-        self.channel_group_name = f'game_{self.channel_nick}'
+
+        self.channel_group_name = f'chat_{self.channel_nick}'
         self.user = self.scope['user']
         self.username = self.user.username
 
@@ -16,20 +17,11 @@ class ChatGroupConsumer(WebsocketConsumer):
 
         self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
 
-        if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
-            passw = self.chat_group.password != ''
-
-            self.send(text_data=json.dumps({
-                'type': 'join',
-                'messages': 'Join to the chat',
-                'password': passw,
-
-            }))
-            return
 
         async_to_sync(self.channel_layer.group_add)(
             self.channel_group_name, self.channel_name
         )
+
         blocked_users = self.user.blocked_users.all()
         messagesql = Message.objects.filter(chat=self.chat_group).exclude(sender__in=blocked_users).order_by("created_at")
 
@@ -48,6 +40,7 @@ class ChatGroupConsumer(WebsocketConsumer):
             'messages': messages_data,
         }))
 
+
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
             self.channel_group_name, self.channel_name
@@ -57,30 +50,7 @@ class ChatGroupConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         action = text_data_json.get('action')
 
-        if action == 'join':
-            password = text_data_json.get('password')
-            if self.chat_group.password == '':
-                self.chat_group.members.add(self.user)
-                self.send(text_data=json.dumps({
-                    'type': 'right_pass',
-                    'messages': 'Joining to the chat',
-                }))
-            elif check_password(password, self.chat_group.password):
-                self.chat_group.members.add(self.user)
-                self.send(text_data=json.dumps({
-                    'type': 'right_pass',
-                    'messages': 'Joining to the chat',
-                }))
-            else:
-                self.send(text_data=json.dumps({
-                    'type': 'wrong_pass',
-                    'messages': 'Wrong password',
-                }))
-            return
-        elif action == 'leave':
-            self.chat_group.members.remove(self.user)
-            return
-        elif action == 'massege':
+        if action == 'massege':
             if not (self.user in self.chat_group.members.all() or self.user == self.chat_group.owner):
                 return
             message_text = text_data_json.get('message', '').strip()

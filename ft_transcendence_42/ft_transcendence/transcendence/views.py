@@ -1,8 +1,5 @@
-from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.urls import reverse
-from django.core.paginator import Paginator
-import json
-from django.core.files.storage import FileSystemStorage
+#
+from django.contrib import messages
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -91,6 +88,21 @@ def register(request):
     else:
         return render(request, "pong_app/register.html")
 
+def find_fiend(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                return redirect('profile', username=user.username)
+            except User.DoesNotExist:
+                messages.error(request, f"User {username} doesn't exist.")
+                return redirect('profile', username=request.user.username)
+        else:
+            messages.error(request, "Enter username")
+            return redirect('profile', username=request.user.username)
+
+    return redirect('index')
 
 def profile(request, username):
     page_user = get_object_or_404(User, username=username)
@@ -198,64 +210,34 @@ def pong(request):
 def invite_to_game(request):
     return render(request, 'pong_app/invite_to_game.html')
 
-@login_required(login_url='/login/')
-def room(request, room_name):
-    return render(request, 'pong_app/room.html', {'room_name': room_name})
+
 
 def bot(request):
     return render(request, 'pong_app/bot.html')
 
 @login_required(login_url='/login/')
 def chat(request):
-    friends = Friend.objects.get(owner=request.user)
+    groups = ChatGroup.objects.filter(Q(owner=request.user) | Q(members=request.user))
+    friend_obj = Friend.objects.get(owner=request.user)
+    # friends = friend_obj.friends.all()
 
+    # online_users = friends.filter(last_activity__gte=now() - timedelta(minutes=1))
+    # friends_with_status = [
+    #     {
+    #         'username': friend.username,
+    #         'photo': friend.photo.url if friend.photo else '/static/default_user_photo.jpg',
+    #         'is_online': friend in online_users
+    #     }
+    #     for friend in friends
+    # ]
+    # print(friends_with_status)
     return render(request, 'pong_app/chat.html', {
-        'friends': friends.friends.all(),
+        "friends": friend_obj.friends.all(),
         "current_user": request.user.username,
+        "groups": groups,
     })
 
-@login_required(login_url='/login/')
-def group_chat(request):
-    groups = ChatGroup.objects.all()
 
-    return render(request, 'pong_app/group_chat.html',{
-        'groups': groups,
-    })
-
-@login_required(login_url='/login/')
-def group_chat_name(request, channel_nick):
-    group = ChatGroup.objects.get(name=channel_nick)
-
-    return render(request, 'pong_app/group_chat_name.html',{
-        'channel_nick':channel_nick,
-        'members': group.members.all()
-    })
-
-@login_required(login_url='/login/')
-def create_group_chat(request):
-    if request.method == "POST":
-
-        username = request.user.username
-        group_name = request.POST["group_name"]
-        user = User.objects.get(username=username)
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
-        if password != confirmation:
-            return render(request, "pong_app/register.html", {
-                "message": "Passwords must match."
-            })
-
-        # Attempt to create new user
-        try:
-            group = ChatGroup.objects.create(owner=user, name=group_name, password=password)
-            group.save()
-        except IntegrityError:
-            return render(request, "pong_app/create_group_chat.html", {
-                "message": "Group name already taken."
-            })
-        return redirect('group_chat_name', group_name)
-    else:
-        return render(request, "pong_app/create_group_chat.html")
 
 def doublejack(request):
     return render(request, 'pong_app/doublejack.html')
@@ -278,7 +260,7 @@ def full_match_history(request, username):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'pong_app/full_match_history.html', {'page_obj': page_obj})
+    return render(request, 'pong_app/full_match_history.html', {'page_obj': page_obj, 'username': user.username})
 
 def full_friends_list(request, username):
     user = get_object_or_404(User, username=username)
@@ -294,5 +276,100 @@ def full_friends_list(request, username):
         'username': user.username
     })
 
-    return render(request, 'pong_app/doublejack.html')
+
+@login_required(login_url='/login/')
+def pong_lobby(request, room_lobby):
+    user = request.user
+    admin_user = get_object_or_404(User, username="admin")
+    group, created = ChatGroup.objects.get_or_create(owner = admin_user, name=room_lobby)
+    group.save()
+
+
+    if created:
+        group.owner = admin_user
+        group.save()
+
+    group.members.add(user)
+    group.save()
+
+    return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
+
+
+
+import requests
+from django.conf import settings
+from django.shortcuts import redirect, render
+from django.http import JsonResponse
+
+def login_with_42(request):
+    authorize_url = f"{settings.FT_API_AUTHORIZE_URL}?client_id={settings.FT_API_CLIENT_ID}&redirect_uri={settings.FT_API_REDIRECT_URI}&response_type=code"
+    return redirect(authorize_url)
+
+
+
+def callback(request):
+    # Retrieve the authorization code from the request
+    code = request.GET.get('code')
+    if not code:
+        return JsonResponse({'error': 'Authorization code not provided'}, status=400)
+
+    try:
+        # Step 1: Exchange the authorization code for an access token
+        token_response = requests.post(settings.FT_API_TOKEN_URL, data={
+            'grant_type': 'authorization_code',
+            'client_id': settings.FT_API_CLIENT_ID,
+            'client_secret': settings.FT_API_CLIENT_SECRET,
+            'code': code,
+            'redirect_uri': settings.FT_API_REDIRECT_URI,
+        })
+        token_response.raise_for_status()  # Raise an exception for HTTP errors
+
+        token_data = token_response.json()
+        access_token = token_data.get('access_token')
+        if not access_token:
+            return JsonResponse({'error': 'Access token not provided in response'}, status=400)
+
+        # Step 2: Fetch user information using the access token
+        user_info_response = requests.get(f"{settings.FT_API_BASE_URL}/v2/me", headers={
+            'Authorization': f'Bearer {access_token}'
+        })
+        user_info_response.raise_for_status()  # Raise an exception for HTTP errors
+
+        user_data = user_info_response.json()
+
+        # Step 3: Create or get the user in the database
+        user, created = User.objects.get_or_create(
+            username=user_data['login'],
+            nickname= user_data['first_name'] + ' ' + user_data['last_name'],
+            email=user_data['email'],
+        )
+
+
+        if created:
+            # If the user was created, set an unusable password and save related objects
+            user.set_unusable_password()
+            user.save()
+
+            # Create related objects such as Score and Friend
+            Score.objects.create(user=user, score=10)
+            Friend.objects.create(owner=user)
+
+        # Step 4: Log the user in
+        login(request, user)
+
+        # Redirect the user to the homepage
+        return redirect('index')
+
+    except requests.exceptions.RequestException as e:
+        # Handle HTTP request errors
+        return JsonResponse({'error': 'Failed to communicate with 42 API', 'details': str(e)}, status=500)
+
+    except IntegrityError as e:
+        # Handle database integrity errors (e.g., unique constraint violations)
+        return JsonResponse({'error': 'Database integrity error', 'details': str(e)}, status=500)
+
+    except Exception as e:
+        # Handle unexpected errors
+        return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
 

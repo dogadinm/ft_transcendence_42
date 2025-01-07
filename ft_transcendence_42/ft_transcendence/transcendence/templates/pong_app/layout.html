@@ -32,7 +32,6 @@
                 </a>
                 <a href="{% url 'logout' %}">Log out</a>
                 <a href="{% url 'chat'%}">Chat</a>
-                <a href="{% url 'group_chat' %}">Group chat</a>
             <!--{% endif %}
             {% if not user.is_authenticated %}-->
                 <a href="{% url 'login' %}">Login</a>
@@ -59,7 +58,8 @@
         </div>
 
         <script src="{% static 'js/script.js' %}"></script>
-        <script src="{% static 'js/FriendRequestsCount.js' %}"></script>
+
+
     </body>
 <style>
     #friend-requests-badge {

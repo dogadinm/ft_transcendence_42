@@ -6,32 +6,41 @@
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
 
-<head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
 
 <div class="chat-wrapper">
-    <!-- Список друзей -->
     <div class="chat-sidebar">
         <h2>Your Friends</h2>
         <ul class="friend-list">
+        <ul class="friend-list">
             {% for friend in friends %}
             <li>
-                <a href="#" class="friend-item" data-friend="{{ friend.username }}">
+                <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
                     <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
                     {{ friend.username }}
+                    <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <h2>Your Groups</h2>
+        <ul class="group-list">
+            {% for group in groups %}
+            <li>
+                <a href="#" class="group-item" data-type="group" data-name="{{ group.name }}">
+                    <img src="{{ group.photo.url }}" alt="{{ group.name }}" class="friend-photo" />
+                    {{ group.name }}
                 </a>
             </li>
             {% endfor %}
         </ul>
     </div>
 
-    <!-- Чат -->
     <div class="chat-content">
         <div class="chat-header">
-            <h2 id="chat-header">Select a Friend</h2>
+            <h2 id="chat-header">Select a Friend or Group</h2>
             <div id="friend-info">
-                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg"/>
+                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg" />
             </div>
         </div>
 
@@ -52,120 +61,163 @@
 </div>
 
 <script type="text/javascript">
-    const currentUser = "{{ current_user }}";
-    const profileBaseUrl = "{% url 'profile' 'username_placeholder' %}".replace('username_placeholder', '');
-    let chatSocket = null;
-    let currentFriend = null;
+const currentUser = "{{ current_user }}";
+const profileBaseUrl = "{% url 'profile' 'username_placeholder' %}".replace('username_placeholder', '');
+let chatSocket = null;
+let currentChat = null;
 
-    function openChat(friendName) {
-        if (chatSocket) {
-            chatSocket.close();
-        }
-
-        currentFriend = friendName;
-
-        const friendLink = document.querySelector(`.friend-item[data-friend="${friendName}"]`);
-        const friendPhoto = friendLink.querySelector('.friend-photo').src;
-
-
-document.getElementById('chat-header').innerHTML = `Chat with: <a href="${profileBaseUrl}${friendName}" target="_blank">${friendName}</a>`;
-document.getElementById('friend-photo').src = friendPhoto;
-
-
-        document.getElementById('messages').innerHTML = '';
-
-
-        chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat_privet/${friendName}/`);
-
-        chatSocket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-
-            if (data.type === 'chat') {
-                const messages = document.getElementById('messages');
-                const messageClass = data.username === currentUser ? 'message-right' : 'message-left';
-                messages.insertAdjacentHTML(
-                    'beforeend',
-                    `<div class="message ${messageClass}">
-                        <p>${data.message}</p>
-                    </div>`
-                );
-                messages.scrollTop = messages.scrollHeight;
-            } else if (data.type === 'chat_history') {
-                const messages = document.getElementById('messages');
-                messages.innerHTML = '';
-                data.messages.forEach((msg) => {
-                    console.log(msg.username === currentUser)
-                    const messageClass = msg.username === currentUser ? 'message-right' : 'message-left';
-                    messages.insertAdjacentHTML(
-                        'beforeend',
-                        `<div class="message ${messageClass}">
-                            <p>${msg.message}</p>
-                        </div>`
-                    );
-                });
-                messages.scrollTop = messages.scrollHeight;
-            }
-        };
-
-
-        chatSocket.onclose = function () {
-            console.log('Chat socket closed');
-        };
+function openChat(type, name) {
+    if (chatSocket) {
+        chatSocket.close();
     }
 
-    const friendLinks = document.querySelectorAll('.friend-item');
-    friendLinks.forEach((link) => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const friendName = link.dataset.friend;
-            openChat(friendName);
-        });
-    });
+    currentChat = { type, name };
 
+    if (type === "private") {
+        document.getElementById('chat-header').innerText = `Chat with: ${name}`;
+    } else if (type === "group") {
+        document.getElementById('chat-header').innerText = `Group: ${name}`;
+    }
 
-    const messageForm = document.getElementById('message-form');
-    messageForm.addEventListener('submit', (e) => {
+    document.getElementById('messages').innerHTML = '';
+
+    const wsPath = type === "private" 
+        ? `ws://${window.location.host}/ws/chat_privet/${name}/` 
+        : `ws://${window.location.host}/ws/chat_group/${name}/`;
+
+    chatSocket = new WebSocket(wsPath);
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        console.log(data)
+        if (data.type === 'chat' || data.type === 'chat_history') {
+            const messages = document.getElementById('messages');
+            const messageClass = data.sender === currentUser ? 'message-right' : 'message-left';
+            if (data.messages) {
+                data.messages.forEach((msg) => {
+
+                    const msgClass = msg.sender === currentUser ? 'message-right' : 'message-left';
+                    messages.insertAdjacentHTML(
+                        'beforeend',
+                        `<div class="message ${msgClass}"><p>${msg.message}</p></div>`
+                    );
+                });
+            } else {
+                if (type === "private") {
+                    messages.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="message ${messageClass}"><p>${data.message}</p></div>`
+                );
+                } else if (type === "group") {
+                    messages.insertAdjacentHTML(
+                    'beforeend',
+                    `<div class="message ${messageClass}"><p>${data.message.message}</p></div>`
+                );
+                }
+
+            }
+            messages.scrollTop = messages.scrollHeight;
+        }
+    };
+
+    chatSocket.onclose = function () {
+        console.log('Chat socket closed');
+    };
+}
+
+document.querySelectorAll('.friend-item, .group-item').forEach((link) => {
+    link.addEventListener('click', (e) => {
         e.preventDefault();
-
-        const messageInput = document.getElementById('message-input').value.trim();
-        if (!messageInput || !currentFriend) return;
-
-        chatSocket.send(
-            JSON.stringify({
-                message: messageInput,
-            })
-        );
-
-        messageForm.reset();
+        const chatType = link.dataset.type;
+        const chatName = link.dataset.name;
+        openChat(chatType, chatName);
     });
+});
+
+document.getElementById('message-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const messageInput = document.getElementById('message-input').value.trim();
+
+    if (!messageInput || !currentChat) return;
+
+    chatSocket.send(JSON.stringify({ 
+        action: 'massege',
+        message: messageInput }));
+    document.getElementById('message-form').reset();
+});
+
+
+const statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+
+statusSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    console.log(data.type);
+
+    if (data.type === 'user_status') {
+        const friendItems = document.querySelectorAll('.friend-item');
+        const onlineUsernames = new Set(data.users || []);
+
+        friendItems.forEach((item) => {
+            const name = item.dataset.name;
+            const statusIndicator = item.querySelector('.status-indicator');
+
+            if (onlineUsernames.has(name)) {
+                statusIndicator.classList.remove('offline');
+                statusIndicator.classList.add('online');
+                statusIndicator.style.backgroundColor = 'green';
+            } else {
+                statusIndicator.classList.remove('online');
+                statusIndicator.classList.add('offline');
+                statusIndicator.style.backgroundColor = 'red';
+            }
+        });
+    }
+};
+
+statusSocket.onclose = function () {
+    console.log("Status WebSocket closed");
+};
 </script>
 
 <style>
+
     .chat-wrapper {
         display: flex;
+        flex-direction: row;
+        width: 100%;
         height: 100vh;
     }
 
+
     .chat-sidebar {
-        flex: 0.3;
+        flex: 0.7;
         padding: 20px;
         border-right: 1px solid #ccc;
         background-color: #f8f9fa;
+        overflow-y: auto;
+        box-sizing: border-box;
     }
 
+
     .chat-content {
-        flex: 0.7;
+        flex: 2;
         display: flex;
         flex-direction: column;
         padding: 20px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        background-color: white;
     }
 
-    .friend-list {
+
+    .friend-list,
+    .group-list {
         list-style: none;
         padding: 0;
     }
 
-    .friend-item {
+    .friend-item,
+    .group-item {
         display: flex;
         align-items: center;
         margin: 10px 0;
@@ -174,7 +226,8 @@ document.getElementById('friend-photo').src = friendPhoto;
         cursor: pointer;
     }
 
-    .friend-item:hover {
+    .friend-item:hover,
+    .group-item:hover {
         text-decoration: underline;
     }
 
@@ -185,6 +238,7 @@ document.getElementById('friend-photo').src = friendPhoto;
         margin-right: 10px;
     }
 
+
     .message-area {
         flex: 1;
         overflow-y: auto;
@@ -193,13 +247,6 @@ document.getElementById('friend-photo').src = friendPhoto;
         padding: 10px;
         margin-bottom: 10px;
         background-color: #fff;
-    }
-
-    .chat-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
     }
 
     .message {
@@ -219,6 +266,7 @@ document.getElementById('friend-photo').src = friendPhoto;
         color: white;
         align-self: flex-end;
     }
+
 
     .chat-form {
         display: flex;
@@ -244,6 +292,22 @@ document.getElementById('friend-photo').src = friendPhoto;
     button:hover {
         background-color: #0056b3;
     }
+
+.status-indicator {
+    display: inline-block;
+    width: 10px; /* Диаметр точки */
+    height: 10px;
+    border-radius: 50%; /* Круглая форма */
+    margin-left: 8px; /* Отступ слева от имени */
+}
+
+.status-indicator.online {
+    background-color: green; /* Зеленая точка для онлайн */
+}
+
+.status-indicator.offline {
+    background-color: red; /* Красная точка для оффлайн */
+}
 </style>
 
 {% endblock %}

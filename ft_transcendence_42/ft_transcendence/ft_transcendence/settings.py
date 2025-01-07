@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'transcendence.apps.TranscendenceConfig',
+    'oauth2_provider',
+    'social_django',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'transcendence.middleware.UpdateLastActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'ft_transcendence.urls'
@@ -88,6 +92,7 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = 'transcendence.User'
+
 
 
 # Password validation
@@ -134,10 +139,17 @@ STATICFILES_DIRS = [BASE_DIR / 'transcendence/static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ASGI_APPLICATION = "ft_transcendence.asgi.application"
+ASGI_APPLICATION = 'ft_transcendence.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+FT_API_CLIENT_ID = 'u-s4t2ud-b47b029769c66a86e5043ce7a42cf8bc1c48762bea7cb79a30ea40f83e5c9c7b'
+FT_API_CLIENT_SECRET = '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'
+FT_API_REDIRECT_URI = 'http://127.0.0.1:8000/callback/'  # Такой же, как в настройках приложения 42
+FT_API_BASE_URL = 'https://api.intra.42.fr'
+FT_API_TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
+FT_API_AUTHORIZE_URL = 'https://api.intra.42.fr/oauth/authorize'
