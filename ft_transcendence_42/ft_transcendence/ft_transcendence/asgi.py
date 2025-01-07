@@ -49,7 +49,7 @@ User = get_user_model()
 
 async def check_user_activity():
     while True:
-        await asyncio.sleep(60)  # Periodic check every 5 seconds
+        await asyncio.sleep(15)
         inactive_users = await sync_to_async(get_inactive_users)()
         all_users = await sync_to_async(get_all_users)()
 
@@ -60,6 +60,7 @@ async def check_user_activity():
 
         for user in all_users:
             if user not in inactive_users:
+                print(user)
                 user.is_online = True
                 await sync_to_async(user.save)()
 

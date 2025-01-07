@@ -35,10 +35,8 @@ class StatusConsumer(AsyncWebsocketConsumer):
 
     async def send_online_status(self):
 
-        print(self.keep_sending_status)
         while self.keep_sending_status:
             online_users = await self.get_online_users()
-            print(online_users)
 
             await self.send(text_data=json.dumps({
                 "type": "user_status",
@@ -46,21 +44,7 @@ class StatusConsumer(AsyncWebsocketConsumer):
                 "is_online": True,
             }))
             await asyncio.sleep(30)
-            #     for user in online_users:
-            #         await self.send(text_data=json.dumps({
-            #             "type": "user_status",
-            #             "username": user.username,
-            #             "is_online": user.is_online,
-            #         }))
-            #     await asyncio.sleep(5)
-            # else:
-            #     await self.send(text_data=json.dumps({
-            #         "type": "user_status",
-            #         "username": 'all_offline',
-            #         "is_online": False,
-            #     }))
-            #     await asyncio.sleep(5)
-
+   
 
     async def user_status(self, event):
 
