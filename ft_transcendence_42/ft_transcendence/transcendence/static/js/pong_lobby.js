@@ -178,31 +178,40 @@
     function drawGame(data) {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = fieldWidth;
-        canvas.height = fieldHeight;
-
-        ctx.clearRect(0, 0, fieldWidth, fieldHeight);
-
+    
+        // Set background color to green
+        ctx.fillStyle = '#1abc9c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+        // Draw intermittent vertical line at the middle
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        const lineHeight = 20;
+        const gap = 10;
+        for (let y = 0; y < canvas.height; y += lineHeight + gap) {
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, y);
+            ctx.lineTo(canvas.width / 2, y + lineHeight);
+            ctx.stroke();
+        }
+    
         // Draw paddles
-        ctx.fillStyle = 'black';
-        ctx.fillRect(20, data.paddles.left.paddleY, paddleWidth, paddleHeight);
-        ctx.fillRect(fieldWidth - 20 - paddleWidth, data.paddles.right.paddleY, paddleWidth, paddleHeight);
-
+        ctx.fillStyle = 'white';
+        ctx.fillRect(10, data.paddles.left.paddleY, 10, 100); // Left paddle
+        ctx.fillRect(780, data.paddles.right.paddleY, 10, 100); // Right paddle
+    
         // Draw ball
         ctx.beginPath();
         ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
         ctx.fill();
-
+    
         // Draw score
         ctx.font = '20px Arial';
-        const leftPlayer = data.players.left || "Left";
-        const rightPlayer = data.players.right || "Right";
-        const text = `${leftPlayer}: ${data.score.left}  ${rightPlayer}: ${data.score.right}`;
-        const textWidth = ctx.measureText(text).width;
-        const centerX = fieldWidth / 2;
-        const maxHalfWidth = fieldWidth / 2;
-        const startX = Math.max(centerX - textWidth / 2, centerX - maxHalfWidth);
-        ctx.fillText(text, startX, 20);
+        ctx.fillStyle = 'white';
+        const leftPlayer = Object.keys(data.score)[0] || "Player 1";
+        const rightPlayer = Object.keys(data.score)[1] || "Player 2";
+        ctx.fillText(`${leftPlayer}: ${data.score[leftPlayer] || 0}`, 20, 20);
+        ctx.fillText(`${rightPlayer}: ${data.score[rightPlayer] || 0}`, 650, 20);
     }
 
     chatGroupSocket.onmessage = function (a) {
