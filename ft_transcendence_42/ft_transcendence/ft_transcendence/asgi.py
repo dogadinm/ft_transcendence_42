@@ -60,7 +60,6 @@ async def check_user_activity():
 
         for user in all_users:
             if user not in inactive_users:
-                print(user)
                 user.is_online = True
                 await sync_to_async(user.save)()
 
