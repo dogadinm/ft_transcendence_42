@@ -1,5 +1,7 @@
 #
 from django.contrib import messages
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -11,98 +13,86 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-
-
 def index(request):
-    return render(request, "pong_app/index.html")
+    if request.user.is_authenticated:
+        return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_authenticated.html"})
+    else:
+        return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_guest.html"})
 
-def calculator(request):
-    return render(request, 'pong_app/calculator.html', {})
+def user_links(request):
+    if request.user.is_authenticated:
+        return render(request, "pong_app/user_links_authenticated.html")
+    return render(request, "pong_app/user_links_guest.html")
 
-def chat_view(request):
-    return render(request, 'pong_app/chat.html')
 
 def login_view(request):
-    if (request.user.is_authenticated):
-        return redirect('index')
+    if request.user.is_authenticated:
+        return render(request, "pong_app/index.html")
+        # return JsonResponse({"success": True, "redirect": "/"}, status=200)
+
     if request.method == "POST":
-        # Attempt to sign user in
-        username = request.POST["username"]
-        password = request.POST["password"]
+        # Parse data from the POST request
+        username = request.POST.get("username")
+        password = request.POST.get("password")
         user = authenticate(request, username=username, password=password)
 
-        # Check if authentication successful
         if user is not None:
             login(request, user)
-            return redirect('index')
+            return JsonResponse({"success": True, "redirect": "/"}, status=200)
+            # return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_authenticated.html"})
         else:
-            return render(request, "pong_app/login.html", {
-                "message": "Invalid username and/or password."
-            })
-    else:
+            return JsonResponse({"success": False, "error": "Invalid username and/or password."}, status=400)
+    elif request.method == "GET":
         return render(request, "pong_app/login.html")
+
+    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+def logout_view(request):
+    logout(request)
+    return JsonResponse({"success": True, "redirect": "/"}, status=200)
+
 
 def register(request):
     if (request.user.is_authenticated):
-        return redirect('index')
+        return render(request, "pong_app/index.html")
     if request.method == "POST":
+        username = request.POST.get("username")
+        nickname = request.POST.get("nickname")
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+        confirmation = request.POST.get("confirmation")
 
-        username = request.POST["username"]
-        nickname = request.POST["nickname"]
-        email = request.POST["email"]
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "pong_app/register.html", {
-                "message": "Passwords must match."
-            })
+            return JsonResponse({"error": "Passwords must match."}, status=400)
+
+        if len(password) < 8:
+            return JsonResponse({"error": "Password must be at least 8 characters long."}, status=400)
+        if not any(char.isupper() for char in password):
+            return JsonResponse({"error": "Password must contain at least one uppercase letter."}, status=400)
+        if not any(char.isdigit() for char in password):
+            return JsonResponse({"error": "Password must contain at least one digit."}, status=400)
 
         if User.objects.filter(username=username).exists():
-            return render(request, "pong_app/register.html", {
-                "message": "Username already taken."
-            })
+            return JsonResponse({"error": "Username already taken."}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({"error": "Email already taken."}, status=400)
 
         if User.objects.filter(nickname=nickname).exists():
-            return render(request, "pong_app/register.html", {
-                "message": "Nickname already taken."
-            })
-        # if User.objects.filter(email=email).exists():
-        #     return render(request, "pong_app/register.html", {
-        #         "message": "Email already taken."
-        #     })
+            return JsonResponse({"error": "Nickname already taken."}, status=400)
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            nickname=nickname
-        )
+        user = User.objects.create_user(username=username, email=email, password=password, nickname=nickname)
         user.save()
-        score_entry = Score.objects.create(user=user, score=10)
-        score_entry.save()
-        friends_list = Friend.objects.create(owner=user)
-        friends_list.save()
+
+        Score.objects.create(user=user, score=10)
+        Friend.objects.create(owner=user)
 
         login(request, user)
-        return redirect('index')
-    else:
+        return JsonResponse({"redirect": "/"})
+    elif request.method == "GET":
         return render(request, "pong_app/register.html")
 
-def find_fiend(request):
-    if request.method == "POST":
-        username = request.POST.get('username')
-        if username:
-            try:
-                user = User.objects.get(username=username)
-                return redirect('profile', username=user.username)
-            except User.DoesNotExist:
-                messages.error(request, f"User {username} doesn't exist.")
-                return redirect('profile', username=request.user.username)
-        else:
-            messages.error(request, "Enter username")
-            return redirect('profile', username=request.user.username)
-
-    return redirect('index')
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
 def profile(request, username):
     page_user = get_object_or_404(User, username=username)
@@ -175,9 +165,6 @@ def profile(request, username):
         "recent_matches":recent_matches,
     })
 
-def logout_view(request):
-    logout(request)
-    return redirect("index")
 
 @login_required
 def profile_settings(request):
@@ -219,7 +206,7 @@ def bot(request):
 def chat(request):
     groups = ChatGroup.objects.filter(members=request.user)
     friend_obj = Friend.objects.get(owner=request.user)
-    # friends = friend_obj.friends.all()
+    friends = friend_obj.friends.all()
 
     # online_users = friends.filter(last_activity__gte=now() - timedelta(minutes=1))
     # friends_with_status = [
@@ -230,12 +217,33 @@ def chat(request):
     #     }
     #     for friend in friends
     # ]
-    # print(friends_with_status)
+
     return render(request, 'pong_app/chat.html', {
-        "friends": friend_obj.friends.all(),
-        "current_user": request.user.username,
-        "groups": groups,
+       "friends": friend_obj.friends.all(),
+      "current_user": request.user.username,
+      "groups": groups,
     })
+
+# @login_required(login_url='/login/')
+# def chat(request):
+#     groups = ChatGroup.objects.filter(members=request.user)
+#     friend_obj = Friend.objects.get(owner=request.user)
+#
+#     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#         return render(request, 'pong_app/chat.html', {
+#             "friends": friend_obj.friends.all(),
+#             "current_user": request.user.username,
+#             "groups": groups,
+#         })
+#     else:
+#         return render(request, 'pong_app/index.html', {
+#             "content_template": 'pong_app/chat.html',
+#             "friends": friend_obj.friends.all(),
+#             "current_user": request.user.username,
+#             "groups": groups,
+#             "user_links_template": "pong_app/user_links_authenticated.html"
+#         })
+
 
 
 
@@ -372,5 +380,3 @@ def callback(request):
     except Exception as e:
         # Handle unexpected errors
         return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
-
-

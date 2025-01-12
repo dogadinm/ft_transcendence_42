@@ -1,201 +1,223 @@
 {% extends "pong_app/layout.html" %}
 {% load static %}
 {% block body %}
+
 <head>
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
-
-{% if is_owner or friend %}
-    <h2 class="mx-5">Friends:</h2>
-    {% for l in list_p %}
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-            <img src="{{ l.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' l  %}">{{ l }}</a></li>
-        </div>
-    {% endfor %}
-    <a href="{% url 'full_friends_list' username %}">Show More</a>
-{% endif %}
-
-{% if is_owner %}
-    <form action="{% url 'find_fiend' %}" method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <input autofocus class="form-control" type="text" name="username" placeholder="Username">
-        </div>
-        <button type="submit" name="action" value="find_friend">Find friend</button>
-    </form>
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-{% endif %}
-
-{% if is_owner and block_list %}
-    <h2 class="mx-5">Blocked people:</h2>
-    {% for b in block_list %}
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-            <img src="{{ b.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' b  %}">{{ b }}</a></li>
-        </div>
-    {% endfor %}
-{% endif %}
-
-
-{% if is_owner and friend_requests %}
-<h2 class="mx-5">Friends requests:</h2>
-<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
-    {% for request in friend_requests %}
-        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-            <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-            <span style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' request.sender.username  %}">{{ request.sender.username }}</a></span>
-            <form method="post" style="margin-right: 10px;">
-                {% csrf_token %}
-                <input type="hidden" name="sender_request" value="{{ request.sender}}">
-                <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                    Accept
-                </button>
-            </form>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="sender_request" value="{{ request.sender }}">
-                <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                    Reject
-                </button>
-            </form>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-<div class="container">
-    {% if is_owner %}
-        <h1 class="mx-5">Username:{{ user.username }}</h1>
-        <h2 class="mx-5">Nickname:{{ nickname }}</h2>
-    {% else %}
-        <h2 class="mx-5">Nickname:{{ nickname }}</h2>
-    {% endif %}
-
-    <div class="text-center my-3">
-        <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
-    </div>
-        <p>{{ description }}</p>
-    <div class="text-center mb-4"></div>
-
-    <div class="row d-flex justify-content-center mb-4">
-        <h3 class="col-4">Rating: {{ score }}</h3>
-    </div>
-</div>
-
-<div class="d-flex justify-content-center profile-actions-container">
-    {% if is_owner %}
-        <a href="{% url 'profile_settings' %}" class="btn btn-primary me-3">Settings</a>
-    {% else %}
-        {% if friend %}
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" name="action" value="delete">Remove from friends</button>
-            </form>
-        {% elif friend_request_taker %}
+<div id="content" class="body">
+    {% if is_owner or friend %}
+        <h2 class="mx-5">Friends:</h2>
+        {% for l in list_p %}
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <img src="{{ l.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
+                <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ l }}')">{{ l }}</a></li>
+            </div>
+        {% endfor %}
+        <a href="#" onclick="navigate('/full_friends_list/{{username}}')">Show More</a>
+    {% endif %}
 
-                <form method="post">
+
+
+    {% if is_owner %}
+        <div class="form-group">
+            <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
+        </div>
+        <div class="find-friend">
+            <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
+        </div>
+        <p id="error-message" style="color: red;"></p>
+        <script src="{% static 'js/find_friend.js' %}"></script>
+    {% endif %}
+
+    {% if is_owner and block_list %}
+        <h2 class="mx-5">Blocked people:</h2>
+        {% for b in block_list %}
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <img src="{{ b.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
+                <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ b }}')">{{ b }}</a></li>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+
+    {% if is_owner and friend_requests %}
+    <h2 class="mx-5">Friends requests:</h2>
+    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+        {% for request in friend_requests %}
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+                <span style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' request.sender.username  %}">{{ request.sender.username }}</a></span>
+                <form method="post" style="margin-right: 10px;">
                     {% csrf_token %}
-                    <input type="hidden" name="sender_request" value="{{ username }}">
+                    <input type="hidden" name="sender_request" value="{{ request.sender}}">
                     <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
                         Accept
                     </button>
                 </form>
-
                 <form method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="sender_request" value="{{ username }}">
+                    <input type="hidden" name="sender_request" value="{{ request.sender }}">
                     <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
                         Reject
                     </button>
                 </form>
             </div>
-        {% elif not friend_request_sent %}
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" name="action" value="send_request">Send friend request</button>
-            </form>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="container">
+        {% if is_owner %}
+            <h1 class="mx-5">Username:{{ user.username }}</h1>
+            <h2 class="mx-5">Nickname:{{ nickname }}</h2>
         {% else %}
-             <p>Request sent</p>
+            <h2 class="mx-5">Nickname:{{ nickname }}</h2>
         {% endif %}
 
-        {% if block_user %}
-            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
-            </form>
+        <div class="text-center my-3">
+            <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
+        </div>
+            <p>{{ description }}</p>
+        <div class="text-center mb-4"></div>
+
+        <div class="row d-flex justify-content-center mb-4">
+            <h3 class="col-4">Rating: {{ score }}</h3>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center profile-actions-container">
+        {% if is_owner %}
+            <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
         {% else %}
-            <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
-            </form>
+            {% if friend %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="delete">Remove from friends</button>
+                </form>
+            {% elif friend_request_taker %}
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="sender_request" value="{{ username }}">
+                        <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                            Accept
+                        </button>
+                    </form>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="sender_request" value="{{ username }}">
+                        <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                            Reject
+                        </button>
+                    </form>
+                </div>
+            {% elif not friend_request_sent %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="send_request">Send friend request</button>
+                </form>
+            {% else %}
+                 <p>Request sent</p>
+            {% endif %}
+
+            {% if block_user %}
+                <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
+                </form>
+            {% else %}
+                <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
+                </form>
+            {% endif %}
         {% endif %}
+    </div>
+
+
+    {% if is_owner or friend %}
+      <h1>Recent Matches</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Winner</th>
+            <th>Match Score</th>
+            <th>Loser</th>
+            <th>Date</th>
+            <th>Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for match in recent_matches %}
+          <tr>
+            <td><a href="#" onclick="navigate('/profile/{{match.winner.username }}')">{{ match.winner.username }}</a></td>
+            <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
+            <td><a href="#" onclick="navigate('/profile/{{match.loser.username }}')">{{ match.loser.username }}</a></td>
+            <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+            {% if username == match.winner.username %}
+              <td>+{{ match.winner_change_score}}</td>
+            {% else %}
+              <td>{{ match.loser_change_score}}</td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">No matches found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}')">Show More</a>
+
+
+      <style>
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 8px;
+          text-align: left;
+          border: 1px solid #ddd;
+        }
+        th {
+          background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+          background-color: #f9f9f9;
+        }
+        tr:hover {
+          background-color: #f1f1f1;
+        }
+
+
+        .find-friend {
+          margin: 20px 0;
+          display: flex;
+          justify-content: center;
+        }
+        .find-friend a, .find-friend span {
+          margin: 0 5px;
+          padding: 8px 12px;
+          text-decoration: none;
+          color: #007bff;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+        }
+        .find-friend a:hover {
+          background-color: #f1f1f1;
+        }
+        .find-friend .current {
+          font-weight: bold;
+          background-color: #007bff;
+          color: white;
+          border: 1px solid #007bff;
+        }
+      </style>
     {% endif %}
 </div>
-
-
-{% if is_owner or friend %}
-  <h1>Recent Matches</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Winner</th>
-        <th>Match Score</th>
-        <th>Loser</th>
-        <th>Date</th>
-        <th>Rating</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for match in recent_matches %}
-      <tr>
-        <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
-        <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
-        <td><a href="{% url 'profile' match.loser.username  %}">{{ match.loser.username }}</a></td>
-        <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
-        {% if username == match.winner.username %}
-          <td>+{{ match.winner_change_score}}</td>
-        {% else %}
-          <td>{{ match.loser_change_score}}</td>
-        {% endif %}
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="5">No matches found.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <a href="{% url 'full_match_history' username %}">Show More</a>
-
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-  </style>
-{% endif %}
 {% endblock %}
 

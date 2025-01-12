@@ -6,8 +6,8 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path("login/", views.login_view, name='login'),
-    path("logout", views.logout_view, name='logout'),
+    path('login/', views.login_view, name='login'),
+    path("logout/", views.logout_view, name='logout'),
     path('register/', views.register, name='register'),
 
     path('chat/', views.chat, name='chat'),
@@ -25,10 +25,11 @@ urlpatterns = [
 
     path('api/friend_requests_count/', views.get_friend_requests_count, name='friend_requests_count'),
     path('invite_to_game/', views.invite_to_game, name='invite_to_game'),
-    path('find-friend/', views.find_fiend, name='find_fiend'),
 
 
     re_path(r'pong/', views.pong, name="pong"),
     path('login/42/', views.login_with_42, name='login_with_42'),
     path('callback/', views.callback, name='callback'),
+    path('api/login/', views.api_login, name='api_login'),
+    path('user-links/', views.user_links, name='user_links'),
 ]

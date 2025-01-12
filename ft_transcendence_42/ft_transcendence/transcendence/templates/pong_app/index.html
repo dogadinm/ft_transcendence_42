@@ -1,19 +1,52 @@
-{% extends "pong_app/layout.html" %}
 {% load static %}
 
-{% block body %}
-{% block title %}42 Pong{% endblock %}
-{% csrf_token %}
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<link type="text/css"  href="{% static 'transcendence/style_index.css' %}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pong{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'transcendence/42po.png' %}">
+    <link type="text/css" href="{% static 'transcendence/style.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
+<body>
+    <!-- Static Navbar -->
+    <nav>
+        <a href="#" onclick="navigate('/')">Main page</a>
+        <span id="user-links">
+            {% include user_links_template %}
+            {% if content_template %}
+              {% include content_template %}
+            {% endif %}
+        </span>
+    </nav>
 
-<h1>Welcome to the Pong game!</h1>
+    <!-- Dynamic Content -->
+    <div id="content" class="body">
+        <h1>Welcome to the Pong game!</h1>
+        <h5>hello page</h5>
+    </div>
 
-<h5>hello page</h5>
 
+    <!-- CSRF token -->
+    <script>
+        const csrfToken = '{{ csrf_token }}';
+    </script>
 
-{% endblock %}
+    <!-- JavaScript -->
+    <script src="{% static 'js/script.js' %}"></script>
+    <style>
+        #friend-requests-badge {
+            background-color: green;
+            color: white;
+            border-radius: 50%;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+    </style>
 
-
+</body>
+</html>

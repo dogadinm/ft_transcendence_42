@@ -14,6 +14,8 @@ class PongLobby(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.username = self.user.username
         self.role = 'spectator'
+        self.game_update = 'game_update_' + self.room_lobby
+        setattr(self, self.game_update, self._dynamic_game_update)
 
         # Add user to WebSocket group and accept connection
         await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
@@ -181,7 +183,7 @@ class PongLobby(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_lobby_name,
             {
-                'type': 'game_update',
+                'type':  self.game_update,
                 'game_state': game_state,
             }
         )
@@ -209,9 +211,9 @@ class PongLobby(AsyncWebsocketConsumer):
             'state': event['state'],
         }))
 
-    async def game_update(self, event):
+    async def _dynamic_game_update(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'game_update',
+            'type': self.game_update,
             **event['game_state'],
         }))
 

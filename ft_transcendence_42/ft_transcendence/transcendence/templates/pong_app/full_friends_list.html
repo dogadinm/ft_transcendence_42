@@ -2,27 +2,28 @@
 {% load static %}
 {% block body %}
 
+<div id="content" class="body">
   <h1>{{username}}'s friends</h1>
 
       {% for friend in page_obj %}
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
             <img src="{{ friend.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' friend.username  %}">{{ friend.username  }}</a></li>
+            <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ friend.username  }}')">{{ friend.username  }}</a></li>
         </div>
       {% endfor %}
 
 
   <div class="pagination">
     {% if page_obj.has_previous %}
-      <a href="?page=1">First</a>
-      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page=1')">First</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.previous_page_number  }}')">Last</a>
     {% endif %}
 
     <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">Next</a>
-      <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.next_page_number  }}')">Next</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.paginator.num_pages  }}')">Last</a>
     {% endif %}
   </div>
 
@@ -68,4 +69,5 @@
       border: 1px solid #007bff;
     }
   </style>
+</div>
 {% endblock %}

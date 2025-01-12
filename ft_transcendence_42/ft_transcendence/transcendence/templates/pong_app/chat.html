@@ -1,183 +1,80 @@
 {% extends "pong_app/layout.html" %}
 {% load static %}
 {% block body %}
-{% block title %}Chat{% endblock %}
+
+
 <head>
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pong{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'transcendence/42po.png' %}">
+    <link type="text/css" href="{% static 'transcendence/style.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+
 </head>
 
+<div id="content" class="body">
+    <div class="chat-wrapper">
+        <div class="chat-sidebar">
+            <h2>Your Friends</h2>
+            <ul class="friend-list">
+            <ul class="friend-list">
+                {% for friend in friends %}
+                <li>
+                    <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
+                        <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
+                        {{ friend.username }}
+                        <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
 
-<div class="chat-wrapper">
-    <div class="chat-sidebar">
-        <h2>Your Friends</h2>
-        <ul class="friend-list">
-        <ul class="friend-list">
-            {% for friend in friends %}
-            <li>
-                <a href="#" class="friend-item" data-type="private" data-name="{{ friend.username }}">
-                    <img src="{{ friend.photo.url }}" alt="{{ friend.username }}" class="friend-photo" />
-                    {{ friend.username }}
-                    <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-
-        <h2>Your Groups</h2>
-        <ul class="group-list">
-            {% for group in groups %}
-            <li>
-                <a href="#" class="group-item" data-type="group" data-name="{{ group.name }}">
-                    <img src="{{ group.photo.url }}" alt="{{ group.name }}" class="friend-photo" />
-                    {{ group.name }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <div class="chat-content">
-        <div class="chat-header">
-            <h2 id="chat-header">Select a Friend or Group</h2>
-            <div id="friend-info">
-                <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg" />
-            </div>
+            <h2>Your Groups</h2>
+            <ul class="group-list">
+                {% for group in groups %}
+                <li>
+                    <a href="#" class="group-item" data-type="group" data-name="{{ group.name }}">
+                        <img src="{{ group.photo.url }}" alt="{{ group.name }}" class="friend-photo" />
+                        {{ group.name }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
 
-        <div id="messages" class="message-area"></div>
+        <div class="chat-content">
+            <div class="chat-header">
+                <h2 id="chat-header">Select a Friend or Group</h2>
+                <div id="friend-info">
+                    <img id="friend-photo" class="friend-photo" alt="Friend's Photo" src="/media/profile_photos/profile_standard.jpg" />
+                </div>
+            </div>
 
-        <form id="message-form" class="chat-form">
-            <input
-                type="text"
-                id="message-input"
-                name="message"
-                placeholder="Enter your message"
-                autocomplete="off"
-                required
-            />
-            <button type="submit">Send</button>
-        </form>
+            <div id="messages" class="message-area"></div>
+
+            <form id="message-form" class="chat-form">
+                <input
+                    type="text"
+                    id="message-input"
+                    name="message"
+                    placeholder="Enter your message"
+                    autocomplete="off"
+                    required
+                />
+                <button type="submit">Send</button>
+            </form>
+        </div>
     </div>
-</div>
 
-<script type="text/javascript">
-const currentUser = "{{ current_user }}";
-const profileBaseUrl = "{% url 'profile' 'username_placeholder' %}".replace('username_placeholder', '');
-let chatSocket = null;
-let currentChat = null;
-
-function openChat(type, name) {
-    if (chatSocket) {
-        chatSocket.close();
-    }
-
-    currentChat = { type, name };
-
-    if (type === "private") {
-        document.getElementById('chat-header').innerText = `Chat with: ${name}`;
-    } else if (type === "group") {
-        document.getElementById('chat-header').innerText = `Group: ${name}`;
-    }
-
-    document.getElementById('messages').innerHTML = '';
-
-    const wsPath = type === "private" 
-        ? `ws://${window.location.host}/ws/chat_privet/${name}/` 
-        : `ws://${window.location.host}/ws/chat_group/${name}/`;
-
-    chatSocket = new WebSocket(wsPath);
-
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        console.log(data)
-        if (data.type === 'chat' || data.type === 'chat_history') {
-            const messages = document.getElementById('messages');
-            const messageClass = data.sender === currentUser ? 'message-right' : 'message-left';
-            if (data.messages) {
-                data.messages.forEach((msg) => {
-
-                    const msgClass = msg.sender === currentUser ? 'message-right' : 'message-left';
-                    messages.insertAdjacentHTML(
-                        'beforeend',
-                        `<div class="message ${msgClass}"><p>${msg.message}</p></div>`
-                    );
-                });
-            } else {
-                if (type === "private") {
-                    messages.insertAdjacentHTML(
-                    'beforeend',
-                    `<div class="message ${messageClass}"><p>${data.message}</p></div>`
-                );
-                } else if (type === "group") {
-                    messages.insertAdjacentHTML(
-                    'beforeend',
-                    `<div class="message ${messageClass}"><p>${data.message.message}</p></div>`
-                );
-                }
-
-            }
-            messages.scrollTop = messages.scrollHeight;
-        }
-    };
-
-    chatSocket.onclose = function () {
-        console.log('Chat socket closed');
-    };
-}
-
-document.querySelectorAll('.friend-item, .group-item').forEach((link) => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const chatType = link.dataset.type;
-        const chatName = link.dataset.name;
-        openChat(chatType, chatName);
-    });
-});
-
-document.getElementById('message-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const messageInput = document.getElementById('message-input').value.trim();
-
-    if (!messageInput || !currentChat) return;
-
-    chatSocket.send(JSON.stringify({ 
-        action: 'massege',
-        message: messageInput }));
-    document.getElementById('message-form').reset();
-});
+    <div id="gameData" data-current-user="{{ current_user }}" data-profile-base-url="{% url 'profile' 'username_placeholder' %}"></div>
+    <script src="{% static 'js/chat.js' %}" type="text/javascript"></script>
 
 
-const statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
 
-statusSocket.onmessage = function (e) {
-    const data = JSON.parse(e.data);
-    console.log(data.type);
-
-    if (data.type === 'user_status') {
-        const friendItems = document.querySelectorAll('.friend-item');
-        const onlineUsernames = new Set(data.users || []);
-
-        friendItems.forEach((item) => {
-            const name = item.dataset.name;
-            const statusIndicator = item.querySelector('.status-indicator');
-
-            if (onlineUsernames.has(name)) {
-                statusIndicator.classList.remove('offline');
-                statusIndicator.classList.add('online');
-                statusIndicator.style.backgroundColor = 'green';
-            } else {
-                statusIndicator.classList.remove('online');
-                statusIndicator.classList.add('offline');
-                statusIndicator.style.backgroundColor = 'red';
-            }
-        });
-    }
-};
-
-statusSocket.onclose = function () {
-    console.log("Status WebSocket closed");
-};
-</script>
 
 <style>
 
@@ -295,19 +192,19 @@ statusSocket.onclose = function () {
 
 .status-indicator {
     display: inline-block;
-    width: 10px; /* Диаметр точки */
+    width: 10px;
     height: 10px;
-    border-radius: 50%; /* Круглая форма */
-    margin-left: 8px; /* Отступ слева от имени */
+    border-radius: 50%;
+    margin-left: 8px;
 }
 
 .status-indicator.online {
-    background-color: green; /* Зеленая точка для онлайн */
+    background-color: green;
 }
 
 .status-indicator.offline {
-    background-color: red; /* Красная точка для оффлайн */
+    background-color: red;
 }
 </style>
-
+</div>
 {% endblock %}

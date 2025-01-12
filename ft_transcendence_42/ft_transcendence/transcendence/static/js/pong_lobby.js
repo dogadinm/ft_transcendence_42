@@ -1,10 +1,11 @@
+(function () {
     let movingDown = false;
-    let isReady = false;
     let movingUp = false;
+    let isReady = false;
 
     const gameDataElement = document.getElementById("gameData");
     const room = gameDataElement.dataset.roomLobby;
-
+    console.log(room)
     const url = `ws://${window.location.host}/ws/lobby/${room}/`;
     const chatSocket = new WebSocket(url);
 
@@ -18,6 +19,7 @@
     chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
+
 
         switch (data.type) {
             case "connection":
@@ -50,7 +52,7 @@
                 startCountdown(data.countdown);
                 break;
 
-            case "game_update":
+            case `game_update_${room}`:
                 fieldWidth = data.field.width;
                 fieldHeight = data.field.height;
                 paddleWidth = data.paddle.width;
@@ -186,7 +188,7 @@
         // Set background color to green
         ctx.fillStyle = '#1abc9c';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
         // Draw intermittent vertical line at the middle
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
@@ -199,17 +201,17 @@
             ctx.lineTo(canvas.width / 2, y + lineHeight);
             ctx.stroke();
         }
-    
+
         // Draw paddles
         ctx.fillStyle = 'white';
         ctx.fillRect(20, data.paddles.left.paddleY, paddleWidth, paddleHeight); // Left paddle
         ctx.fillRect(fieldWidth - 20 - paddleWidth, data.paddles.right.paddleY, paddleWidth, paddleHeight); // Right paddle
-    
+
         // Draw ball
         ctx.beginPath();
         ctx.arc(data.ball.x, data.ball.y, 10, 0, Math.PI * 2);
         ctx.fill();
-    
+
         // Draw score
         ctx.font = '20px Arial';
         ctx.fillStyle = 'white';
@@ -270,3 +272,26 @@
         chatBox.appendChild(messageElement);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+
+    function disconnectWebSocket() {
+    if (chatSocket) {
+        chatSocket.close(1000, "User disconnected"); // close with code 1000 (normal)
+        console.log("Closing Lobby WebSocket...");
+    }
+
+    if (chatGroupSocket) {
+        chatGroupSocket.close(1000, "User disconnected");
+        console.log("Closing Chat WebSocket...");
+    }
+    navigate('/');
+}
+
+    document.getElementById("assignRightButton").addEventListener("click", () => assignRole("right"));
+    document.getElementById("assignLeftButton").addEventListener("click", () => assignRole("left"));
+    document.getElementById("readyButton").addEventListener("click", sendReadySignal);
+    document.getElementById("leaveRoleButton").addEventListener("click", leaveRole);
+    document.getElementById("leaveLobbyButton").addEventListener("click", disconnectWebSocket);
+    document.getElementById("sendMessage").addEventListener("click", sendChatMessage);
+
+})();

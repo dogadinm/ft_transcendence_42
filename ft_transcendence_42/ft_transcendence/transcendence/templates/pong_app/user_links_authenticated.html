@@ -1,0 +1,14 @@
+{% load static %}
+<a href="#" onclick="navigate('/profile/{{ user.username }}')">
+    <strong>{{ user.username }}</strong>
+    <span id="friend-requests-badge"></span>
+</a>
+<a href="#" onclick="logOut()">Log out</a>
+<a href="#" onclick="navigate('/chat/')">Chat</a>
+<a href="#" onclick="navigate('/pong/')">Pong</a>
+<a href="#" onclick="navigate('/pong_lobby/1/')">Pong1</a>
+<a href="#" onclick="navigate('/pong_lobby/2/')">Pong2</a>
+<a href="#" onclick="navigate('/bot/')">Play Pong With Bot</a>
+<a href="#" onclick="loadPage('/doublejack/')">Doublejack</a>
+
+<script src="{% static 'js/logout.js' %}"></script>

@@ -1,15 +1,14 @@
-{% extends 'pong_app/layout.html' %}
+
 {% load static %}
 
-{% block title %}Pong With Bot{% endblock %}
-{% block body %}
+
 <head>
 	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
+
 <h1>Play Pong With Bot</h1>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
-{% endblock %}
 
-{% block scripts %}
+
+
 <script src="{% static 'js/pongScript.js' %}"></script>
-{% endblock %}
