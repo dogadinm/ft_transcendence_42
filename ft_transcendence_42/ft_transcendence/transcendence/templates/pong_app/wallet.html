@@ -1,0 +1,26 @@
+{% extends "pong_app/layout.html" %}
+
+{% block body %}
+<h1 class="mx-5">Crypto Wallet</h1>
+
+<div class="container">
+    <div class="row d-flex justify-content-center">
+        <h3 class="col-4">Bind your wallet</h3>
+    </div>
+
+    <div class="row d-flex justify-content-center">
+        <form method="post" action="{% url 'bind_wallet' %}" class="col-4">
+            {% csrf_token %}
+            <div class="form-group mb-3">
+                <label for="address">Wallet Address:</label>
+                <input type="text" id="address" name="address" class="form-control" placeholder="Enter your wallet address" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="private_key">Private Key:</label>
+                <input type="password" id="private_key" name="private_key" class="form-control" placeholder="Enter your private key" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Bind Wallet</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

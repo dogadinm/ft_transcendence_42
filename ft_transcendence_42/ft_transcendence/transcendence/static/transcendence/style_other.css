@@ -1,0 +1,47 @@
+body {
+    background-color: #e66649;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    color: #333;
+    background-image: url('/static/transcendence/42po.png'); /* Path to your image */
+    background-repeat: no-repeat; /* Prevent the image from repeating */
+    background-position: 10px 10px; /* Adjust positioning */
+    background-size: 84px 84px; /* Set size of the image */
+    margin: 0;
+    padding: 0;
+}
+
+/* Style for name and points boxes */
+#other_name, #name {
+    width: 200px;
+    height: 50px;
+    border-top: 2px solid #000;
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
+    border-radius: 10px 10px 0 0; /* Rounded corners at the top */
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    padding: 10px 0;
+    margin: 10px auto 0;
+    font-family: 'Arial', sans-serif;
+}
+
+#other_points, #points {
+    width: 200px;
+    height: 50px;
+    border: 2px solid #000;
+    border-radius: 0 0 10px 10px; /* Rounded corners at the bottom */
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    background-color: #f9f9f9;
+    padding: 10px 0;
+    margin: 0 auto 20px;
+    font-family: 'Arial', sans-serif;
+}

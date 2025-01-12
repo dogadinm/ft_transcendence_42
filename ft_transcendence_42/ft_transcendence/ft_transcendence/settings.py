@@ -25,12 +25,14 @@ SECRET_KEY = 'django-insecure-u^vt#4ed_g=85r5yj^vn_(@b2de5pzb&&0t(wl#lrh=w3@4s71
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'transcendence.apps.TranscendenceConfig',
+    'oauth2_provider',
+    'social_django',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'transcendence.middleware.UpdateLastActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'ft_transcendence.urls'
@@ -76,10 +82,17 @@ WSGI_APPLICATION = 'ft_transcendence.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'django',
+        'USER': 'django_admin',
+        'PASSWORD': '2306',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
+
+AUTH_USER_MODEL = 'transcendence.User'
+
 
 
 # Password validation
@@ -115,10 +128,28 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'transcendence/static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+ASGI_APPLICATION = 'ft_transcendence.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+FT_API_CLIENT_ID = 'u-s4t2ud-b47b029769c66a86e5043ce7a42cf8bc1c48762bea7cb79a30ea40f83e5c9c7b'
+FT_API_CLIENT_SECRET = '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'
+FT_API_REDIRECT_URI = 'http://127.0.0.1:8000/callback/'  # Такой же, как в настройках приложения 42
+FT_API_BASE_URL = 'https://api.intra.42.fr'
+FT_API_TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
+FT_API_AUTHORIZE_URL = 'https://api.intra.42.fr/oauth/authorize'

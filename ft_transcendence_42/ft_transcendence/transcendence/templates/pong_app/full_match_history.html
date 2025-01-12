@@ -1,0 +1,93 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+
+  <h1>Match History</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Winner</th>
+        <th>Match Score</th>
+        <th>Loser</th>
+        <th>Date</th>
+        <th>Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in page_obj %}
+      <tr>
+        <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
+        <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
+        <td><a href="{% url 'profile' match.loser.username  %}">{{ match.loser.username }}</a></td>
+        <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
+        {% if username == match.winner.username %}
+          <td>+{{ match.winner_change_score}}</td>
+        {% else %}
+          <td>{{ match.loser_change_score}}</td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No matches found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page=1">First</a>
+      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+    {% endif %}
+  </div>
+
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .pagination {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .pagination a, .pagination span {
+      margin: 0 5px;
+      padding: 8px 12px;
+      text-decoration: none;
+      color: #007bff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .pagination a:hover {
+      background-color: #f1f1f1;
+    }
+    .pagination .current {
+      font-weight: bold;
+      background-color: #007bff;
+      color: white;
+      border: 1px solid #007bff;
+    }
+  </style>
+{% endblock %}

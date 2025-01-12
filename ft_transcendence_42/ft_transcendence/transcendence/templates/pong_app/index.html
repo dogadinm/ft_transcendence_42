@@ -1,0 +1,19 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+
+{% block body %}
+{% block title %}42 Pong{% endblock %}
+{% csrf_token %}
+
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_index.css' %}" rel="stylesheet">
+</head>
+
+<h1>Welcome to the Pong game!</h1>
+
+<h5>hello page</h5>
+
+
+{% endblock %}
+
+

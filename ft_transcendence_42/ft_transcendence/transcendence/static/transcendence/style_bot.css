@@ -1,0 +1,30 @@
+body {
+    background-color: #e66649;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    color: #333;
+    background-image: url('/static/transcendence/42po.png'); /* Path to your image */
+    background-repeat: no-repeat; /* Prevent the image from repeating */
+    background-position: 10px 10px; /* Adjust positioning */
+    background-size: 84px 84px; /* Set size of the image */
+    margin: 0;
+    padding: 0;
+}
+
+.pong-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.pong-section canvas {
+    margin-top: 20px;
+    border: 2px solid black;
+}

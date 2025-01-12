@@ -1,0 +1,40 @@
+{% extends "pong_app/layout.html" %}
+{% block title %}DoubleJack{% endblock %}
+{% load static %}
+{% block body %}
+    <h1>Doublejack</h1>
+	<div id="other_score">score</div>
+	<div id="other_hand">hand</div>
+	<div id="other_name">name</div>
+	<div id="other_points">points</div>
+	<div id="other_status">other_status</div>
+	<p></p>
+	<!-- waiting on others -> start-> waiting on others -> reset -> hit ->reset / end -->
+	 <!-- resume? -->
+	<!-- timing send // disconnect handling-->
+	<div id="game_status" style="height: 30px; align-content: center;">
+		<p>game_status...</p>
+	</div>
+	<div id="game_time" style="height: 30px; align-content: center;">
+		<p>Time of the whole game</p>
+	</div>
+	<div id="time" style="height: 30px; align-content: center;">
+		<p>Time of one match</p>
+	</div>
+	<div id="game">game number</div>
+	<div id="score">score</div>
+	<div id="hand">hand</div>
+	<div id="name">name</div>
+	<div id="points">points</div>
+	<div id="role">role (spectator)</div>
+	<div id="my_status">my_status</div>
+	<div id="buttons" style="height: 60px; align-content: center;">
+		<button id="join">JOIN !</button>
+	</div>
+
+
+
+    <p>Status: <span id="ws_status">Not connected</span></p>
+	<script src="{% static 'js/doublejack.js' %}"></script>
+{% endblock %}
+

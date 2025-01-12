@@ -1,0 +1,36 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+{% block title %}Profile settings{% endblock %}
+
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+
+<div class="container mt-5">
+    <h1 class="text-center">Profile settings</h1>
+    <form method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="nickname" class="form-label">Nickname</label>
+            <input type="text" class="form-control" id="nickname" name="nickname" value="{{ user.nickname }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="photo" class="form-label">Profile photo</label>
+            <input type="file" class="form-control" id="photo" name="photo">
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Descriptions</label>
+            <textarea class="form-control" id="description" name="description" rows="4">{{ user.profile.description }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+</div>
+{% endblock %}

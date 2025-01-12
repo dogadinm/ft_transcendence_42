@@ -1,0 +1,28 @@
+{% extends 'pong_app/layout.html' %}
+{% block title %}Pong Game{% endblock %}
+{% load static %}
+{% block body %}
+<head>
+	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+<div class="container text-center mt-5">
+    <form onsubmit="joinGame(); return false;">
+        <label for="roomName">Enter Room Name:</label>
+        <input type="text" id="roomName" name="room_name" required>
+        <br><br>
+        <button type="submit" class="btn btn-primary">Connect</button>
+    </form>
+</div>
+
+<script>
+function joinGame() {
+    const roomName = document.getElementById('roomName').value.trim();
+    if (roomName) {
+        window.location.href = `/pong_lobby/${roomName}/`;
+    } else {
+        alert('Please enter a room name.');
+    }
+}
+</script>
+
+{% endblock %}
