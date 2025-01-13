@@ -8,7 +8,7 @@
 
     <div id="content" class="body">
         <h2>Register</h2>
-        <div id="error-message" style="color: red;"></div> <!-- Блок для сообщений об ошибках -->
+        <div id="error-message" style="color: red;"></div>
         <form id="register-form">
             {% csrf_token %}
             <div class="form-group">
@@ -16,9 +16,6 @@
             </div>
             <div class="form-group">
                 <input class="form-control" autofocus type="text" name="nickname" placeholder="Nickname" required>
-            </div>
-            <div class="form-group">
-                <input class="form-control" type="email" name="email" placeholder="Email Address" required>
             </div>
             <div class="form-group">
                 <input class="form-control" type="password" name="password" placeholder="Password" required>

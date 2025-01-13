@@ -5,7 +5,6 @@
 
     const gameDataElement = document.getElementById("gameData");
     const room = gameDataElement.dataset.roomLobby;
-    console.log(room)
     const url = `ws://${window.location.host}/ws/lobby/${room}/`;
     const chatSocket = new WebSocket(url);
 

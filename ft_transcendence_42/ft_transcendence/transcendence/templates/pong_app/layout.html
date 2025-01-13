@@ -35,8 +35,6 @@
                     <a href="#" onclick="logOut()">Log out</a>
                     <a href="#" onclick="navigate('/chat')">Chat</a>
                     <a href="#" onclick="navigate('/pong')">Pong</a>
-                    <a href="#" onclick="navigate('/pong_lobby/1/')">Pong1</a>
-                    <a href="#" onclick="navigate('/pong_lobby/2/')">Pong2</a>
                     <a href="#" onclick="navigate('/bot')">Play Pong With Bot</a>
                     <a href="#" onclick="loadPage('/doublejack')">Doublejack</a>
 
@@ -58,16 +56,7 @@
         <script src="{% static 'js/script.js' %}"></script>
 
     </body>
-<style>
-    #friend-requests-badge {
-        background-color: green;
-        color: white;
-        border-radius: 50%;
-        padding: 5px 10px;
-        font-size: 14px;
-        margin-left: 5px;
-    }
-</style>
+
 
         {% block scripts %}
         {% endblock %}

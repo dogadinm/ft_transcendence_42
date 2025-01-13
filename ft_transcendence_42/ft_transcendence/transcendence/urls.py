@@ -30,6 +30,5 @@ urlpatterns = [
     re_path(r'pong/', views.pong, name="pong"),
     path('login/42/', views.login_with_42, name='login_with_42'),
     path('callback/', views.callback, name='callback'),
-    path('api/login/', views.api_login, name='api_login'),
     path('user-links/', views.user_links, name='user_links'),
 ]
