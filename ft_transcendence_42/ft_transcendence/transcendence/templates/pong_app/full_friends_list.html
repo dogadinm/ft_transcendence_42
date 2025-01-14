@@ -3,6 +3,34 @@
 {% block body %}
 
 <div id="content" class="body">
+    <div class="profile-page-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <a href="#" onclick="navigate('/profile/{{ username }}')">Profile</a>
+                {% if is_owner %}
+                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                {% endif %}
+                {% if is_owner or friend %}
+                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+                {% endif %}
+            </ul>
+        </div>
+
+    {% if is_owner %}
+      <div class="form-group">
+          <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
+      </div>
+      <div class="find-friend">
+          <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
+      </div>
+      <p id="error-message" style="color: red;"></p>
+      <script src="{% static 'js/find_friend.js' %}"></script>
+  {% endif %}
+
+
   <h1>{{username}}'s friends</h1>
 
       {% for friend in page_obj %}
@@ -13,20 +41,21 @@
       {% endfor %}
 
 
-  <div class="pagination">
-    {% if page_obj.has_previous %}
-      <a href="#" onclick="navigate('/full_match_history/{{username}}?page=1')">First</a>
-      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.previous_page_number  }}')">Last</a>
-    {% endif %}
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page=1')">First</a>
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.previous_page_number  }}')">Last</a>
+        {% endif %}
 
-    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
-    {% if page_obj.has_next %}
-      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.next_page_number  }}')">Next</a>
-      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.paginator.num_pages  }}')">Last</a>
-    {% endif %}
+        {% if page_obj.has_next %}
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.next_page_number  }}')">Next</a>
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.paginator.num_pages  }}')">Last</a>
+        {% endif %}
+      </div>
   </div>
-
+</div>
   <style>
     table {
       width: 100%;
@@ -69,5 +98,5 @@
       border: 1px solid #007bff;
     }
   </style>
-</div>
+
 {% endblock %}

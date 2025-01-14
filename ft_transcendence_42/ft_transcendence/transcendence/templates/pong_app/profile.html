@@ -5,175 +5,83 @@
 <head>
 	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
+
+
 <div id="content" class="body">
-    {% if is_owner or friend %}
-        <h2 class="mx-5">Friends:</h2>
-        {% for l in list_p %}
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <img src="{{ l.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-                <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ l }}')">{{ l }}</a></li>
-            </div>
-        {% endfor %}
-        <a href="#" onclick="navigate('/full_friends_list/{{username}}')">Show More</a>
-    {% endif %}
-
-
-
-    {% if is_owner %}
-        <div class="form-group">
-            <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
+    <div class="profile-page-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <a href="#" onclick="navigate('/profile/{{ username }}')">Profile</a>
+                {% if is_owner %}
+                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+                    <a href="#" onclick="navigate('/friend_requests/', true)">Friend Requests</a>
+                {% endif %}
+                {% if is_owner or friend %}
+                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+                {% endif %}
+            </ul>
         </div>
-        <div class="find-friend">
-            <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
-        </div>
-        <p id="error-message" style="color: red;"></p>
-        <script src="{% static 'js/find_friend.js' %}"></script>
-    {% endif %}
 
-    {% if is_owner and block_list %}
-        <h2 class="mx-5">Blocked people:</h2>
-        {% for b in block_list %}
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <img src="{{ b.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-                <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ b }}')">{{ b }}</a></li>
+
+
+        <div class="container" id="profile_content">
+            {% if is_owner %}
+                <h1 class="mx-5">Username:{{ user.username }}</h1>
+                <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+            {% else %}
+                <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+            {% endif %}
+
+            <div class="text-center my-3">
+                <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
             </div>
-        {% endfor %}
-    {% endif %}
+                <p>{{ description }}</p>
+            <div class="text-center mb-4"></div>
+
+            <div class="row d-flex justify-content-center mb-4">
+                <h3 class="col-4">Rating: {{ score }}</h3>
+            </div>
+        </div>
 
 
-    {% if is_owner and friend_requests %}
-    <h2 class="mx-5">Friends requests:</h2>
-    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
-        {% for request in friend_requests %}
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-                <span style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' request.sender.username  %}">{{ request.sender.username }}</a></span>
-                <form method="post" style="margin-right: 10px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="sender_request" value="{{ request.sender}}">
-                    <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+<div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
+    {% if not is_owner %}
+        {% csrf_token %}
+        <div id="profile-actions-content">
+            {% if friend %}
+                <button id="remove-friend-btn" data-action="delete" class="profile-action-btn">Remove from friends</button>
+            {% elif friend_request_taker %}
+                <div class="friend-request-actions">
+                    <button id="accept-request-btn" data-action="accept_request" data-username="{{ username }}" class="profile-action-btn" style="background-color: green;">
                         Accept
                     </button>
-                </form>
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="sender_request" value="{{ request.sender }}">
-                    <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                    <button id="reject-request-btn" data-action="decline_request" data-username="{{ username }}" class="profile-action-btn" style="background-color: red;">
                         Reject
                     </button>
-                </form>
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <div class="container">
-        {% if is_owner %}
-            <h1 class="mx-5">Username:{{ user.username }}</h1>
-            <h2 class="mx-5">Nickname:{{ nickname }}</h2>
-        {% else %}
-            <h2 class="mx-5">Nickname:{{ nickname }}</h2>
-        {% endif %}
-
-        <div class="text-center my-3">
-            <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
-        </div>
-            <p>{{ description }}</p>
-        <div class="text-center mb-4"></div>
-
-        <div class="row d-flex justify-content-center mb-4">
-            <h3 class="col-4">Rating: {{ score }}</h3>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-center profile-actions-container">
-        {% if is_owner %}
-            <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
-        {% else %}
-            {% if friend %}
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" name="action" value="delete">Remove from friends</button>
-                </form>
-            {% elif friend_request_taker %}
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="sender_request" value="{{ username }}">
-                        <button type="submit" name="action" value="accept_request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                            Accept
-                        </button>
-                    </form>
-
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="sender_request" value="{{ username }}">
-                        <button type="submit" name="action" value="decline_request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                            Reject
-                        </button>
-                    </form>
                 </div>
             {% elif not friend_request_sent %}
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" name="action" value="send_request">Send friend request</button>
-                </form>
+                <button id="send-request-btn" data-action="send_request" class="profile-action-btn">Send friend request</button>
             {% else %}
-                 <p>Request sent</p>
+                <p id="request-sent-message">Request sent</p>
             {% endif %}
 
             {% if block_user %}
-                <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" name="action" value="unblock_user">Unblock</button>
-                </form>
+                <button id="unblock-user-btn" data-action="unblock_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Unblock</button>
             {% else %}
-                <form action="{% url 'profile' username=username %}" method="post" class="me-3 profile-action-form">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" name="action" value="block_user">Block</button>
-                </form>
+                <button id="block-user-btn" data-action="block_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Block</button>
             {% endif %}
-        {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+
     </div>
-
-
-    {% if is_owner or friend %}
-      <h1>Recent Matches</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Winner</th>
-            <th>Match Score</th>
-            <th>Loser</th>
-            <th>Date</th>
-            <th>Rating</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for match in recent_matches %}
-          <tr>
-            <td><a href="#" onclick="navigate('/profile/{{match.winner.username }}')">{{ match.winner.username }}</a></td>
-            <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
-            <td><a href="#" onclick="navigate('/profile/{{match.loser.username }}')">{{ match.loser.username }}</a></td>
-            <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
-            {% if username == match.winner.username %}
-              <td>+{{ match.winner_change_score}}</td>
-            {% else %}
-              <td>{{ match.loser_change_score}}</td>
-            {% endif %}
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5">No matches found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <a href="#" onclick="navigate('/full_match_history/{{username}}')">Show More</a>
-
+</div>
 
       <style>
+
         table {
           width: 100%;
           border-collapse: collapse;
@@ -216,8 +124,52 @@
           color: white;
           border: 1px solid #007bff;
         }
+
+    .profile-actions-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .profile-action-btn {
+        margin: 5px 0;
+        padding: 10px 20px;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .friend-request-actions {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .friend-request-actions button {
+        width: 48%;
+    }
+
+    @media (max-width: 768px) {
+        .profile-actions-container {
+            padding: 15px;
+        }
+
+        .profile-action-btn {
+            font-size: 16px;
+            padding: 12px 24px;
+        }
+
+        .friend-request-actions button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
       </style>
-    {% endif %}
+<script src="{% static 'js/profileActions.js' %}"></script>
 </div>
 {% endblock %}
 

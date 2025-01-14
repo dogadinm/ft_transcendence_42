@@ -12,6 +12,89 @@ function showSection(sectionId) {
         stopPongGame();
     }
 }
+
+//async function navigate(url, updateProfile = false) {
+//    try {
+//        const response = await fetch(url, {
+//            method: "GET",
+//            headers: {
+//                "X-Requested-With": "XMLHttpRequest",
+//            },
+//        });
+//
+//        if (response.ok) {
+//            const html = await response.text();
+//
+//            const parser = new DOMParser();
+//            const doc = parser.parseFromString(html, "text/html");
+//
+//            const newContent = doc.querySelector("#content");
+//            const newProfileContent = doc.querySelector("#profile_content");
+//
+////            history.pushState(null, "", url);
+//
+//            updateUserLinks();
+//
+//            if (newContent) {
+//                history.pushState(null, "", url);
+//                document.querySelector("#content").innerHTML = newContent.innerHTML;
+//
+//            }
+//            if (updateProfile && newProfileContent) {
+//
+//                document.querySelector("#profile_content").innerHTML = newProfileContent.innerHTML;
+//                console.log(html)
+//                executeScriptsInContent(html);
+//            }
+//
+//
+//            executeScriptsInContent(html);
+//
+//        } else {
+//            console.error("Failed to fetch page:", response.status);
+//        }
+//    } catch (error) {
+//        console.error("Error during navigation:", error);
+//    }
+//}
+
+async function loadPage(url) {
+    console.log("Loading page:", url);
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest", // AJAX-запрос
+            },
+        });
+
+        if (response.ok) {
+            const html = await response.text();
+//            document.getElementById("content").innerHTML = html;
+//            history.pushState(null, "", url);
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const newContent = doc.querySelector("#profile_content");
+            history.pushState(null, "", url);
+
+
+            if (newContent) {
+                document.querySelector("#profile_content").innerHTML = newContent.innerHTML;
+            } else {
+                console.error("Content block not found.");
+            }
+            executeScriptsInContent(html);
+
+
+        } else {
+            console.error("Failed to load page:", response.status);
+        }
+    } catch (error) {
+        console.error("Error loading page:", error);
+    }
+}
+
 async function navigate(url) {
     try {
         const response = await fetch(url, {
@@ -44,32 +127,6 @@ async function navigate(url) {
     }
 }
 
-async function loadPage(url) {
-    console.log("Loading page:", url);
-    try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest", // AJAX-запрос
-            },
-        });
-
-        if (response.ok) {
-            const html = await response.text();
-            document.getElementById("content").innerHTML = html; // Загрузка контента
-            history.pushState(null, "", url); // Обновление URL без перезагрузки
-            console.log("Page loaded:", url);
-            updateUserLinks()
-
-
-            executeScriptsInContent(html);
-        } else {
-            console.error("Failed to load page:", response.status);
-        }
-    } catch (error) {
-        console.error("Error loading page:", error);
-    }
-}
 
 async function updateUserLinks() {
     try {

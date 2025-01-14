@@ -31,4 +31,5 @@ urlpatterns = [
     path('login/42/', views.login_with_42, name='login_with_42'),
     path('callback/', views.callback, name='callback'),
     path('user-links/', views.user_links, name='user_links'),
+    path('friend_requests/', views.friend_requests, name='friend_requests'),
 ]

@@ -1,0 +1,11 @@
+
+
+{% if is_owner and block_list %}
+    <h2 class="mx-5">Blocked people:</h2>
+    {% for b in block_list %}
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <img src="{{ b.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
+            <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ b }}')">{{ b }}</a></li>
+        </div>
+    {% endfor %}
+{% endif %}

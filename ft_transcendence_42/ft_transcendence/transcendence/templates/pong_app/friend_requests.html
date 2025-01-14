@@ -1,0 +1,45 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+
+<div id="content" class="body">
+    <div class="profile-page-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
+                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+            </ul>
+        </div>
+
+
+    <div id="profile_content" class="body">
+        <div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
+            <h2 class="mx-5">Friend Requests:</h2>
+            <div id="friend-requests-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+                {% csrf_token %}
+                {% for request in friend_requests %}
+
+                    <div class="friend-request" data-username="{{ request.sender.username }}">
+                        <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+                        <span style="font-size: 18px; margin-right: 20px;">
+                            <a href="{% url 'profile' request.sender.username %}">{{ request.sender.username }}</a>
+                        </span>
+                        <button class="accept-request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                            Accept
+                        </button>
+                        <button class="decline-request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                            Reject
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+    <script src="{% static 'js/friend_requests.js' %}"></script>
+{% endblock %}
+

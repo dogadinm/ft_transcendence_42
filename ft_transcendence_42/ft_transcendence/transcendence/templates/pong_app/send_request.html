@@ -1,0 +1,13 @@
+<div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
+    {% if not is_owner %}
+        <p id="request-sent-message">Request sent</p>
+
+
+        {% if block_user %}
+            <button id="unblock-user-btn" data-action="unblock_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Unblock</button>
+        {% else %}
+            <button id="block-user-btn" data-action="block_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Block</button>
+        {% endif %}
+
+    {% endif %}
+</div>

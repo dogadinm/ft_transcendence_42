@@ -3,7 +3,7 @@ function navigateToProfile() {
 
     if (usernameInput) {
         const url = `/profile/${encodeURIComponent(usernameInput)}`; // Construct URL dynamically
-        loadPage(url); // Call loadPage to fetch and update the content
+        navigate(url); // Call loadPage to fetch and update the content
     } else {
         const errorMessage = "User not found.";
         document.getElementById("error-message").textContent = errorMessage;
