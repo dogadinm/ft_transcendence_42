@@ -7,7 +7,7 @@ import logging
 from django.utils.timezone import now
 from django.db import models
 from datetime import timedelta
-
+from django.db.models import Q
 from django.contrib.auth.models import BaseUserManager
 
 class User(AbstractUser):
@@ -59,6 +59,19 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.sender.username} -> {self.receiver.username}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sender', 'receiver'],
+                name='unique_friend_request_direct'
+            ),
+            models.UniqueConstraint(
+                name='unique_friend_request_inverse',
+                condition=Q(sender__lt=models.F('receiver')),  # Гарантия уникальности в обе стороны
+                fields=['sender', 'receiver']
+            ),
+        ]
 
 class Friend(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='friends_list')

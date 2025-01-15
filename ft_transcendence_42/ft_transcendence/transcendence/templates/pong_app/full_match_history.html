@@ -11,6 +11,7 @@
                 {% if is_owner %}
                     <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
                     <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
                 {% endif %}
                 {% if is_owner or friend %}
                     <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>

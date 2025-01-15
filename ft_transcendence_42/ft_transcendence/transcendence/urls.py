@@ -14,6 +14,7 @@ urlpatterns = [
 
     path('profile/<str:username>', views.profile, name='profile'),
     path('profile_settings/', views.profile_settings, name='profile_settings'),
+    path("blockedPeople/", views.blocked_people, name='blockedPeople'),
 
     path('full_match_history/<str:username>', views.full_match_history, name='full_match_history'),
     path('full_friends_list/<str:username>', views.full_friends_list, name='full_friends_list'),   

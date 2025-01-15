@@ -10,15 +10,15 @@
     {% endif %}
 
 <div id="content" class="body">
-    <div class="profile-page-container">
-        <!-- Sidebar -->
+
         <div class="sidebar">
             <ul>
-                <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
+                    <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
                     <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
                     <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
-                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
-                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
+                    <a href="#" onclick="navigate('/full_match_history/{{ user.username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ user.username }}')">Friends</a>
             </ul>
         </div>
 
@@ -46,5 +46,5 @@
             </form>
         </div>
     </div>
-</div>
+
 {% endblock %}

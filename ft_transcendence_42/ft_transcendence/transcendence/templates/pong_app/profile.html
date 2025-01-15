@@ -8,14 +8,14 @@
 
 
 <div id="content" class="body">
-    <div class="profile-page-container">
-        <!-- Sidebar -->
+
         <div class="sidebar">
             <ul>
                 <a href="#" onclick="navigate('/profile/{{ username }}')">Profile</a>
                 {% if is_owner %}
                     <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
-                    <a href="#" onclick="navigate('/friend_requests/', true)">Friend Requests</a>
+                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
                 {% endif %}
                 {% if is_owner or friend %}
                     <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
@@ -26,7 +26,7 @@
 
 
 
-        <div class="container" id="profile_content">
+        <div>
             {% if is_owner %}
                 <h1 class="mx-5">Username:{{ user.username }}</h1>
                 <h2 class="mx-5">Nickname:{{ nickname }}</h2>
@@ -46,6 +46,7 @@
         </div>
 
 
+
 <div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
     {% if not is_owner %}
         {% csrf_token %}
@@ -54,12 +55,7 @@
                 <button id="remove-friend-btn" data-action="delete" class="profile-action-btn">Remove from friends</button>
             {% elif friend_request_taker %}
                 <div class="friend-request-actions">
-                    <button id="accept-request-btn" data-action="accept_request" data-username="{{ username }}" class="profile-action-btn" style="background-color: green;">
-                        Accept
-                    </button>
-                    <button id="reject-request-btn" data-action="decline_request" data-username="{{ username }}" class="profile-action-btn" style="background-color: red;">
-                        Reject
-                    </button>
+                    <p id="already-sent-friend-request<">This page user already sent friend request</p>
                 </div>
             {% elif not friend_request_sent %}
                 <button id="send-request-btn" data-action="send_request" class="profile-action-btn">Send friend request</button>
@@ -77,9 +73,9 @@
 </div>
 
 
-    </div>
-</div>
 
+
+      <script src="{% static 'js/profileActions.js' %}"></script>
       <style>
 
         table {
@@ -168,8 +164,9 @@
             margin-bottom: 10px;
         }
     }
-      </style>
-<script src="{% static 'js/profileActions.js' %}"></script>
+    </style>
+
+
 </div>
 {% endblock %}
 

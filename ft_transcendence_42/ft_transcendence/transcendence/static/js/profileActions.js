@@ -1,66 +1,78 @@
-document.addEventListener("DOMContentLoaded", () => {
-    document.addEventListener("click", async function (event) {
-        const target = event.target;
+function initializeProfileActionsScript() {
+    console.log('Initializing profile actions script...');
 
-        // Проверяем, есть ли действие у элемента
-        if (target && target.dataset.action) {
-            event.preventDefault();
+    if (document._profileActionsInitialized) {
+        console.log('Profile actions script is already initialized.');
+        return;
+    }
 
-            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
-            if (!csrfToken) {
-                console.error("CSRF token not found.");
-                return;
-            }
+    document._profileActionsInitialized = true;
 
-            const action = target.dataset.action;
-            const username = target.dataset.username || "";
+    document.addEventListener("click", handleProfileActionsClick);
+}
 
-            const formData = new FormData();
-            formData.append("action", action);
-            formData.append("csrfmiddlewaretoken", csrfToken.value);
+async function handleProfileActionsClick(event) {
+    const target = event.target;
 
-            if (username) {
-                formData.append("sender_request", username);
-            }
+    if (target && target.dataset.action) {
+        event.preventDefault();
+        console.log("Action triggered:", target.dataset.action);
 
-            try {
-                const response = await fetch(window.location.href, {
-                    method: "POST",
-                    body: formData,
-                    headers: { "X-Requested-With": "XMLHttpRequest" },
-                });
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (!csrfToken) {
+            console.error("CSRF token not found.");
+            return;
+        }
 
-                const contentType = response.headers.get("Content-Type");
-                if (contentType && contentType.includes("application/json")) {
-                    const data = await response.json();
+        const action = target.dataset.action;
+        const username = target.dataset.username || "";
 
-                    if (data.success) {
-                        // Обновляем HTML контент в контейнере действий
-                        const actionsContainer = document.querySelector("#profile-actions-container");
-                        const actionsContent = document.querySelector("#profile-actions-content");
+        const formData = new FormData();
+        formData.append("action", action);
+        formData.append("csrfmiddlewaretoken", csrfToken.value);
 
-                        if (actionsContent) {
-                            actionsContent.innerHTML = data.html; // вставляем обновленный HTML
-                        }
+        if (username) {
+            formData.append("sender_request", username);
+        }
 
-                        // Вставляем сообщение от сервера
-                        const messageContainer = document.querySelector("#message-container");
-                        if (messageContainer) {
-                            messageContainer.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-                        }
-                    } else {
-                        alert(data.message || "An error occurred.");
+        try {
+            const response = await fetch(window.location.href, {
+                method: "POST",
+                body: formData,
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+
+            const contentType = response.headers.get("Content-Type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+
+                console.log("Response data:", data);
+
+                if (data.success) {
+                    // Обработка успешного ответа
+                    if (data.redirect) {
+                        console.log("Redirecting to:", data.redirect);
+                        navigate(data.redirect);
+                    }
+
+                    const messageContainer = document.querySelector("#message-container");
+                    if (messageContainer) {
+                        messageContainer.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
                     }
                 } else {
-                    console.error("Invalid response format. Expected JSON.");
-                    const html = await response.text();
-                    console.error(html);
-                    alert("An unexpected error occurred.");
+                    alert(data.message || "An error occurred.");
                 }
-            } catch (error) {
-                console.error("Fetch error:", error);
-                alert("An error occurred. Please try again.");
+            } else {
+                console.error("Invalid response format. Expected JSON.");
+                const html = await response.text();
+                console.error(html);
+                alert("An unexpected error occurred.");
             }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            alert("An error occurred. Please try again.");
         }
-    });
-});
+    }
+}
+
+initializeProfileActionsScript();

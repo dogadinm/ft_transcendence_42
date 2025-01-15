@@ -1,7 +1,7 @@
 document.getElementById("login-form").addEventListener("submit", async function (event) {
-    event.preventDefault(); // Предотвращает стандартную отправку формы
+    event.preventDefault();
 
-    const formData = new FormData(this); // Собирает данные из формы
+    const formData = new FormData(this);
     try {
         const response = await fetch("/login/", {
             method: "POST",

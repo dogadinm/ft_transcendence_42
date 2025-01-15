@@ -5,3 +5,4 @@ Pillow
 django-oauth-toolkit
 django-extensions
 social-auth-app-django
+channels_redis
