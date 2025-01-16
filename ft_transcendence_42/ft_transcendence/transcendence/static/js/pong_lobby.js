@@ -18,7 +18,7 @@
     chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
-
+        console.log(`game_update_${room}`);
 
         switch (data.type) {
             case "connection":
@@ -226,9 +226,10 @@
 
     chatGroupSocket.onmessage = function (a) {
         const chat_data = JSON.parse(a.data);
+        console.log(chat_data.type)
         switch (chat_data.type) {
 
-            case "chat":
+            case `chat_message_${room}`:
                 if (Array.isArray(chat_data.messages)) {
                     updateChatMessages(chat_data.messages);
                 } else {

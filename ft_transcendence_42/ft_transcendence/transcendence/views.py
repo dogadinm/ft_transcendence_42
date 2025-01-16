@@ -345,8 +345,8 @@ def pong_lobby(request, room_lobby):
         group.owner = admin_user
         group.save()
 
-    group.members.add(user)
-    group.save()
+    # group.members.add(user)
+    # group.save()
     return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
 
 

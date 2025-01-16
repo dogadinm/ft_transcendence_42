@@ -17,13 +17,17 @@ class PongLobby(AsyncWebsocketConsumer):
         self.game_update = 'game_update_' + self.room_lobby
         setattr(self, self.game_update, self._dynamic_game_update)
 
-        # Add user to WebSocket group and accept connection
-        await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
-        await self.accept()
 
         # Retrieve or create game room
         self.room_game = room_manager.get_or_create_room(self.room_lobby)
-        self.room_game.spectators.append(self.username)
+        if self.user not in self.room_game.people:
+            self.room_game.people.add(self.user)
+            self.room_game.spectators.append(self.username)
+
+            # Add user to WebSocket group and accept connection
+            await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
+
+        await self.accept()
         await self.broadcast_lobby_state()
 
         # Notify user of connection and initial state

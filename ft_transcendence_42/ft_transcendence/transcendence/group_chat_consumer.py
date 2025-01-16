@@ -13,14 +13,20 @@ class ChatGroupConsumer(WebsocketConsumer):
         self.user = self.scope['user']
         self.username = self.user.username
 
-        self.accept()
+        self.chat_message = 'chat_message_' + self.channel_nick
+        setattr(self, self.chat_message, self._dynamic_game_update)
 
         self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
 
+        if self.user not in self.chat_group.members.all():
+            self.chat_group.members.add(self.user)
+            async_to_sync(self.channel_layer.group_add)(
+                self.channel_group_name, self.channel_name
+            )
 
-        async_to_sync(self.channel_layer.group_add)(
-            self.channel_group_name, self.channel_name
-        )
+        self.accept()
+
+
 
         blocked_users = self.user.blocked_users.all()
         messagesql = Message.objects.filter(chat=self.chat_group).exclude(sender__in=blocked_users).order_by("created_at")
@@ -36,7 +42,7 @@ class ChatGroupConsumer(WebsocketConsumer):
         ]
 
         self.send(text_data=json.dumps({
-            'type': 'chat',
+            'type': self.chat_message,
             'messages': messages_data,
         }))
 
@@ -69,12 +75,12 @@ class ChatGroupConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 self.channel_group_name,
                 {
-                    'type': 'chat_message',
+                    'type': self.chat_message,
                     'message': message_data,
                 }
             )
 
-    def chat_message(self, event):
+    def _dynamic_game_update(self, event):
         message = event['message']
 
         sender_username = message['sender']
@@ -83,6 +89,6 @@ class ChatGroupConsumer(WebsocketConsumer):
             return
 
         self.send(text_data=json.dumps({
-            'type': 'chat',
+            'type': self.chat_message,
             'message': message,
         }))

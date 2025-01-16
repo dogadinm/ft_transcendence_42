@@ -21,6 +21,7 @@ class RoomGame:
 
     def __init__(self):
         # Game state initialization
+        self.people = set()
         self.players = {'left': None, 'right': None}
         self.paddles = {
             'left': {'paddleY': (RoomGame.FIELD_HEIGHT - RoomGame.PADDLE_HEIGHT) // 2, 'direction': 0},  # direction: -1 (up), 1 (down), 0 (stationary)
