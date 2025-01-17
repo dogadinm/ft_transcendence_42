@@ -8,7 +8,8 @@
     const room = gameDataElement.dataset.roomLobby;
     const url = `ws://${window.location.host}/ws/lobby/${room}/`;
     const chatSocket = new WebSocket(url);
-
+    const chatGroupUrl = `ws://${window.location.host}/ws/chat_group/${room}/`;
+    const chatGroupSocket = new WebSocket(chatGroupUrl);
 
 
     // Add event listeners for key events once
@@ -46,6 +47,10 @@
 
                 updateRoleDisplay(role);
                 break;
+            case "redirect":
+                console.log(data.room_lobby);
+                navigate(`/pong_lobby/${data.room_lobby}/`);
+
 
             case "timer_start":
                 startCountdown(data.countdown);
@@ -224,7 +229,22 @@
         ctx.fillText(text, startX, 20);
     }
 
+    chatGroupSocket.onmessage = function (a) {
+        const chat_data = JSON.parse(a.data);
+        console.log(chat_data.type)
+        switch (chat_data.type) {
+            case `chat_message_${room}`:
+                if (Array.isArray(chat_data.messages)) {
+                    updateChatMessages(chat_data.messages);
+                } else {
+                    appendChatMessage(chat_data.message);
+                }
+                break;
 
+            default:
+                console.warn(`Unhandled chat message type: ${chat_data.type}`);
+        }
+    };
 
     function sendChatMessage() {
         const input = document.getElementById("chat-input");
