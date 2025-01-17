@@ -2,7 +2,6 @@
 {% load static %}
 {% block body %}
 
-
 <head>
     <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
     <link type="text/css" href="{% static 'transcendence/style.css' %}" rel="stylesheet">
@@ -14,7 +13,6 @@
     <canvas id="gameCanvas" width="800" height="400" style="border:1px solid black;"></canvas>
 
     <div id="gameData" data-room-lobby="{{ room_lobby }}"></div>
-    <script src="{% static 'js/pong_lobby.js' %}" type="text/javascript"></script>
 
 
     <h1>Lobby</h1>
@@ -28,6 +26,7 @@
         <button id="readyButton">Ready</button>
         <button id="leaveRoleButton">Leave Role</button>
         <button id="leaveLobbyButton">Leave Lobby</button>
+        <button id="changeLobbyButton">Change Lobby</button>
 
         <h3>Spectators</h3>
         <div id="spectators"></div>
@@ -39,7 +38,6 @@
     <div id="chat-box" style="border: 1px solid black; height: 200px; overflow-y: scroll; padding: 5px;"></div>
     <input type="text" id="chat-input" placeholder="Type your message..." style="width: 80%;">
     <button id="sendMessage">Send</button>
-
+    <script src="{% static 'js/pong_lobby.js' %}" type="text/javascript"></script>
 </div>
 {% endblock %}
-

@@ -16,10 +16,27 @@ class PongLobby(AsyncWebsocketConsumer):
         self.role = 'spectator'
         self.game_update = 'game_update_' + self.room_lobby
         setattr(self, self.game_update, self._dynamic_game_update)
-
-
-        # Retrieve or create game room
         self.room_game = room_manager.get_or_create_room(self.room_lobby)
+
+        rooms_copy = list(room_manager.rooms.items())  # Создаем копию словаря
+
+        for room, room_obj in rooms_copy:
+            if self.user in room_obj.people:
+                # Отключаем пользователя из текущей комнаты
+                print(room)
+                await self.channel_layer.group_discard(room, self.channel_name)
+                room_obj.people.remove(self.user)
+                if self.username in room_obj.spectators:
+                    room_obj.spectators.remove(self.username)
+
+                # Если комната пуста, удаляем её
+                if not room_obj.people:
+                    del room_manager.rooms[room]
+
+                # Обновляем состояние предыдущей комнаты
+                await self.broadcast_lobby_state()
+
+
         if self.user not in self.room_game.people:
             self.room_game.people.add(self.user)
             self.room_game.spectators.append(self.username)
@@ -48,6 +65,8 @@ class PongLobby(AsyncWebsocketConsumer):
             self.room_game.ready['right'] = False
         elif self.username in self.room_game.spectators:
             self.room_game.spectators.remove(self.username)
+        elif self.user in self.room_game.people:
+            self.room_game.people.remove(self.user)
 
         # Remove room if no players remain
         if (

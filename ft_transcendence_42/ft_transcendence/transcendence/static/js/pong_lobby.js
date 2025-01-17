@@ -3,13 +3,13 @@
     let movingUp = false;
     let isReady = false;
 
+
     const gameDataElement = document.getElementById("gameData");
     const room = gameDataElement.dataset.roomLobby;
     const url = `ws://${window.location.host}/ws/lobby/${room}/`;
     const chatSocket = new WebSocket(url);
 
-    const chatGroupUrl = `ws://${window.location.host}/ws/chat_group/${room}/`;
-    const chatGroupSocket = new WebSocket(chatGroupUrl);
+
 
     // Add event listeners for key events once
     document.addEventListener('keydown', handleKeyDown);
@@ -18,7 +18,7 @@
     chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
-        console.log(`game_update_${room}`);
+
 
         switch (data.type) {
             case "connection":
@@ -224,23 +224,7 @@
         ctx.fillText(text, startX, 20);
     }
 
-    chatGroupSocket.onmessage = function (a) {
-        const chat_data = JSON.parse(a.data);
-        console.log(chat_data.type)
-        switch (chat_data.type) {
 
-            case `chat_message_${room}`:
-                if (Array.isArray(chat_data.messages)) {
-                    updateChatMessages(chat_data.messages);
-                } else {
-                    appendChatMessage(chat_data.message);
-                }
-                break;
-
-            default:
-                console.warn(`Unhandled chat message type: ${chat_data.type}`);
-        }
-    };
 
     function sendChatMessage() {
         const input = document.getElementById("chat-input");
