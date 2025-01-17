@@ -16,26 +16,15 @@ class PongLobby(AsyncWebsocketConsumer):
         self.role = 'spectator'
         self.game_update = 'game_update_' + self.room_lobby
         setattr(self, self.game_update, self._dynamic_game_update)
-        self.room_game = room_manager.get_or_create_room(self.room_lobby)
+        self.room_game = room_manager.get_or_create_room(self.room_lobby_name)
 
-        rooms_copy = list(room_manager.rooms.items())  # Создаем копию словаря
 
-        for room, room_obj in rooms_copy:
+        for room, room_obj in room_manager.rooms.items():
             if self.user in room_obj.people:
-                # Отключаем пользователя из текущей комнаты
-                print(room)
-                await self.channel_layer.group_discard(room, self.channel_name)
-                room_obj.people.remove(self.user)
-                if self.username in room_obj.spectators:
-                    room_obj.spectators.remove(self.username)
-
-                # Если комната пуста, удаляем её
-                if not room_obj.people:
-                    del room_manager.rooms[room]
-
-                # Обновляем состояние предыдущей комнаты
-                await self.broadcast_lobby_state()
-
+                # Notify old connection to close
+                await self.channel_layer.send(
+                    room, {"type": "force_disconnect"}
+                )
 
         if self.user not in self.room_game.people:
             self.room_game.people.add(self.user)
@@ -43,6 +32,7 @@ class PongLobby(AsyncWebsocketConsumer):
 
             # Add user to WebSocket group and accept connection
             await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
+        print(self.channel_name)
 
         await self.accept()
         await self.broadcast_lobby_state()
@@ -80,6 +70,7 @@ class PongLobby(AsyncWebsocketConsumer):
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)
+        print("hellooooooo")
         await self.broadcast_lobby_state()
 
     async def receive(self, text_data):
@@ -246,3 +237,8 @@ class PongLobby(AsyncWebsocketConsumer):
             'winner': event['winner'],
         }))
         await self.broadcast_lobby_state()
+
+    async def force_disconnect(self, event):
+        await self.send(text_data=json.dumps({"type": "close_connection"}))
+        print(f"Sent close message to {self.channel_name}")
+        await self.close()

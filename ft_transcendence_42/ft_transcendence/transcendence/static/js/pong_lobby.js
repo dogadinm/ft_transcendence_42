@@ -263,7 +263,7 @@
         chatSocket.close(1000, "User disconnected"); // close with code 1000 (normal)
         console.log("Closing Lobby WebSocket...");
     }
-
+    
     if (chatGroupSocket) {
         chatGroupSocket.close(1000, "User disconnected");
         console.log("Closing Chat WebSocket...");
