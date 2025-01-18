@@ -1,27 +1,16 @@
-
-from django.contrib import messages
-from django.dispatch import receiver
-from django.http import JsonResponse
-from django.contrib.auth import authenticate, login
 import requests
-from django.conf import settings
-from django.shortcuts import redirect, render
-from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import JsonResponse
+from django.conf import settings
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
-from django.contrib.auth import login
+from .forms import ProfileSettingsForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
-from django.contrib.auth import logout
-from django.shortcuts import redirect
 from django.http import JsonResponse
 
-from django.conf import settings
 
 
 def index(request):
@@ -227,24 +216,42 @@ def friend_requests(request):
 @login_required
 def profile_settings(request):
     user = request.user
+
     if request.method == "POST":
-        nickname = request.POST.get("nickname")
-        description = request.POST.get("description")
-        photo = request.FILES.get("photo")
-
-        try:
-            user.nickname = nickname
-            user.description = description
-            if photo:
-                user.photo = photo
+        form = ProfileSettingsForm(request.POST, request.FILES, user=user)
+        if form.is_valid():
+            user.nickname = form.cleaned_data["nickname"]
+            user.description = form.cleaned_data["description"]
+            if form.cleaned_data["photo"]:
+                user.photo = form.cleaned_data["photo"]
             user.save()
-        except IntegrityError:
-            return render(request, "pong_app/profile_settings.html", {
-                "message": "Username already taken."
-            })
-        return render(request, "pong_app/profile_settings.html", {"user": user})
 
-    return render(request, "pong_app/profile_settings.html", {"user": user})
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({
+                    "success": True,
+                    "message": "Settings updated successfully.",
+                    "updated_fields": {
+                        "nickname": user.nickname,
+                        "description": user.description,
+                    }
+                })
+
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({
+                    "success": False,
+                    "message": "Validation failed.",
+                    "errors": form.errors,
+                }, status=400)
+
+    else:
+        form = ProfileSettingsForm(initial={
+            "nickname": user.nickname,
+            "description": user.description,
+        })
+
+    return render(request, "pong_app/profile_settings.html", {"form": form, "user": user})
+
 
 @login_required(login_url='/login/')
 def add_friend(request):

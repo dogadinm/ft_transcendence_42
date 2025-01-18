@@ -3,48 +3,46 @@
 {% block body %}
 
 <head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
-    {% if message %}
-        <div>{{ message }}</div>
-    {% endif %}
-
 <div id="content" class="body">
 
-        <div class="sidebar">
-            <ul>
-                    <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
-                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
-                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
-                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
-                    <a href="#" onclick="navigate('/full_match_history/{{ user.username }}')">Match History</a>
-                    <a href="#" onclick="navigate('/full_friends_list/{{ user.username }}')">Friends</a>
-            </ul>
-        </div>
-
-        <div class="container mt-5">
-            <h1 class="text-center">Profile settings</h1>
-            <form method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
-                {% csrf_token %}
-
-                <div class="mb-3">
-                    <label for="nickname" class="form-label">Nickname</label>
-                    <input type="text" class="form-control" id="nickname" name="nickname" value="{{ user.nickname }}" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="photo" class="form-label">Profile photo</label>
-                    <input type="file" class="form-control" id="photo" name="photo">
-                </div>
-
-                <div class="mb-3">
-                    <label for="description" class="form-label">Descriptions</label>
-                    <textarea class="form-control" id="description" name="description" rows="4">{{ user.profile.description }}</textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Save changes</button>
-            </form>
-        </div>
+    <div class="sidebar">
+        <ul>
+            <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
+            <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+            <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+            <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
+            <a href="#" onclick="navigate('/full_match_history/{{ user.username }}')">Match History</a>
+            <a href="#" onclick="navigate('/full_friends_list/{{ user.username }}')">Friends</a>
+        </ul>
     </div>
+
+    <div class="container mt-5">
+        <h1 class="text-center">Profile settings</h1>
+        <form id="profile-settings-form" method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="nickname" class="form-label">Nickname</label>
+                <input type="text" class="form-control" id="nickname" name="nickname" value="{{ user.nickname }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="photo" class="form-label">Profile photo(png,jpeg,jpg)</label>
+                <input type="file" class="form-control" id="photo" name="photo">
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Descriptions</label>
+                <textarea class="form-control" id="description" name="description" rows="4">{{ user.profile.description }}</textarea>
+            </div>
+
+            <!-- Keep type="button" or ensure preventDefault() is working -->
+            <a href="#" class="btn btn-primary" id="save-button">Save changes</a>
+        </form>
+        <div id="settings-feedback" style="display: none;"></div>
+        <script src="{% static 'js/profileSettings.js' %}"></script>
+    </div>
+</div>
 
 {% endblock %}
