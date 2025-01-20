@@ -36,13 +36,13 @@
                     <a href="#" onclick="navigate('/chat')">Chat</a>
                     <a href="#" onclick="navigate('/pong')">Pong</a>
                     <a href="#" onclick="navigate('/bot')">Play Pong With Bot</a>
-                    <a href="#" onclick="loadPage('/doublejack')">Doublejack</a>
+                    <a href="#" onclick="navigate('/doublejack')">Doublejack</a>
 
                     <script src="{% static 'js/logout.js' %}"></script>
                 {% endif %}
                 {% if not user.is_authenticated %}
                     <a href="#" onclick="navigate('/login')">Login</a>
-                    <a href="#" onclick="loadPage('/register')">Sign Up</a>
+                    <a href="#" onclick="navigate('/register')">Sign Up</a>
                 {% endif %}
             </span>
         </nav>
