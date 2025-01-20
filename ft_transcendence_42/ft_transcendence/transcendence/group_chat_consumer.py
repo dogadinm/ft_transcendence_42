@@ -3,26 +3,36 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import User, Score, Friend, Message, ChatGroup
 from django.contrib.auth.hashers import check_password
-
+from .game import room_manager
 
 class ChatGroupConsumer(WebsocketConsumer):
     def connect(self):
         self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
 
         self.channel_group_name = f'chat_{self.channel_nick}'
+        self.room_lobby_name = f'game_{self.channel_nick}'
         self.user = self.scope['user']
         self.username = self.user.username
-
         self.chat_message = 'chat_message_' + self.channel_nick
         setattr(self, self.chat_message, self._dynamic_game_update)
 
-        self.chat_group = ChatGroup.objects.get(name=self.channel_nick)
+        # for room, room_obj in room_manager.rooms.items():
+        #     if self.user in room_obj.people:
+        #         if room != self.room_lobby_name:
+        #             return
+
+        self.chat_group, created = ChatGroup.objects.get_or_create(name=self.channel_nick)
+
+        if created:
+            self.chat_group.name = self.channel_nick
+            self.chat_group.save()
 
         if self.user not in self.chat_group.members.all():
             self.chat_group.members.add(self.user)
             async_to_sync(self.channel_layer.group_add)(
                 self.channel_group_name, self.channel_name
             )
+
 
         self.accept()
 

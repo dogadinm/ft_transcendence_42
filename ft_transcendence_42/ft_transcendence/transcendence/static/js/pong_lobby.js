@@ -237,13 +237,13 @@
                 if (Array.isArray(chat_data.messages)) {
                     updateChatMessages(chat_data.messages);
                 } else {
-                    appendChatMessage(chat_data.message);
-                }
-                break;
+                   appendChatMessage(chat_data.message);
+               }
+               break;
 
-            default:
-                console.warn(`Unhandled chat message type: ${chat_data.type}`);
-        }
+          default:
+               console.warn(`Unhandled chat message type: ${chat_data.type}`);
+       }
     };
 
     function sendChatMessage() {

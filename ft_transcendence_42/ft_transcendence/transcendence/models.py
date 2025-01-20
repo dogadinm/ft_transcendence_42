@@ -11,12 +11,13 @@ from django.db.models import Q
 from django.contrib.auth.models import BaseUserManager
 
 class User(AbstractUser):
-    nickname = models.CharField(max_length=30, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
     blocked_users = models.ManyToManyField('self', blank=True, related_name='blocking_users', symmetrical=False)
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(default=now)
+    lobby = models.CharField(max_length=30, blank=True, null=True)
+    user_42 = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.pk:

@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.conf import settings
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
-from .forms import ProfileSettingsForm
+from .forms import ProfileSettingsForm, LoginForm, RegistrationForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -29,20 +29,21 @@ def user_links(request):
 def login_view(request):
     if request.user.is_authenticated:
         return render(request, "pong_app/index.html")
-        # return JsonResponse({"success": True, "redirect": "/"}, status=200)
-
     if request.method == "POST":
-        # Parse data from the POST request
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            login(request, user)
-            return JsonResponse({"success": True, "redirect": "/"}, status=200)
-            # return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_authenticated.html"})
+            if user:
+                login(request, user)
+                return JsonResponse({"success": True, "redirect": "/"}, status=200)
+            else:
+                return JsonResponse({"success": False, "error": "Invalid username and/or password."}, status=400)
         else:
-            return JsonResponse({"success": False, "error": "Invalid username and/or password."}, status=400)
+            errors = form.errors.as_json()
+            return JsonResponse({"success": False, "error": errors}, status=400)
     elif request.method == "GET":
         return render(request, "pong_app/login.html")
 
@@ -61,44 +62,33 @@ def logout_view(request):
 
 
 def register(request):
-    if (request.user.is_authenticated):
+    if request.user.is_authenticated:
         return render(request, "pong_app/index.html")
+
     if request.method == "POST":
-        username = request.POST.get("username")
-        nickname = request.POST.get("nickname")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        confirmation = request.POST.get("confirmation")
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            email = form.cleaned_data["email"]
+            password = form.cleaned_data["password"]
 
-        if password != confirmation:
-            return JsonResponse({"error": "Passwords must match."}, status=400)
+            # Create the user and other related objects
+            user = User.objects.create_user(username=username, password=password, email=email)
+            user.save()
 
-        if len(password) < 8:
-            return JsonResponse({"error": "Password must be at least 8 characters long."}, status=400)
-        if not any(char.isupper() for char in password):
-            return JsonResponse({"error": "Password must contain at least one uppercase letter."}, status=400)
-        if not any(char.isdigit() for char in password):
-            return JsonResponse({"error": "Password must contain at least one digit."}, status=400)
+            Score.objects.create(user=user, score=10)
+            Friend.objects.create(owner=user)
 
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({"error": "Username already taken."}, status=400)
+            login(request, user)
+            return JsonResponse({"redirect": "/"})
+        else:
+            print(form.errors)
+            return JsonResponse({"error": form.errors}, status=400)
 
-        if User.objects.filter(nickname=nickname).exists():
-            return JsonResponse({"error": "Nickname already taken."}, status=400)
-
-        user = User.objects.create_user(username=username, password=password, nickname=nickname)
-        user.save()
-
-        Score.objects.create(user=user, score=10)
-        Friend.objects.create(owner=user)
-
-        login(request, user)
-        return JsonResponse({"redirect": "/"})
     elif request.method == "GET":
-        return render(request, "pong_app/register.html")
+        form = RegistrationForm()
 
-    return JsonResponse({"error": "Invalid request method."}, status=405)
-
+    return render(request, "pong_app/register.html", {"form": form})
 
 
 
@@ -160,7 +150,6 @@ def profile(request, username):
 
     return render(request, "pong_app/profile.html", {
         "username": page_user.username,
-        "nickname": page_user.nickname,
         "description": page_user.description,
         "photo": page_user.photo.url,
         "score": score.score,
@@ -220,7 +209,7 @@ def profile_settings(request):
     if request.method == "POST":
         form = ProfileSettingsForm(request.POST, request.FILES, user=user)
         if form.is_valid():
-            user.nickname = form.cleaned_data["nickname"]
+            user.username = form.cleaned_data["username"]
             user.description = form.cleaned_data["description"]
             if form.cleaned_data["photo"]:
                 user.photo = form.cleaned_data["photo"]
@@ -231,7 +220,7 @@ def profile_settings(request):
                     "success": True,
                     "message": "Settings updated successfully.",
                     "updated_fields": {
-                        "nickname": user.nickname,
+                        "username": user.username,
                         "description": user.description,
                     }
                 })
@@ -246,7 +235,7 @@ def profile_settings(request):
 
     else:
         form = ProfileSettingsForm(initial={
-            "nickname": user.nickname,
+            "username": user.username,
             "description": user.description,
         })
 
@@ -342,18 +331,6 @@ def blocked_people(request):
 
 @login_required(login_url='/login/')
 def pong_lobby(request, room_lobby):
-    user = request.user
-    username = user.username
-    admin_user = get_object_or_404(User, username=username)
-    group, created = ChatGroup.objects.get_or_create(name=room_lobby)
-    group.save()
-
-    if created:
-        group.owner = admin_user
-        group.save()
-
-    # group.members.add(user)
-    # group.save()
     return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
 
 
@@ -395,7 +372,6 @@ def callback(request):
         # Step 3: Create or get the user in the database
         user, created = User.objects.get_or_create(
             username=user_data['login'],
-            nickname= user_data['first_name'] + ' ' + user_data['last_name'],
             email=user_data['email'],
         )
 

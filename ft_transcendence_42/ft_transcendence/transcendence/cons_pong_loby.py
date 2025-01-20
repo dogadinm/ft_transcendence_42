@@ -6,6 +6,7 @@ from .models import ChatGroup
 from django.shortcuts import get_object_or_404
 from asgiref.sync import sync_to_async
 
+
 class PongLobby(AsyncWebsocketConsumer):
     async def connect(self):
         # Initialize room and user context
@@ -27,9 +28,8 @@ class PongLobby(AsyncWebsocketConsumer):
                         'type': 'redirect',
                         'room_lobby': room[5:]
                     }))
+                    await self.close()
                     return
-
-
 
         if self.user not in self.room_game.people:
             self.room_game.people.add(self.user)
@@ -37,7 +37,6 @@ class PongLobby(AsyncWebsocketConsumer):
 
             # Add user to WebSocket group and accept connection
             await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
-
 
         await self.accept()
         await self.broadcast_lobby_state()
@@ -72,8 +71,12 @@ class PongLobby(AsyncWebsocketConsumer):
             not self.room_game.spectators
         ):
             room_manager.remove_room(self.room_lobby)
-            group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
-            await sync_to_async(group.delete)()
+            try:
+                group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
+                await sync_to_async(group.delete)()
+            except:
+                print("ChatGroup doesnt exist")
+
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)
