@@ -5,6 +5,7 @@ import string
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import User, Score, Friend, Message, ChatGroup, PrivateMessage
+from .game import room_manager
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -72,10 +73,15 @@ class ChatConsumer(WebsocketConsumer):
                 }
             )
         elif invite:
-            random_length = random.randint(1, 8)
+            random_string = None
+            while True:
+                random_length = random.randint(1, 8)
+                random_string = self.generate_random_string(random_length)
+                link = 'http://127.0.0.1:8000/pong_lobby/' + random_string + '/'
+                if(f'game_{random_string}' not in room_manager.rooms):
+                    break
 
-            random_string = self.generate_random_string(random_length)
-            link = 'http://127.0.0.1:8000/pong_lobby/' + random_string + '/'
+
             PrivateMessage.objects.create(
                 sender=self.user,
                 receiver=friend,

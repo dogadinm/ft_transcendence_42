@@ -4,10 +4,10 @@
     let isReady = false;
 
 
-    const gameDataElement = document.getElementById("gameData");
-    const room = gameDataElement.dataset.roomLobby;
-    const url = `ws://${window.location.host}/ws/lobby/${room}/`;
-    const lobbySocket = new WebSocket(url);
+    let gameDataElement = document.getElementById("gameData");
+    let room = gameDataElement.dataset.roomLobby;
+    let url = `ws://${window.location.host}/ws/lobby/${room}/`;
+    lobbySocket = new WebSocket(url);
 
 
 
