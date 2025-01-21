@@ -13,6 +13,7 @@
 
         currentChat = { type, name };
 
+
         if (type === "private") {
             document.getElementById('chat-header').innerText = `Chat with: ${name}`;
         } else if (type === "group") {
@@ -35,18 +36,19 @@
                 const messageClass = data.sender === currentUser ? 'message-right' : 'message-left';
                 if (data.messages) {
                     data.messages.forEach((msg) => {
-
                         const msgClass = msg.sender === currentUser ? 'message-right' : 'message-left';
                         messages.insertAdjacentHTML(
                             'beforeend',
-                            `<div class="message ${msgClass}"><p>${msg.message}</p></div>`
+                            `<div class="message ${msgClass}">
+                                <p>${msg.message.startsWith('http') ? `<a href="${msg.message}" target="_blank">${msg.message}</a>` : msg.message}</p>
+                            </div>`
                         );
                     });
                 } else {
                     if (type === "private") {
                         messages.insertAdjacentHTML(
                         'beforeend',
-                        `<div class="message ${messageClass}"><p>${data.message}</p></div>`
+                        `<div class="message ${messageClass}"><p>${data.message.startsWith('http') ? `<a href="${data.message}" target="_blank">${data.message}</a>` : data.message}</p></div>`
                     );
                     } else if (type === "group") {
                         messages.insertAdjacentHTML(
@@ -85,6 +87,18 @@
             message: messageInput }));
         document.getElementById('message-form').reset();
     });
+
+    document.getElementById('game-invite-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      let a = document.getElementById('chat-header');
+      let name = a.textContent.split(': ')[1]; // Extract username after "Chat with: "
+      console.log(name); // Output: admin
+      chatSocket.send(JSON.stringify({
+        invite: 'invite',
+        friend: name,
+      }));
+    });
+
 
 
     const statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);

@@ -21,14 +21,17 @@
         </div>
 
     {% if is_owner %}
-      <div class="form-group">
-          <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
-      </div>
-      <div class="find-friend">
-          <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
-      </div>
+      <form id="find-friend-form" onsubmit="event.preventDefault(); navigateToProfile();">
+          <div>
+              <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
+          </div>
+          <div class="find-friend">
+              <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
+          </div>
+          {% csrf_token %}
+      </form>
       <p id="error-message" style="color: red;"></p>
-      <script src="{% static 'js/find_friend.js' %}"></script>
+      <script src="{% static 'js/findFriend.js' %}"></script>
     {% endif %}
 
 

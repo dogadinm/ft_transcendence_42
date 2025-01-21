@@ -67,10 +67,14 @@
                 />
                 <button type="submit">Send</button>
             </form>
+            <form id="game-invite-form">
+                <button type="submit">Invite</button>
+            </form>
+
         </div>
     </div>
 
-    <div id="gameData" data-current-user="{{ current_user }}" data-profile-base-url="{% url 'profile' 'username_placeholder' %}"></div>
+    <div id="gameData" data-current-user="{{ current_user }}" data-profile-base-url="{% url 'profile' 'username_placeholder' %}" data-friend-user="{{ current_user }}"></div>
     <script src="{% static 'js/chat.js' %}" type="text/javascript"></script>
 
 

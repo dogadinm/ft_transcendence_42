@@ -2,6 +2,7 @@ from django import forms
 from .models import User, ChatGroup
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
+from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate
 import os
 
@@ -116,3 +117,28 @@ class RegistrationForm(forms.Form):
 class LoginForm(forms.Form):
     username = forms.CharField(min_length=3, max_length=25, required=True)
     password = forms.CharField(min_length=8, widget=forms.PasswordInput, required=True)
+
+class FiendFriendForm(forms.Form):
+    username = forms.CharField(
+        min_length=3,
+        max_length=25,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Lobby can only contain letters and numbers.')],
+        error_messages={
+            'min_length': 'Username must be at least 3 characters long.',
+            'max_length': 'Username cannot be more than 25 characters.',
+        }
+    )
+class FiendLobbyForm(forms.Form):
+    lobby_name = forms.CharField(
+        min_length=1,
+        max_length=8,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Lobby can only contain letters and numbers.')],
+        error_messages={
+            'min_length': 'Lobby must be at least 1 character long.',
+            'max_length': 'Lobby cannot be more than 8 characters.',
+        }
+    )

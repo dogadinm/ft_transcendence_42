@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.conf import settings
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
-from .forms import ProfileSettingsForm, LoginForm, RegistrationForm
+from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -82,7 +82,6 @@ def register(request):
             login(request, user)
             return JsonResponse({"redirect": "/"})
         else:
-            print(form.errors)
             return JsonResponse({"error": form.errors}, status=400)
 
     elif request.method == "GET":
@@ -242,13 +241,36 @@ def profile_settings(request):
     return render(request, "pong_app/profile_settings.html", {"form": form, "user": user})
 
 
-@login_required(login_url='/login/')
-def add_friend(request):
-    return render(request, 'pong_app/add_friend.html')
+def find_friend(request):
+    if request.method == "POST":
+        form = FiendFriendForm(request.POST)
+        if form.is_valid():
+            print(form)
+            username = form.cleaned_data["username"]
+            try:
+                user = User.objects.get(username=username)
+                return JsonResponse({"exists": True, "username": user.username})
+            except User.DoesNotExist:
+                return JsonResponse({"exists": False, "message": "User not found."})
+        else:
+            return JsonResponse({"exists": False, "message": "Invalid data."})
+
+    if request.user.is_authenticated:
+        return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_authenticated.html"})
+    else:
+        return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_guest.html"})
+
 
 @login_required(login_url='/login/')
-def pong(request):
-    return render(request, 'pong_app/pong.html')
+def find_lobby(request):
+    if request.method == "POST":
+        form = FiendLobbyForm(request.POST)
+        if form.is_valid():
+            lobby_name = form.cleaned_data["lobby_name"]
+            return JsonResponse({"exists": True, "lobby_name": lobby_name})
+        else:
+            return JsonResponse({"exists": False, "message": "Invalid data."})
+    return render(request, 'pong_app/find_lobby.html')
 
 @login_required(login_url='/login/')
 def invite_to_game(request):
@@ -331,7 +353,21 @@ def blocked_people(request):
 
 @login_required(login_url='/login/')
 def pong_lobby(request, room_lobby):
+    if len(room_lobby) < 1:
+        return render(request, 'pong_app/find_lobby.html',
+                      {'error_message': 'Lobby must be at least 1 character long.'})
+    elif len(room_lobby) > 8:
+        return render(request, 'pong_app/find_lobby.html',
+                      {'error_message': 'Lobby cannot be more than 8 characters.'})
+    if not all(c.isalnum() for c in room_lobby):
+        return render(request, 'pong_app/find_lobby.html',
+                      {'error_message': 'Lobby can only contain letters and numbers.'})
+    user = request.user
+    if(user.lobby and user.lobby != f'game_{room_lobby}'):
+        return render(request, 'pong_app/pong_lobby.html', {'room_lobby': user.lobby[5:]})
+
     return render(request, 'pong_app/pong_lobby.html', {'room_lobby': room_lobby})
+
 
 
 

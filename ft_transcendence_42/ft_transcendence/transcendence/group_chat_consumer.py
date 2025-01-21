@@ -5,7 +5,7 @@ from .models import User, Score, Friend, Message, ChatGroup
 from django.contrib.auth.hashers import check_password
 from .game import room_manager
 
-class ChatGroupConsumer(WebsocketConsumer):
+class GroupChatConsumer(WebsocketConsumer):
     def connect(self):
         self.channel_nick = self.scope['url_route']['kwargs']['channel_nick']
 

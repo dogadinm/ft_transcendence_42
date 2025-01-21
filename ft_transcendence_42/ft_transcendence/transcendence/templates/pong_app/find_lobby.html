@@ -1,0 +1,21 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+
+<head>
+	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+<div id="content" class="body">
+      <form id="find-lobby-form" onsubmit="event.preventDefault(); navigateToLobby();">
+          {% csrf_token %}
+          <div>
+              <input autofocus class="form-control" type="text" id="lobby-input" placeholder="Lobby">
+          </div>
+          <div class="find-lobby">
+              <a href="#" id="find-lobby-link" onclick="navigateToLobby()">Find lobby</a>
+          </div>
+      </form>
+      <p id="error-message" style="color: red;"></p>
+      <script src="{% static 'js/findLobby.js' %}"></script>
+</div>
+{% endblock %}

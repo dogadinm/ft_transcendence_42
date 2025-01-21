@@ -5,6 +5,7 @@ from .game import room_manager
 from .models import ChatGroup
 from django.shortcuts import get_object_or_404
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 
 
 class PongLobby(AsyncWebsocketConsumer):
@@ -19,17 +20,14 @@ class PongLobby(AsyncWebsocketConsumer):
         setattr(self, self.game_update, self._dynamic_game_update)
         self.room_game = room_manager.get_or_create_room(self.room_lobby_name)
 
-
-        for room, room_obj in room_manager.rooms.items():
-            if self.user in room_obj.people:
-                if room != self.room_lobby_name:
-                    await self.accept()
-                    await self.send(text_data=json.dumps({
-                        'type': 'redirect',
-                        'room_lobby': room[5:]
-                    }))
-                    await self.close()
-                    return
+        if(self.user.lobby and self.user.lobby != self.room_lobby_name):
+                await self.accept()
+                await self.send(text_data=json.dumps({
+                    'type': 'redirect',
+                    'room_lobby': self.user.lobby[5:]
+                }))
+                await self.close()
+                return
 
         if self.user not in self.room_game.people:
             self.room_game.people.add(self.user)
@@ -37,6 +35,9 @@ class PongLobby(AsyncWebsocketConsumer):
 
             # Add user to WebSocket group and accept connection
             await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
+            self.user.lobby = self.room_lobby_name
+            await database_sync_to_async(self.user.save)()
+
 
         await self.accept()
         await self.broadcast_lobby_state()
@@ -63,20 +64,21 @@ class PongLobby(AsyncWebsocketConsumer):
         if self.user in self.room_game.people:
             print(self.user in self.room_game.people)
             self.room_game.people.remove(self.user)
-        print(self.room_game.people)
         # Remove room if no players remain
         if (
             not self.room_game.players['left'] and
             not self.room_game.players['right'] and
             not self.room_game.spectators
         ):
-            room_manager.remove_room(self.room_lobby)
+            room_manager.remove_room(self.room_lobby_name)
             try:
                 group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
-                await sync_to_async(group.delete)()
+                await database_sync_to_async(group.delete)()
             except:
                 print("ChatGroup doesnt exist")
-
+        if not (self.user.lobby and self.user.lobby != self.room_lobby_name):
+            self.user.lobby = None
+            await database_sync_to_async(self.user.save)()
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)

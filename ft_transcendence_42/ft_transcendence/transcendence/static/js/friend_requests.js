@@ -9,11 +9,9 @@ function initializeFriendRequestsScript() {
         return;
     }
 
-    // Добавляем обработчик клика на контейнер
     requestsContainer.addEventListener('click', function (e) {
         console.log('Click detected:', e.target);
 
-        // Проверяем, что клик был на кнопке "Accept" или "Decline"
         if (e.target.classList.contains('accept-request') || e.target.classList.contains('decline-request')) {
             const button = e.target;
             const action = button.classList.contains('accept-request') ? 'accept_request' : 'decline_request';
@@ -27,7 +25,6 @@ function initializeFriendRequestsScript() {
             const username = requestDiv.getAttribute('data-username');
             console.log('Action:', action, 'Username:', username);
 
-            // Отправка POST-запроса
             fetch('/friend_requests/', {
                 method: 'POST',
                 headers: {
@@ -45,14 +42,12 @@ function initializeFriendRequestsScript() {
                     console.log('Response data:', data);
 
                     if (data.success) {
-                        // Успешное выполнение
                         if (action === 'accept_request') {
                             alert('Friend request accepted.');
                         } else {
                             alert('Friend request declined.');
                         }
 
-                        // Удаляем элемент запроса
                         requestDiv.remove();
                     } else {
                         alert('Error processing the request.');
@@ -65,5 +60,4 @@ function initializeFriendRequestsScript() {
     });
 }
 
-// Вызываем функцию инициализации
 initializeFriendRequestsScript();

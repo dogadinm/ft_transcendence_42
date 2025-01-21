@@ -23,12 +23,11 @@ urlpatterns = [
 	path("doublejack/", views.doublejack, name='doublejack'),
     path("pong_lobby/<str:room_lobby>/", views.pong_lobby, name='pong_lobby'),
 
-
-    path('api/friend_requests_count/', views.get_friend_requests_count, name='friend_requests_count'),
+    path("find_friend/", views.find_friend, name='find_friend'),
     path('invite_to_game/', views.invite_to_game, name='invite_to_game'),
 
 
-    re_path(r'pong/', views.pong, name="pong"),
+    re_path(r'find_lobby/', views.find_lobby, name="find_lobby"),
     path('login/42/', views.login_with_42, name='login_with_42'),
     path('callback/', views.callback, name='callback'),
     path('user-links/', views.user_links, name='user_links'),
