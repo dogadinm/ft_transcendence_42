@@ -1,0 +1,21 @@
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+
+<head>
+	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+<div id="content" class="body">
+      <form id="find-doublejack-form" onsubmit="event.preventDefault(); navigateToDoublejack();">
+          {% csrf_token %}
+          <div>
+              <input autofocus class="form-control" type="text" id="doublejack-input" placeholder="Doublejack">
+          </div>
+          <div class="find-doublejack">
+              <a href="#" id="find-doublejack-link" onclick="navigateToDoublejack()">Find doublejack lobby</a>
+          </div>
+      </form>
+      <p id="error-message" style="color: red;"></p>
+      <script src="{% static 'js/findDoublejack.js' %}"></script>
+</div>
+{% endblock %}
