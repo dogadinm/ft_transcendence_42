@@ -2,6 +2,24 @@
 {% load static %}
 {% block body %}
 
+<div id="content" class="body">
+    <div class="profile-page-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <a href="#" onclick="navigate('/profile/{{ username }}')">Profile</a>
+                {% if is_owner %}
+                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
+                {% endif %}
+                {% if is_owner or friend %}
+                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+                {% endif %}
+            </ul>
+        </div>
+
   <h1>Match History</h1>
   <table>
     <thead>
@@ -16,9 +34,9 @@
     <tbody>
       {% for match in page_obj %}
       <tr>
-        <td><a href="{% url 'profile' match.winner.username  %}">{{ match.winner.username }}</a></td>
+        <td><a href="#" onclick="navigate('/profile/{{match.winner.username }}')">{{ match.winner.username }}</a></td>
         <td>{{ match.winner_match_score }} - {{ match.loser_match_score }}</td>
-        <td><a href="{% url 'profile' match.loser.username  %}">{{ match.loser.username }}</a></td>
+        <td><a href="#" onclick="navigate('/profile/{{match.loser.username }}')">{{ match.loser.username }}</a></td>
         <td>{{ match.created_at|date:"Y-m-d H:i" }}</td>
         {% if username == match.winner.username %}
           <td>+{{ match.winner_change_score}}</td>
@@ -36,16 +54,17 @@
 
   <div class="pagination">
     {% if page_obj.has_previous %}
-      <a href="?page=1">First</a>
-      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page=1')">First</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.previous_page_number }}')">Previous</a>
     {% endif %}
 
     <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">Next</a>
-      <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.next_page_number }}')">Next</a>
+      <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.paginator.num_pages  }}')">Last</a>
     {% endif %}
+  </div>
   </div>
 
   <style>
@@ -90,4 +109,5 @@
       border: 1px solid #007bff;
     }
   </style>
+</div>
 {% endblock %}

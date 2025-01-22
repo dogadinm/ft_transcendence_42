@@ -1,7 +1,6 @@
-{% extends "pong_app/layout.html" %}
-{% block title %}DoubleJack{% endblock %}
+
 {% load static %}
-{% block body %}
+
     <h1>Doublejack</h1>
 	<div id="other_score">score</div>
 	<div id="other_hand">hand</div>
@@ -36,5 +35,5 @@
 
     <p>Status: <span id="ws_status">Not connected</span></p>
 	<script src="{% static 'js/doublejack.js' %}"></script>
-{% endblock %}
+
 

@@ -5,6 +5,8 @@ from .game import room_manager
 from .models import ChatGroup
 from django.shortcuts import get_object_or_404
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
+
 
 class PongLobby(AsyncWebsocketConsumer):
     async def connect(self):
@@ -14,14 +16,30 @@ class PongLobby(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.username = self.user.username
         self.role = 'spectator'
+        self.game_update = 'game_update_' + self.room_lobby
+        setattr(self, self.game_update, self._dynamic_game_update)
+        self.room_game = room_manager.get_or_create_room(self.room_lobby_name)
 
-        # Add user to WebSocket group and accept connection
-        await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
+        if(self.user.lobby and self.user.lobby != self.room_lobby_name):
+                await self.accept()
+                await self.send(text_data=json.dumps({
+                    'type': 'redirect',
+                    'room_lobby': self.user.lobby[5:]
+                }))
+                await self.close()
+                return
+
+        if self.user not in self.room_game.people:
+            self.room_game.people.add(self.user)
+            self.room_game.spectators.append(self.username)
+
+            # Add user to WebSocket group and accept connection
+            await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
+            self.user.lobby = self.room_lobby_name
+            await database_sync_to_async(self.user.save)()
+
+
         await self.accept()
-
-        # Retrieve or create game room
-        self.room_game = room_manager.get_or_create_room(self.room_lobby)
-        self.room_game.spectators.append(self.username)
         await self.broadcast_lobby_state()
 
         # Notify user of connection and initial state
@@ -33,7 +51,8 @@ class PongLobby(AsyncWebsocketConsumer):
         await self.send_game_update(self.room_game.get_game_state())
 
     async def disconnect(self, close_code):
-        # Handle player or spectator disconnection
+        # Handle player or spectator disconnecti
+
         if self.username == self.room_game.players.get('left'):
             self.room_game.players['left'] = None
             self.room_game.ready['left'] = False
@@ -42,16 +61,24 @@ class PongLobby(AsyncWebsocketConsumer):
             self.room_game.ready['right'] = False
         elif self.username in self.room_game.spectators:
             self.room_game.spectators.remove(self.username)
-
+        if self.user in self.room_game.people:
+            print(self.user in self.room_game.people)
+            self.room_game.people.remove(self.user)
         # Remove room if no players remain
         if (
             not self.room_game.players['left'] and
             not self.room_game.players['right'] and
             not self.room_game.spectators
         ):
-            room_manager.remove_room(self.room_lobby)
-            group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
-            await sync_to_async(group.delete)()
+            room_manager.remove_room(self.room_lobby_name)
+            try:
+                group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
+                await database_sync_to_async(group.delete)()
+            except:
+                print("ChatGroup doesnt exist")
+        if not (self.user.lobby and self.user.lobby != self.room_lobby_name):
+            self.user.lobby = None
+            await database_sync_to_async(self.user.save)()
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)
@@ -181,7 +208,7 @@ class PongLobby(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_lobby_name,
             {
-                'type': 'game_update',
+                'type':  self.game_update,
                 'game_state': game_state,
             }
         )
@@ -209,9 +236,9 @@ class PongLobby(AsyncWebsocketConsumer):
             'state': event['state'],
         }))
 
-    async def game_update(self, event):
+    async def _dynamic_game_update(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'game_update',
+            'type': self.game_update,
             **event['game_state'],
         }))
 
@@ -221,3 +248,4 @@ class PongLobby(AsyncWebsocketConsumer):
             'winner': event['winner'],
         }))
         await self.broadcast_lobby_state()
+

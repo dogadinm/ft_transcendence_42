@@ -9,7 +9,7 @@
     <head>
 
         <head>
-            <title>42Prague Pong</title>
+            <title>Pong</title>
             <link rel="icon" type="image/png" href="/static/transcendence/42po.png">
           </head>
 
@@ -22,32 +22,30 @@
     </head>
     <body>
 
+
         <!-- <h1>Welcome to the Pong game!</h1> -->
         <nav>
-            <a href="{% url 'index' %}">Main page</a>
-            <!--{% if user.is_authenticated %}-->
-                <a href="{% url 'profile' username=user.username %}">
-                    <strong>{{ user.username }}</strong>
-                    <span id="friend-requests-badge"></span>
-                </a>
-                <a href="{% url 'logout' %}">Log out</a>
-                <a href="{% url 'chat'%}">Chat</a>
-            <!--{% endif %}
-            {% if not user.is_authenticated %}-->
-                <a href="{% url 'login' %}">Login</a>
-                <a href="{% url 'register' %}">Sign Up</a>
+            <a href="#" onclick="navigate('/')">Main page</a>
+            <span id="user-links">
+                {% if user.is_authenticated %}
+                    <a href="#" onclick="navigate('/profile/{{ user.username }}')">
+                        <strong>{{ user.username }}</strong>
+                        <span id="friend-requests-badge"></span>
+                    </a>
+                    <a href="#" onclick="logOut()">Log out</a>
+                    <a href="#" onclick="navigate('/chat')">Chat</a>
+                    <a href="#" onclick="navigate('/find_lobby')">Pong</a>
+                    <a href="#" onclick="navigate('/bot')">Play Pong With Bot</a>
+                    <a href="#" onclick="navigate('/doublejack')">Doublejack</a>
+					<a href="#" onclick="navigate('/find_tournament/')">Tournament</a>
 
-        <div id="pong-game-section" class="section">
-            <h2>Pong Game</h2>
-            <canvas></canvas>
-            <p>Control the left player by using up and down arrow keys</p>
-        </div>
-
-
-            <!--{% endif %}-->
-            <a href="{% url 'pong' %}">Pong</a>
-            <a href="{% url 'bot' %}">Play Pong With Bot</a>
-            <a href="{% url 'doublejack' %}">Doublejack</a>
+                    <script src="{% static 'js/logout.js' %}"></script>
+                {% endif %}
+                {% if not user.is_authenticated %}
+                    <a href="#" onclick="navigate('/login')">Login</a>
+                    <a href="#" onclick="navigate('/register')">Sign Up</a>
+                {% endif %}
+            </span>
         </nav>
 
         <!-- Content Block -->
@@ -56,21 +54,10 @@
             {% block body %}
             {% endblock %}
         </div>
-
         <script src="{% static 'js/script.js' %}"></script>
 
-
     </body>
-<style>
-    #friend-requests-badge {
-        background-color: green;
-        color: white;
-        border-radius: 50%;
-        padding: 5px 10px;
-        font-size: 14px;
-        margin-left: 5px;
-    }
-</style>
+
 
         {% block scripts %}
         {% endblock %}

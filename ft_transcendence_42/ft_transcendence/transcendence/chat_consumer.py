@@ -1,7 +1,11 @@
 import json
+from traceback import print_tb
+import random
+import string
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from .models import User, Score, Friend, Message, ChatGroup, PrivateMessage
+from .game import room_manager
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -50,9 +54,10 @@ class ChatConsumer(WebsocketConsumer):
     def receive(self, text_data):
         data = json.loads(text_data)
         message = data.get('message')
+        invite = data.get('invite')
+        friend = User.objects.get(username=self.friend_username)
 
         if message:
-            friend = User.objects.get(username=self.friend_username)
             PrivateMessage.objects.create(
                 sender=self.user,
                 receiver=friend,
@@ -64,6 +69,29 @@ class ChatConsumer(WebsocketConsumer):
                 {
                     'type': 'chat_message',
                     'message': message,
+                    'sender': self.user.username,
+                }
+            )
+        elif invite:
+            random_string = None
+            while True:
+                random_length = random.randint(1, 8)
+                random_string = self.generate_random_string(random_length)
+                link = 'http://127.0.0.1:8000/pong_lobby/' + random_string + '/'
+                if(f'game_{random_string}' not in room_manager.rooms):
+                    break
+
+
+            PrivateMessage.objects.create(
+                sender=self.user,
+                receiver=friend,
+                text=link
+            )
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_name,
+                {
+                    'type': 'chat_message',
+                    'message': link,
                     'sender': self.user.username,
                 }
             )
@@ -83,3 +111,10 @@ class ChatConsumer(WebsocketConsumer):
     @staticmethod
     def create_room_name(user1, user2):
         return f"private_{min(user1, user2)}_{max(user1, user2)}"
+
+
+    def generate_random_string(self, length):
+        letters_and_digits = string.ascii_letters + string.digits
+        result_str = ''.join(random.choice(letters_and_digits) for _ in range(length))
+        return result_str
+

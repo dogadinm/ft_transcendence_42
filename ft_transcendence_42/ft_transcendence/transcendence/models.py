@@ -7,16 +7,20 @@ import logging
 from django.utils.timezone import now
 from django.db import models
 from datetime import timedelta
-
+from django.db.models import Q
 from django.contrib.auth.models import BaseUserManager
 
 class User(AbstractUser):
-    nickname = models.CharField(max_length=30, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
     blocked_users = models.ManyToManyField('self', blank=True, related_name='blocking_users', symmetrical=False)
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(default=now)
+    lobby = models.CharField(max_length=30, blank=True, null=True)
+    user_42 = models.BooleanField(default=False)
+    wallet_address = models.CharField(max_length=100, blank=True, null=True)
+    wallet_prt_key = models.CharField(max_length=150, blank=True, null=True)
+
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -59,6 +63,19 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.sender.username} -> {self.receiver.username}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sender', 'receiver'],
+                name='unique_friend_request_direct'
+            ),
+            models.UniqueConstraint(
+                name='unique_friend_request_inverse',
+                condition=Q(sender__lt=models.F('receiver')),  # Гарантия уникальности в обе стороны
+                fields=['sender', 'receiver']
+            ),
+        ]
 
 class Friend(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='friends_list')

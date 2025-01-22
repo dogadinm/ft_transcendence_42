@@ -4,19 +4,18 @@
     let isReady = false;
 
 
-    const gameDataElement = document.getElementById("gameData");
-    const room = gameDataElement.dataset.roomLobby;
-    const url = `ws://${window.location.host}/ws/lobby/${room}/`;
-    const chatSocket = new WebSocket(url);
-    const chatGroupUrl = `ws://${window.location.host}/ws/chat_group/${room}/`;
-    const chatGroupSocket = new WebSocket(chatGroupUrl);
+    let gameDataElement = document.getElementById("gameData");
+    let room = gameDataElement.dataset.roomLobby;
+    let url = `ws://${window.location.host}/ws/lobby/${room}/`;
+    lobbySocket = new WebSocket(url);
+
 
 
     // Add event listeners for key events once
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
 
-    chatSocket.onmessage = function (e) {
+    lobbySocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
 
@@ -87,7 +86,7 @@
     }
 
     function sendMessage(message) {
-        chatSocket.send(JSON.stringify(message));
+        lobbySocket.send(JSON.stringify(message));
     }
 
     function updateRoleDisplay(role) {
@@ -229,67 +228,14 @@
         ctx.fillText(text, startX, 20);
     }
 
-    chatGroupSocket.onmessage = function (a) {
-        const chat_data = JSON.parse(a.data);
-        console.log(chat_data.type)
-        switch (chat_data.type) {
-            case `chat_message_${room}`:
-                if (Array.isArray(chat_data.messages)) {
-                    updateChatMessages(chat_data.messages);
-                } else {
-                   appendChatMessage(chat_data.message);
-               }
-               break;
-
-          default:
-               console.warn(`Unhandled chat message type: ${chat_data.type}`);
-       }
-    };
-
-    function sendChatMessage() {
-        const input = document.getElementById("chat-input");
-        const message = input.value.trim();
-        if (message) {
-            chatGroupSocket.send(JSON.stringify({ action: "massege", message }));
-            input.value = "";
-        }
-    }
-
-    function updateChatMessages(messages) {
-        const chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML = "";
-        messages.forEach(appendChatMessage);
-    }
-
-    function appendChatMessage(message) {
-        const chatBox = document.getElementById("chat-box");
-        const messageElement = document.createElement("div");
-        messageElement.className = "chat-message";
-        messageElement.innerHTML = `
-            <div>
-                <img src="${message.photo}" alt="Photo" style="width: 30px; height: 30px; border-radius: 50%;">
-                <strong>${message.sender}</strong>:
-            </div>
-            <div>${message.message}</div>
-            <div style="font-size: 0.8em; color: gray;">${message.time}</div>
-        `;
-        chatBox.appendChild(messageElement);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
 
     function disconnectWebSocket() {
-    if (chatSocket) {
-        chatSocket.close(1000, "User disconnected"); // close with code 1000 (normal)
-        console.log("Closing Lobby WebSocket...");
+        if (lobbySocket) {
+            lobbySocket.close(1000, "User disconnected"); // close with code 1000 (normal)
+            console.log("Closing Lobby WebSocket...");
+        }
+        navigate('/');
     }
-    
-    if (chatGroupSocket) {
-        chatGroupSocket.close(1000, "User disconnected");
-        console.log("Closing Chat WebSocket...");
-    }
-    navigate('/');
-}
 
     document.getElementById("assignRightButton").addEventListener("click", () => assignRole("right"));
     document.getElementById("assignLeftButton").addEventListener("click", () => assignRole("left"));

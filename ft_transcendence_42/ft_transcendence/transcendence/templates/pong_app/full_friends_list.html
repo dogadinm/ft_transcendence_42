@@ -2,30 +2,63 @@
 {% load static %}
 {% block body %}
 
+<div id="content" class="body">
+    <div class="profile-page-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <a href="#" onclick="navigate('/profile/{{ username }}')">Profile</a>
+                {% if is_owner %}
+                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
+                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
+                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
+                {% endif %}
+                {% if is_owner or friend %}
+                    <a href="#" onclick="navigate('/full_match_history/{{ username }}')">Match History</a>
+                    <a href="#" onclick="navigate('/full_friends_list/{{ username }}')">Friends</a>
+                {% endif %}
+            </ul>
+        </div>
+
+    {% if is_owner %}
+      <form id="find-friend-form" onsubmit="event.preventDefault(); navigateToProfile();">
+          <div>
+              <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
+          </div>
+          <div class="find-friend">
+              <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
+          </div>
+          {% csrf_token %}
+      </form>
+      <p id="error-message" style="color: red;"></p>
+      <script src="{% static 'js/findFriend.js' %}"></script>
+    {% endif %}
+
+
   <h1>{{username}}'s friends</h1>
 
       {% for friend in page_obj %}
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
             <img src="{{ friend.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
-            <li style="font-size: 18px; margin-right: 20px;"><a href="{% url 'profile' friend.username  %}">{{ friend.username  }}</a></li>
+            <li style="font-size: 18px; margin-right: 20px;"><a href="#" onclick="navigate('/profile/{{ friend.username  }}')">{{ friend.username  }}</a></li>
         </div>
       {% endfor %}
 
 
-  <div class="pagination">
-    {% if page_obj.has_previous %}
-      <a href="?page=1">First</a>
-      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-    {% endif %}
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page=1')">First</a>
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.previous_page_number  }}')">Last</a>
+        {% endif %}
 
-    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
-    {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}">Next</a>
-      <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-    {% endif %}
+        {% if page_obj.has_next %}
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.next_page_number  }}')">Next</a>
+          <a href="#" onclick="navigate('/full_match_history/{{username}}?page={{ page_obj.paginator.num_pages  }}')">Last</a>
+        {% endif %}
+      </div>
   </div>
-
   <style>
     table {
       width: 100%;
@@ -68,4 +101,7 @@
       border: 1px solid #007bff;
     }
   </style>
+</div>
+
+
 {% endblock %}
