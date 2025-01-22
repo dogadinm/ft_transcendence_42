@@ -340,7 +340,7 @@ def full_friends_list(request, username):
         "is_owner": request.user.username == username,
         "friend": request.user in friend_objct.friends.all(),
     })
-
+  
 @login_required(login_url='/login/')
 def blocked_people(request):
     main_user = request.user
