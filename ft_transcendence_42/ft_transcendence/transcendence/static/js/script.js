@@ -7,9 +7,9 @@ async function navigate(url) {
     if (statusSocket) {
         statusSocket.close();
     }
-    if (lobbySocket) {
-        lobbySocket.close();
-    }
+    // if (lobbySocket) {
+    //     lobbySocket.close();
+    // }
 
     try {
         const response = await fetch(url, {
