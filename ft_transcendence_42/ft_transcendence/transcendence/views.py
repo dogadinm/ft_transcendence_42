@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.conf import settings
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
-from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm
+from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm, FiendTournamentForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -438,3 +438,47 @@ def callback(request):
     except Exception as e:
         # Handle unexpected errors
         return JsonResponse({'error': 'An unexpected error occurred', 'details': str(e)}, status=500)
+
+@login_required(login_url='/login/')
+def tournament(request, tournament_id):
+	return render(request, 'pong_app/tournament.html', {'tournament_id': tournament_id})
+
+
+
+
+
+@login_required(login_url='/login/')
+def find_tournament(request):
+    main_user = request.user
+    # main_user.wallet_address = receive data
+    #main_user.save()
+    if request.method == "POST":
+        if not (main_user.wallet_address and main_user.wallet_prt_key):
+            return JsonResponse({"exists": False, "message": "Wallet data is missing. Please bind your wallet first."}, status=403)
+        form = FiendTournamentForm(request.POST)
+        if form.is_valid():
+            tournament_name = form.cleaned_data["tournament_name"]
+            return JsonResponse({"exists": True, "tournament_name": tournament_name})
+        else:
+            return JsonResponse({"exists": False, "message": "Invalid data."})
+    if not (main_user.wallet_address and main_user.wallet_prt_key):
+        return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
+    return render(request, 'pong_app/find_tournament.html')
+
+# @login_required(login_url='/login/')
+# def find_tournament(request):
+# 	main_user = request.user
+# 	if request.method == "POST":
+# 		if not (main_user.wallet_address and main_user.wallet_prt_key):
+# 			# Return a 403 status code for missing wallet data
+# 			return JsonResponse(
+# 				{"exists": False, "message": "Wallet data is missing. Please bind your wallet first."},
+# 				status=403
+# 			)
+# 		form = FiendTournamentForm(request.POST)
+# 		if form.is_valid():
+# 			tournament_name = form.cleaned_data["tournament_name"]
+# 			return JsonResponse({"exists": True, "tournament_name": tournament_name})
+# 		else:
+# 			return JsonResponse({"exists": False, "message": "Invalid data."})
+# 	return render(request, 'pong_app/find_tournament.html')

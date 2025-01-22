@@ -11,6 +11,8 @@ urlpatterns = [
     path('register/', views.register, name='register'),
 
     path('chat/', views.chat, name='chat'),
+	path('tournament/<str:tournament_id>/', views.tournament, name='tournament'),
+	path('find_tournament/', views.find_tournament, name='find_tournament'),
 
     path('profile/<str:username>', views.profile, name='profile'),
     path('profile_settings/', views.profile_settings, name='profile_settings'),

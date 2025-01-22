@@ -18,6 +18,9 @@ class User(AbstractUser):
     last_activity = models.DateTimeField(default=now)
     lobby = models.CharField(max_length=30, blank=True, null=True)
     user_42 = models.BooleanField(default=False)
+    wallet_address = models.CharField(max_length=100, blank=True, null=True)
+    wallet_prt_key = models.CharField(max_length=150, blank=True, null=True)
+
 
     def save(self, *args, **kwargs):
         if self.pk:

@@ -142,3 +142,16 @@ class FiendLobbyForm(forms.Form):
             'max_length': 'Lobby cannot be more than 8 characters.',
         }
     )
+
+class FiendTournamentForm(forms.Form):
+    tournament_name = forms.CharField(
+        min_length=1,
+        max_length=8,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Tournament id can only contain letters and numbers.')],
+        error_messages={
+            'min_length': 'Tournament id must be at least 1 character long.',
+            'max_length': 'Tournament id cannot be more than 8 characters.',
+        }
+    )
