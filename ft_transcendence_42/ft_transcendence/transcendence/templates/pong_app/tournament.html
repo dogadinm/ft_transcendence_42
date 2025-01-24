@@ -1,0 +1,20 @@
+
+{% extends "pong_app/layout.html" %}
+{% load static %}
+{% block body %}
+
+
+
+<head>
+	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
+</head>
+
+
+<div id="content" class="body">
+    <div id="gameData" data-room-lobby="{{ tournament_id }}"></div>
+    <script src="{% static 'js/tournament.js' %}" type="text/javascript"></script>
+    hello
+    {{tournament_id}}
+</div>
+
+{% endblock %}
