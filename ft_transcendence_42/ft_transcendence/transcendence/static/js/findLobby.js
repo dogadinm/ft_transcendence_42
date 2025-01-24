@@ -1,4 +1,4 @@
-function navigateToLobby() {
+function  navigateToLobby() {
       const lobbyInput = document.getElementById('lobby-input').value.trim();
 
       if (lobbyInput) {

@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+import json
 
 
 
@@ -458,6 +459,22 @@ def find_doublejack(request):
             return JsonResponse({"exists": False, "message": "Invalid data."})
     return render(request, 'pong_app/find_doublejack.html')
 
+@login_required(login_url='/login/')
+def bind_wallet(request):
+    if request.method == "POST":
+        wallet_address = request.POST.get("wallet")
+        private_key = request.POST.get("key")
+
+        if not wallet_address or not private_key:
+            return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
+
+        main_user = request.user
+        main_user.wallet_address = wallet_address
+        main_user.wallet_prt_key = private_key
+        main_user.save()
+        return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
+
+    return JsonResponse({"message": "Invalid request method."}, status=405)
 
 
 @login_required(login_url='/login/')
@@ -468,6 +485,7 @@ def find_tournament(request):
     if request.method == "POST":
         if not (main_user.wallet_address and main_user.wallet_prt_key):
             return JsonResponse({"exists": False, "message": "Wallet data is missing. Please bind your wallet first."}, status=403)
+
         form = FiendTournamentForm(request.POST)
         if form.is_valid():
             tournament_name = form.cleaned_data["tournament_name"]
@@ -477,6 +495,47 @@ def find_tournament(request):
     if not (main_user.wallet_address and main_user.wallet_prt_key):
         return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
     return render(request, 'pong_app/find_tournament.html')
+
+# @login_required(login_url='/login/')
+# def find_tournament(request):
+#     main_user = request.user
+
+#     if request.method == "POST":
+#         action = request.POST.get("action", "")  # Get the action type from the form data
+
+#         if action == "bind_wallet":
+#             # Handle wallet binding
+#             wallet_address = request.POST.get("wallet")
+#             private_key = request.POST.get("key")
+
+#             if not wallet_address or not private_key:
+#                 return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
+
+#             main_user.wallet_address = wallet_address
+#             main_user.wallet_prt_key = private_key
+#             main_user.save()
+#             return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
+
+#         elif action == "find_tournament":
+#             # Handle tournament search
+#             if not (main_user.wallet_address and main_user.wallet_prt_key):
+#                 return JsonResponse({"exists": False, "message": "Wallet data is missing. Please bind your wallet first."}, status=403)
+
+#             form = FiendTournamentForm(request.POST)
+#             if form.is_valid():
+#                 tournament_name = form.cleaned_data["tournament_name"]
+#                 return JsonResponse({"exists": True, "tournament_name": tournament_name})
+#             else:
+#                 return JsonResponse({"exists": False, "message": "Invalid data."})
+
+#         else:
+#             return JsonResponse({"exists": False, "message": "Invalid action."}, status=400)
+
+#     # For GET requests, render the appropriate template
+#     if not (main_user.wallet_address and main_user.wallet_prt_key):
+#         return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
+#     return render(request, "pong_app/find_tournament.html")
+
 
 # @login_required(login_url='/login/')
 # def find_tournament(request):
