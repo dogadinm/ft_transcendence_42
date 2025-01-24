@@ -1,14 +1,15 @@
 let chatSocket = null;
 let statusSocket = null;
 let lobbySocket  = null;
+// let ws = null;
 
 async function navigate(url) {
 
     if (statusSocket) {
         statusSocket.close();
     }
-    // if (lobbySocket) {
-    //     lobbySocket.close();
+    // if (ws) {
+    //     ws.close();
     // }
 
     try {
@@ -24,10 +25,11 @@ async function navigate(url) {
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
+            console.log(doc)
             const newContent = doc.querySelector("#content");
             history.pushState(null, "", url);
             updateUserLinks()
-
+            console.log(newContent)
             if (newContent) {
                 document.querySelector("#content").innerHTML = newContent.innerHTML;
             } else {

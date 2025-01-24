@@ -3,8 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.conf import settings
-from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory
-from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm, FiendTournamentForm
+from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory, ScoreDoubleJack
+from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm, FiendTournamentForm, FindDoublejackForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -77,6 +77,7 @@ def register(request):
             user.save()
 
             Score.objects.create(user=user, score=10)
+            ScoreDoubleJack.objects.create(user=user, score=1000)
             Friend.objects.create(owner=user)
 
             login(request, user)
@@ -96,6 +97,7 @@ def profile(request, username):
     page_user = get_object_or_404(User, username=username)
     main_user = request.user
     score = Score.objects.get(user=page_user)
+    score_double_jack = ScoreDoubleJack.objects.get(user=page_user)
 
     main_user_friends = Friend.objects.get(owner=main_user)
     page_user_friends = Friend.objects.get(owner=page_user)
@@ -152,6 +154,7 @@ def profile(request, username):
         "description": page_user.description,
         "photo": page_user.photo.url,
         "score": score.score,
+        "score_double_jack": score_double_jack.score,
         "user_account": page_user,
         "is_owner": request.user == page_user,
 
@@ -294,8 +297,8 @@ def chat(request):
 
 
 @login_required(login_url='/login/')
-def doublejack(request):
-    return render(request, 'pong_app/doublejack.html')
+def doublejack(request, room_lobby):
+    return render(request, 'pong_app/doublejack.html', {'room_lobby':room_lobby})
 
 @login_required(login_url='/login/')
 def get_friend_requests_count(request):
@@ -444,6 +447,16 @@ def tournament(request, tournament_id):
 	return render(request, 'pong_app/tournament.html', {'tournament_id': tournament_id})
 
 
+@login_required(login_url='/login/')
+def find_doublejack(request):
+    if request.method == "POST":
+        form = FindDoublejackForm(request.POST)
+        if form.is_valid():
+            doublejack_name = form.cleaned_data["doublejack_name"]
+            return JsonResponse({"exists": True, "doublejack_name": doublejack_name})
+        else:
+            return JsonResponse({"exists": False, "message": "Invalid data."})
+    return render(request, 'pong_app/find_doublejack.html')
 
 
 

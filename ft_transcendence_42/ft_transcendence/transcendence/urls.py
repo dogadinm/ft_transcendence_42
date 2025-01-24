@@ -22,7 +22,9 @@ urlpatterns = [
     path('full_friends_list/<str:username>', views.full_friends_list, name='full_friends_list'),   
 
     path("bot/", views.bot, name='bot'),
-	path("doublejack/", views.doublejack, name='doublejack'),
+	path("doublejack_lobby/<str:room_lobby>/", views.doublejack, name='doublejack_lobby'),
+	path('find_doublejack/', views.find_doublejack, name='find_doublejack'),
+	
     path("pong_lobby/<str:room_lobby>/", views.pong_lobby, name='pong_lobby'),
 
     path("find_friend/", views.find_friend, name='find_friend'),

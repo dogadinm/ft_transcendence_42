@@ -45,6 +45,12 @@ class Score (models.Model):
     def __str__(self):
         return f"User: {self.user.username}, Score: {self.score}"
 
+class ScoreDoubleJack (models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="doublejack_scores")
+    score = models.IntegerField(default=1000)
+    def __str__(self):
+        return f"User: {self.user.username}, ScoreDoubleJack: {self.score}"
+
 class MatchHistory (models.Model):
     winner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="winner")
     loser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loser")

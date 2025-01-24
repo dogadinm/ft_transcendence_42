@@ -1,5 +1,8 @@
-
+{% extends "pong_app/layout.html" %}
 {% load static %}
+{% block body %}
+<div id="content" class="body">
+	<div id="gameData" data-room-lobby="{{ room_lobby }}"></div>
 
     <h1>Doublejack</h1>
 	<div id="other_score">score</div>
@@ -30,10 +33,11 @@
 	<div id="buttons" style="height: 60px; align-content: center;">
 		<button id="join">JOIN !</button>
 	</div>
+	{{room_lobby}}
 
 
 
     <p>Status: <span id="ws_status">Not connected</span></p>
 	<script src="{% static 'js/doublejack.js' %}"></script>
-
-
+</div>
+{% endblock %}
