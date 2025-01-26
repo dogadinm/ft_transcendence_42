@@ -170,6 +170,7 @@ class TournamentRoom:
     def save_match(self, winner_username, loser_username):
         winner = User.objects.get(username=winner_username)
         loser = User.objects.get(username=loser_username)
+
         MatchHistory.objects.create(
             winner=winner,
             loser=loser,
@@ -179,11 +180,20 @@ class TournamentRoom:
             loser_change_score=TournamentRoom.LOSS_POINTS
         )
 
+        # tournament_id = 'name'
+        # type_of_gaame = 'name'
+        # game_id = 1
+        # winner=winner.username,
+        # loser=loser.username,
+        # winner_change_score=TournamentRoom.WIN_POINTS,
+        # loser_change_score=TournamentRoom.LOSS_POINTS
+
+        # save_blockcahin(winner, loser, tournament_id)
+
     @sync_to_async
     def update_scores(self, winner_username, loser_username):
         winner = User.objects.get(username=winner_username)
         loser = User.objects.get(username=loser_username)
-
         winner_score = Score.objects.get(user=winner)
         loser_score = Score.objects.get(user=loser)
         winner_score.score += TournamentRoom.WIN_POINTS
