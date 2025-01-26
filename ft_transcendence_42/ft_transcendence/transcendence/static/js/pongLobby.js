@@ -95,7 +95,7 @@
         roleElement.innerText = `You are: ${roleText}`;
     }
 
-        function startCountdown(seconds) {
+    function startCountdown(seconds) {
         const timerElement = document.getElementById("timer");
 
         // Initialize the timer display

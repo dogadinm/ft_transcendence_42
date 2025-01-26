@@ -1,18 +1,18 @@
-function  connectWallet() {
+function  bindWallet() {
 	const wallInput = document.getElementById('wallet-input').value.trim();
 	const keyInput = document.getElementById('private_key').value.trim();
 
 	if (wallInput && keyInput) {
-	  if (wallInput.length < 1) {
-		displayErrorMessage("Lobby must be at least 3 characters long.");
-		return;
-	  } else if (lobbyInput.length > 8) {
-		displayErrorMessage("Lobby cannot be more than 25 characters.");
-		return;
-	  } else if (!/^[a-zA-Z0-9]+$/.test(wallInput)) {
-		displayErrorMessage("Lobby can only contain letters and digits.");
-		return;
-	  }
+	//   if (wallInput.length < 1) {
+	// 	displayErrorMessage("Lobby must be at least 3 characters long.");
+	// 	return;
+	//   } else if (lobbyInput.length > 8) {
+	// 	displayErrorMessage("Lobby cannot be more than 25 characters.");
+	// 	return;
+	//   } else if (!/^[a-zA-Z0-9]+$/.test(wallInput)) {
+	// 	displayErrorMessage("Lobby can only contain letters and digits.");
+	// 	return;
+	//   }
 
 	  const formData = new FormData();
 	  formData.append('wallet', wallInput);

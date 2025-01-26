@@ -12,9 +12,57 @@
 
 <div id="content" class="body">
     <div id="gameData" data-room-lobby="{{ tournament_id }}"></div>
-    <script src="{% static 'js/tournament.js' %}" type="text/javascript"></script>
-    hello
-    {{tournament_id}}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Ping Pong Tournament</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+        }
+        canvas {
+          border: 2px solid #000;
+          margin: 20px auto;
+          display: block;
+        }
+        #controls {
+          margin: 10px;
+        }
+        #status {
+          font-size: 18px;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Ping Pong Tournament</h1>
+      <p id="status">Waiting to connect...</p>
+      <div id="controls">
+        <button id="readyBtn">I'm Ready!</button>
+      </div>
+      
+      <button id="readyButton">Ready</button>
+      <canvas id="gameCanvas" width="800" height="400"></canvas>
+      <div id="tournamentState">
+        <h2>Players Queue</h2>
+        <ul id="players-list"></ul>
+    
+        <h2>Spectators</h2>
+        <ul id="spectators-list"></ul>
+    
+        <h2>Round Winners</h2>
+        <ul id="winners-list"></ul>
+    
+        <h2>Ready Players</h2>
+        <ul id="ready-players-list"></ul>
+    </div>
+      <script src="{% static 'js/tournament.js' %}"></script>
+
+    </body>
+    </html>
 </div>
 
 {% endblock %}

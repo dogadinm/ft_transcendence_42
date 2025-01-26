@@ -1,3 +1,5 @@
+
+{% load static %}
 <h1 class="mx-5">Crypto Wallet</h1>
 
 <div class="container">
@@ -17,6 +19,10 @@
                 <input type="password" id="private_key" name="private_key" class="form-control" placeholder="Enter your private key" required>
             </div>
             <button type="submit" class="btn btn-primary">Bind Wallet</button>
+            <div class="find-tournament">
+                <a href="#" id="find-tournament-link" onclick="bindWallet()">Find tournament</a>
+            </div>
         </form>
     </div>
 </div>
+<script src="{% static 'js/wallet.js' %}"></script>

@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.conf import settings
 from .models import User, Score, Room, Friend, ChatGroup, FriendRequest, MatchHistory, ScoreDoubleJack
-from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm, FiendTournamentForm, FindDoublejackForm
+from .forms import ProfileSettingsForm, LoginForm, RegistrationForm, FiendFriendForm, FiendLobbyForm, FiendTournamentForm, FindDoublejackForm, BindWalletForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -462,17 +462,24 @@ def find_doublejack(request):
 @login_required(login_url='/login/')
 def bind_wallet(request):
     if request.method == "POST":
-        wallet_address = request.POST.get("wallet")
-        private_key = request.POST.get("key")
+        form = BindWalletForm(request.POST)
+        if form.is_valid():
+            wallet_address = form.cleaned_data["wallet"]
+            private_key = form.cleaned_data["key"]
+            print(wallet_address)
+            print(private_key)
 
-        if not wallet_address or not private_key:
-            return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
 
-        main_user = request.user
-        main_user.wallet_address = wallet_address
-        main_user.wallet_prt_key = private_key
-        main_user.save()
-        return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
+            if not wallet_address or not private_key:
+                return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
+
+            main_user = request.user
+            main_user.wallet_address = wallet_address
+            main_user.wallet_prt_key = private_key
+            main_user.save()
+            return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
+        else:
+            return JsonResponse({"exists": False, "message": "Invalid data."})
 
     return JsonResponse({"message": "Invalid request method."}, status=405)
 

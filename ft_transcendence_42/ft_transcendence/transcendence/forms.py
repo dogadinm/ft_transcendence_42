@@ -168,3 +168,26 @@ class FindDoublejackForm(forms.Form):
             'max_length': 'Doublejack lobby cannot be more than 8 characters.',
         }
     )
+class BindWalletForm(forms.Form):
+    wallet = forms.CharField(
+        min_length=1,
+        max_length=8,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Doublejack lobby can only contain letters and numbers.')],
+        error_messages={
+            'min_length': 'Doublejack lobby must be at least 1 character long.',
+            'max_length': 'Doublejack lobby cannot be more than 8 characters.',
+        }
+    )
+    key = forms.CharField(
+        min_length=1,
+        max_length=8,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Doublejack lobby can only contain letters and numbers.')],
+        error_messages={
+            'min_length': 'Doublejack lobby must be at least 1 character long.',
+            'max_length': 'Doublejack lobby cannot be more than 8 characters.',
+        }
+    )

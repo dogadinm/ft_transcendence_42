@@ -90,6 +90,7 @@ class RoomGame:
             self.ball['x'] = new_x
             self.ball['y'] = new_y
 
+
             # Goal check
             if self.ball['x'] <= 20:
                 self.score['right'] += 1
