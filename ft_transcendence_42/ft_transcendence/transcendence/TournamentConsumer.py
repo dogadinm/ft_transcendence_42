@@ -7,6 +7,7 @@ from channels.db import database_sync_to_async
 from .TournamentGame import tournament_manager
 
 
+
 # class TournamentConsumer(AsyncWebsocketConsumer):
 #     async def connect(self):
 #         """Подключение нового клиента."""
@@ -148,7 +149,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-        # Удаляем пользователя из комнаты
         if self.username in self.room.players_queue:
             self.room.players_queue.remove(self.username)
         if self.username in self.room.spectators:
@@ -177,7 +177,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             elif self.username == self.room.current_players['right']:
                 self.room.ready['right'] = True
             if self.room.ready['left'] and self.room.ready['right']:
-                await self.room.start_tournament(self.send_update)
+                asyncio.create_task(self.room.start_tournament(self.send_update))
 
             await self.broadcast_tournament_state()
 

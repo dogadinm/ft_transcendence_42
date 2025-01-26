@@ -68,7 +68,7 @@ class TournamentRoom:
     async def start_tournament(self, send_update):
         # self.assign_role()
         # await send_update(self.get_game_state())
-        while len(self.players_queue) + len(self.round_winners) > 1 or self.game_working:
+        while len(self.players_queue) + len(self.round_winners) > 1:
             if not self.current_players['left'] and not self.current_players['right']:
                 self.set_next_match()
                 await send_update(self.get_game_state())
