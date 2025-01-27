@@ -11,7 +11,7 @@ from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 import json
-
+import os
 
 
 def index(request):
@@ -62,6 +62,14 @@ def logout_view(request):
     return JsonResponse({"success": True, "redirect": "/"}, status=200)
 
 
+def bind_walet():
+    wallet_file_path = os.path.join(os.path.dirname(__file__), 'wallet.txt')
+    with open(wallet_file_path, 'r') as file:
+        lines = file.readlines()
+        wallet_address = lines[0].strip()  # First line as wallet address
+        wallet_prt_key = lines[1].strip()  # Second line as private key
+        return wallet_address, wallet_prt_key
+
 def register(request):
     if request.user.is_authenticated:
         return render(request, "pong_app/index.html")
@@ -75,8 +83,8 @@ def register(request):
 
             # Create the user and other related objects
             user = User.objects.create_user(username=username, password=password, email=email)
+            user.wallet_address, user.wallet_prt_key = bind_walet()
             user.save()
-
             Score.objects.create(user=user, score=10)
             ScoreDoubleJack.objects.create(user=user, score=1000)
             Friend.objects.create(owner=user)
@@ -415,15 +423,16 @@ def callback(request):
             email=user_data['email'],
         )
 
-
         if created:
             # If the user was created, set an unusable password and save related objects
             user.set_unusable_password()
+            user.wallet_address, user.wallet_prt_key = bind_walet()
             user.save()
 
             # Create related objects such as Score and Friend
             Score.objects.create(user=user, score=10)
             Friend.objects.create(owner=user)
+            ScoreDoubleJack.objects.create(user=user, score=1000)
 
         # Step 4: Log the user in
         login(request, user)
@@ -459,39 +468,35 @@ def find_doublejack(request):
             return JsonResponse({"exists": False, "message": "Invalid data."})
     return render(request, 'pong_app/find_doublejack.html')
 
-@login_required(login_url='/login/')
-def bind_wallet(request):
-    if request.method == "POST":
-        form = BindWalletForm(request.POST)
-        if form.is_valid():
-            wallet_address = form.cleaned_data["wallet"]
-            private_key = form.cleaned_data["key"]
-            print(wallet_address)
-            print(private_key)
+# @login_required(login_url='/login/')
+# def bind_wallet(request):
+#     if request.method == "POST":
+#         form = BindWalletForm(request.POST)
+#         if form.is_valid():
+#             wallet_address = form.cleaned_data["wallet"]
+#             private_key = form.cleaned_data["key"]
 
 
-            if not wallet_address or not private_key:
-                return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
+#             if not wallet_address or not private_key:
+#                 return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
 
-            main_user = request.user
-            main_user.wallet_address = wallet_address
-            main_user.wallet_prt_key = private_key
-            main_user.save()
-            return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
-        else:
-            return JsonResponse({"exists": False, "message": "Invalid data."})
+#             main_user = request.user
+#             main_user.wallet_address = wallet_address
+#             main_user.wallet_prt_key = private_key
+#             main_user.save()
+#             return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
+#         else:
+#             return JsonResponse({"exists": False, "message": "Invalid data."})
 
-    return JsonResponse({"message": "Invalid request method."}, status=405)
+#     return JsonResponse({"message": "Invalid request method."}, status=405)
 
 
 @login_required(login_url='/login/')
 def find_tournament(request):
     main_user = request.user
-    # main_user.wallet_address = receive data
-    #main_user.save()
     if request.method == "POST":
         if not (main_user.wallet_address and main_user.wallet_prt_key):
-            return JsonResponse({"exists": False, "message": "Wallet data is missing. Please bind your wallet first."}, status=403)
+            return JsonResponse({"exists": False, "message": "Wallet data is missing."}, status=403)
 
         form = FiendTournamentForm(request.POST)
         if form.is_valid():
@@ -503,61 +508,3 @@ def find_tournament(request):
         return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
     return render(request, 'pong_app/find_tournament.html')
 
-# @login_required(login_url='/login/')
-# def find_tournament(request):
-#     main_user = request.user
-
-#     if request.method == "POST":
-#         action = request.POST.get("action", "")  # Get the action type from the form data
-
-#         if action == "bind_wallet":
-#             # Handle wallet binding
-#             wallet_address = request.POST.get("wallet")
-#             private_key = request.POST.get("key")
-
-#             if not wallet_address or not private_key:
-#                 return JsonResponse({"exists": False, "message": "Both wallet address and private key are required."}, status=400)
-
-#             main_user.wallet_address = wallet_address
-#             main_user.wallet_prt_key = private_key
-#             main_user.save()
-#             return JsonResponse({"exists": True, "message": "Wallet bound successfully."})
-
-#         elif action == "find_tournament":
-#             # Handle tournament search
-#             if not (main_user.wallet_address and main_user.wallet_prt_key):
-#                 return JsonResponse({"exists": False, "message": "Wallet data is missing. Please bind your wallet first."}, status=403)
-
-#             form = FiendTournamentForm(request.POST)
-#             if form.is_valid():
-#                 tournament_name = form.cleaned_data["tournament_name"]
-#                 return JsonResponse({"exists": True, "tournament_name": tournament_name})
-#             else:
-#                 return JsonResponse({"exists": False, "message": "Invalid data."})
-
-#         else:
-#             return JsonResponse({"exists": False, "message": "Invalid action."}, status=400)
-
-#     # For GET requests, render the appropriate template
-#     if not (main_user.wallet_address and main_user.wallet_prt_key):
-#         return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
-#     return render(request, "pong_app/find_tournament.html")
-
-
-# @login_required(login_url='/login/')
-# def find_tournament(request):
-# 	main_user = request.user
-# 	if request.method == "POST":
-# 		if not (main_user.wallet_address and main_user.wallet_prt_key):
-# 			# Return a 403 status code for missing wallet data
-# 			return JsonResponse(
-# 				{"exists": False, "message": "Wallet data is missing. Please bind your wallet first."},
-# 				status=403
-# 			)
-# 		form = FiendTournamentForm(request.POST)
-# 		if form.is_valid():
-# 			tournament_name = form.cleaned_data["tournament_name"]
-# 			return JsonResponse({"exists": True, "tournament_name": tournament_name})
-# 		else:
-# 			return JsonResponse({"exists": False, "message": "Invalid data."})
-# 	return render(request, 'pong_app/find_tournament.html')

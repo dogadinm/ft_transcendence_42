@@ -2,7 +2,9 @@ import asyncio
 import random
 from .models import User, Score, MatchHistory
 from asgiref.sync import sync_to_async
-
+from django.conf import settings
+import csv
+import os
 
 class TournamentRoom:
     # Game constants
@@ -18,8 +20,10 @@ class TournamentRoom:
 
     FIELD_WIDTH = 800
     FIELD_HEIGHT = 400
+    
 
-    def __init__(self):
+    def __init__(self, tournament_id):
+        self.tournament_id = tournament_id
         self.players_queue = [] 
         self.current_players = {'left': None, 'right': None}
         self.spectators = []
@@ -34,6 +38,7 @@ class TournamentRoom:
         self.speed = TournamentRoom.BALL_INITIAL_SPEED
         self.round_winners = []
         self.game_working = False
+        self.round = 0
 
     def add_ready_player(self, player):
         if len(self.all_ready) < 4:
@@ -53,13 +58,20 @@ class TournamentRoom:
         self.set_next_match()
 
     def set_next_match(self):
-        if len(self.players_queue) >= 2:
+        if len(self.players_queue) > 2:
             self.current_players['left'] = self.players_queue.pop(0)
             self.current_players['right'] = self.players_queue.pop(0)
+            self.round = 1
+        elif len(self.players_queue) == 2:
+            self.current_players['left'] = self.players_queue.pop(0)
+            self.current_players['right'] = self.players_queue.pop(0)
+            self.round = 2
         elif len(self.round_winners) >= 2:
             self.current_players['left'] = self.round_winners.pop(0)
             self.current_players['right'] = self.round_winners.pop(0)
+            self.round = 3
         self.spectators = self.players_queue + self.round_winners
+        print(self.round)
         print(self.current_players)
         print(self.players_queue)
         print(self.ready)
@@ -78,8 +90,8 @@ class TournamentRoom:
 
             await self.game_loop(send_update)
 
-        champion = self.round_winners[0] if self.round_winners else self.players_queue[0]
-        await send_update({'type': 'tournament_end', 'champion': champion})
+        # champion = self.round_winners[0] if self.round_winners else self.players_queue[0]
+        # await send_update({'type': 'tournament_end', 'champion': champion})
 
     def check_paddle_collision(self, side, new_x, new_y, paddle_x):
         paddle_y_start = self.paddles[side]['paddleY']
@@ -107,9 +119,11 @@ class TournamentRoom:
 
             winner = self.end_game()
             if winner:
+                
                 loser = self.current_players['right'] if winner == self.current_players['left'] else self.current_players['left']
                 await self.update_scores(winner, loser)
                 await self.save_match(winner, loser)
+                
 
                 self.round_winners.append(winner)
                 self.reset_game()  
@@ -180,15 +194,10 @@ class TournamentRoom:
             loser_change_score=TournamentRoom.LOSS_POINTS
         )
 
-        # tournament_id = 'name'
-        # type_of_gaame = 'name'
-        # game_id = 1
-        # winner=winner.username,
-        # loser=loser.username,
-        # winner_change_score=TournamentRoom.WIN_POINTS,
-        # loser_change_score=TournamentRoom.LOSS_POINTS
-
-        # save_blockcahin(winner, loser, tournament_id)
+        self.create_csv(winner.username, loser.username)
+        # save_blockcahin(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
+        self.round = 0
+        
 
     @sync_to_async
     def update_scores(self, winner_username, loser_username):
@@ -203,6 +212,7 @@ class TournamentRoom:
         loser_score.save()
 
     def reset_game(self):
+
         self.score = {'left': 0, 'right': 0}
         self.ready = {'left': False, 'right': False}
         self.current_players = {'left': None, 'right': None}
@@ -210,14 +220,47 @@ class TournamentRoom:
         self.speed = TournamentRoom.BALL_INITIAL_SPEED
         self.game_working = False
 
-    
+
+    def create_csv(self, winner, loser):
+        tournament_id = self.tournament_id
+        game_id = self.round
+        type_of_game = "semi_final" if game_id in [1, 2] else "final" if game_id == 3 else "unknown"
+        winner_change_score = TournamentRoom.WIN_POINTS
+        loser_change_score = TournamentRoom.LOSS_POINTS
+
+        csv_file_path = os.path.join(settings.MEDIA_ROOT, f'tournament_{tournament_id}_game_{game_id}.csv')
+
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([
+                'tournament_id',
+                'game_id',
+                'type_of_game',
+                'winner',
+                'winner_change_score',
+                'loser',
+                'loser_change_score'
+            ])
+
+            writer.writerow([
+                tournament_id,
+                game_id,
+                type_of_game,
+                winner,
+                winner_change_score,
+                loser,
+                loser_change_score
+            ])
+
+        return csv_file_path
+      
 class TournamentRoomManager:
     def __init__(self):
         self.rooms = {}
 
     def get_or_create_room(self, room_name):
         if room_name not in self.rooms:
-            self.rooms[room_name] = TournamentRoom()
+            self.rooms[room_name] = TournamentRoom(room_name)
         return self.rooms[room_name]
 
     def remove_room(self, room_name):
