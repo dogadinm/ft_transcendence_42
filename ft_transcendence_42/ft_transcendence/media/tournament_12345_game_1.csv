@@ -1,2 +1,2 @@
 tournament_id,game_id,type_of_game,winner,winner_change_score,loser,loser_change_score
-444,2,semi_final,hed,10,hhhh,-5
+12345,1,semi_final,misha,10,admin,-5

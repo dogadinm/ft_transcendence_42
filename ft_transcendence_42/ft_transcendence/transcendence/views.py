@@ -454,7 +454,11 @@ def callback(request):
 
 @login_required(login_url='/login/')
 def tournament(request, tournament_id):
-	return render(request, 'pong_app/tournament.html', {'tournament_id': tournament_id})
+    
+	return render(request, 'pong_app/tournament.html', {
+        'tournament_id': tournament_id,
+        'username': request.user.username,                                           
+    })
 
 
 @login_required(login_url='/login/')

@@ -37,8 +37,9 @@ class TournamentRoom:
         self.all_ready = set()
         self.speed = TournamentRoom.BALL_INITIAL_SPEED
         self.round_winners = []
-        self.game_working = False
         self.round = 0
+        self.is_tournament_running = False
+        self.champion = None
 
     def add_ready_player(self, player):
         if len(self.all_ready) < 4:
@@ -70,19 +71,16 @@ class TournamentRoom:
             self.current_players['left'] = self.round_winners.pop(0)
             self.current_players['right'] = self.round_winners.pop(0)
             self.round = 3
-        self.spectators = self.players_queue + self.round_winners
-        print(self.round)
-        print(self.current_players)
-        print(self.players_queue)
-        print(self.ready)
 
 
-    async def start_tournament(self, send_update):
+    async def start_tournament(self, send_update, broadcast_tournament_state):
         # self.assign_role()
         # await send_update(self.get_game_state())
         while len(self.players_queue) + len(self.round_winners) > 1:
+            self.is_tournament_running = True
             if not self.current_players['left'] and not self.current_players['right']:
                 self.set_next_match()
+                await broadcast_tournament_state()
                 await send_update(self.get_game_state())
 
             while not self.ready['left'] or not self.ready['right']:
@@ -90,8 +88,10 @@ class TournamentRoom:
 
             await self.game_loop(send_update)
 
-        # champion = self.round_winners[0] if self.round_winners else self.players_queue[0]
-        # await send_update({'type': 'tournament_end', 'champion': champion})
+        if self.round_winners:
+            self.champion = self.round_winners[0]
+            await broadcast_tournament_state()
+        self.is_tournament_running = False
 
     def check_paddle_collision(self, side, new_x, new_y, paddle_x):
         paddle_y_start = self.paddles[side]['paddleY']
@@ -112,21 +112,17 @@ class TournamentRoom:
 
     async def game_loop(self, send_update):
         while self.ready['left'] and self.ready['right']:
-            self.game_working = True
             self.update_paddles()
             self.update_ball()
             await send_update(self.get_game_state())
 
             winner = self.end_game()
-            if winner:
-                
+            if winner:        
                 loser = self.current_players['right'] if winner == self.current_players['left'] else self.current_players['left']
                 await self.update_scores(winner, loser)
                 await self.save_match(winner, loser)
-                
-
                 self.round_winners.append(winner)
-                self.reset_game()  
+                self.reset_game()
                 break
 
             await asyncio.sleep(0.03)
@@ -212,13 +208,15 @@ class TournamentRoom:
         loser_score.save()
 
     def reset_game(self):
-
         self.score = {'left': 0, 'right': 0}
         self.ready = {'left': False, 'right': False}
         self.current_players = {'left': None, 'right': None}
         self.ball = {'x': TournamentRoom.FIELD_WIDTH / 2, 'y': TournamentRoom.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
         self.speed = TournamentRoom.BALL_INITIAL_SPEED
-        self.game_working = False
+        self.paddles = {
+            'left': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
+            'right': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
+        }
 
 
     def create_csv(self, winner, loser):

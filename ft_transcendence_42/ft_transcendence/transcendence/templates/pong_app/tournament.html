@@ -38,27 +38,38 @@
       </style>
     </head>
     <body>
+      <div id="TournamentData" data-room-lobby="{{ tournament_id }}" data-username="{{ username }}"></div>
       <h1>Ping Pong Tournament</h1>
+      <h1>Lobby {{ tournament_id }}</h1>
       <p id="status">Waiting to connect...</p>
       <div id="controls">
-        <button id="readyBtn">I'm Ready!</button>
+        <button id="readyButton">I'm Ready For Tournament</button>
       </div>
-      
-      <button id="readyButton">Ready</button>
+
       <canvas id="gameCanvas" width="800" height="400"></canvas>
+      <h2>Champion: </h2>
+
+      <div id="connection-status"></div>
       <div id="tournamentState">
-        <h2>Players Queue</h2>
-        <ul id="players-list"></ul>
-    
+                <ul id="ready-tournament-players-list"></ul>
+        <h2><ul id="ready-players-list"></ul></h2>
+
+        <!-- <h2>Players Queue</h2>
+        <ul id="players-list"></ul> -->
+
+        <h2>Ready Tournament Players</h2>
+        <ul id="ready-tournament-players-list"></ul>
+
         <h2>Spectators</h2>
         <ul id="spectators-list"></ul>
-    
+      
         <h2>Round Winners</h2>
         <ul id="winners-list"></ul>
-    
-        <h2>Ready Players</h2>
-        <ul id="ready-players-list"></ul>
-    </div>
+      
+
+      </div>
+      
+  
       <script src="{% static 'js/tournament.js' %}"></script>
 
     </body>

@@ -56,6 +56,7 @@
                 break;
 
             case `game_update_${room}`:
+                console.log(data);
                 fieldWidth = data.field.width;
                 fieldHeight = data.field.height;
                 paddleWidth = data.paddle.width;
