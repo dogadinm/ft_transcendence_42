@@ -52,6 +52,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             'role': role,
             'name': self.table_game.playerName(role),
             'status': self.table_game.playerStatus(role),
+            'gamestatus': str(self.table_game.status),
             'points': self.table_game.playerPoints(role),
             'hand': self.table_game.playerHand(role),
             'score': self.table_game.playerScore(role),
@@ -66,9 +67,9 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         if data.get("action") == "join":
             self.elo = await self.get_elo_for_user(self.username)
-            if (self.table_game.status == GameStatus.ENDED) :
-                double_jack_table_manager.remove_table(self.room_name)
-                self.table_game = double_jack_table_manager.get_or_create_table(self, self.room_name)
+            # if (self.table_game.status == GameStatus.ENDED) :
+            #     double_jack_table_manager.remove_table(self.room_name)
+            #     self.table_game = double_jack_table_manager.get_or_create_table(self, self.room_name)
             if (self.username == ''): # maybe, need to check that guest cannot join the game
                 return
             await self.send(text_data=json.dumps({
@@ -86,6 +87,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                 'role': self.role,
                 'name': self.table_game.playerName(self.role),
                 'status': self.table_game.playerStatus(self.role),
+                'gamestatus': str(self.table_game.status),
                 'points': self.table_game.playerPoints(self.role),
                 'hand': self.table_game.playerHand(self.role),
                 'score': self.table_game.playerScore(self.role),
@@ -160,6 +162,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
             'role': event['role'],
             'name': event['name'],
             'status': event['status'],
+            'gamestatus': event['gamestatus'],
             'points': event['points'],
             'hand': event['hand'],
             'score': event['score'],

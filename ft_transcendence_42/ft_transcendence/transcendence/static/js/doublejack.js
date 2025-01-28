@@ -1,5 +1,5 @@
 (function () {
-	console.log('heloo.');
+	console.log('hello.');
 	// Establish WebSocket connection
 	id = 0;
 	const gameDataElement = document.getElementById("gameData");
@@ -18,14 +18,25 @@
 		if (data && data.joined) {
 			id = data.joined;
 		}
+		if (data && data.gamestatus && data.gamestatus == 'ENDED')
+		{
+			document.getElementById('buttons').innerHTML = '<p>game finished</p>'
+		}
 		if (data && data.reset) {
-			document.getElementById('buttons').innerHTML = '<button id="reset">RESET !</button>'
-			document.getElementById('reset').onclick = function() {
-				const message = {
-					action: 'reset'  // This is the action we'll send to the WebSocket
+			if (data.gamestatus && data.gamestatus == 'ENDED')
+			{
+				document.getElementById('buttons').innerHTML = '<p>game finished</p>'
+			}
+			else
+			{
+				document.getElementById('buttons').innerHTML = '<button id="reset">RESET !</button>'
+				document.getElementById('reset').onclick = function() {
+					const message = {
+						action: 'reset'  // This is the action we'll send to the WebSocket
+					};
+					ws.send(JSON.stringify(message));  // Send the action to WebSocket
 				};
-				ws.send(JSON.stringify(message));  // Send the action to WebSocket
-			};
+			}
 		}
 		if (data && data.set) {
 			document.getElementById('buttons').innerHTML = '<button id="hit">HIT !</button><button id="stay">STAY!</button>'
@@ -45,10 +56,10 @@
 		if (data && data.disable) {
 			document.getElementById('buttons').innerHTML = '<p>Waiting for the other player...</p>'
 		}
-		if (data && data.color && data.role && id == data.role) {
-			// Change the background color when a message is received
-			document.body.style.backgroundColor = data.color;
-		}
+		// if (data && data.color && data.role && id == data.role) {
+		// 	// Change the background color when a message is received
+		// 	document.body.style.backgroundColor = data.color;
+		// }
 		if (data && data.name) {
 			if (data.role) {
 				if (id == data.role)
@@ -57,11 +68,11 @@
 					document.getElementById('other_name').innerHTML = data.name;
 			}
 		}
-		if (data && data.role && id == data.role) {
+		// if (data && data.role && id == data.role) {
 
-			document.getElementById('role').innerHTML = data.role;
+		// 	document.getElementById('role').innerHTML = data.role;
 
-		}
+		// }
 		if (data && 'points' in data) {
 			if (data.role) {
 				if (id == data.role)
@@ -70,14 +81,14 @@
 					document.getElementById('other_points').innerHTML = data.points;
 			}
 		}
-		if (data && 'status' in data) {
-			if (data.role) {
-				if (id == data.role)
-					document.getElementById('my_status').innerHTML = data.status;
-				else if (id != data.role)
-					document.getElementById('other_status').innerHTML = data.status;
-			}
-		}
+		// if (data && 'status' in data) {
+		// 	if (data.role) {
+		// 		if (id == data.role)
+		// 			document.getElementById('my_status').innerHTML = data.status;
+		// 		else if (id != data.role)
+		// 			document.getElementById('other_status').innerHTML = data.status;
+		// 	}
+		// }
 		if (data && data.hand) {
 			const handElement = id == data.role
 				? document.getElementById('hand')
