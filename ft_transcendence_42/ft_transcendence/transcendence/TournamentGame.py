@@ -222,9 +222,11 @@ class TournamentRoom:
     def create_csv(self, winner, loser):
         tournament_id = self.tournament_id
         game_id = self.round
-        type_of_game = "semi_final" if game_id in [1, 2] else "final" if game_id == 3 else "unknown"
-        winner_change_score = TournamentRoom.WIN_POINTS
-        loser_change_score = TournamentRoom.LOSS_POINTS
+        game_type = "semi_final" if game_id in [1, 2] else "final" if game_id == 3 else "unknown"
+
+        is_winner_left = winner in self.current_players['left']
+        winner_score = self.score['left'] if is_winner_left else self.score['right']
+        loser_score = self.score['right'] if is_winner_left else self.score['left']
 
         csv_file_path = os.path.join(settings.MEDIA_ROOT, f'tournament_{tournament_id}_game_{game_id}.csv')
 
@@ -233,21 +235,21 @@ class TournamentRoom:
             writer.writerow([
                 'tournament_id',
                 'game_id',
-                'type_of_game',
-                'winner',
-                'winner_change_score',
-                'loser',
-                'loser_change_score'
+                'game_type',
+                'loser_name',
+                'loser_score',
+                'winner_name',
+                'winner_score'
             ])
 
             writer.writerow([
                 tournament_id,
                 game_id,
-                type_of_game,
-                winner,
-                winner_change_score,
+                game_type,
                 loser,
-                loser_change_score
+                loser_score,
+                winner,
+                winner_score,
             ])
 
         return csv_file_path

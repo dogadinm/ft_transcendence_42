@@ -1,23 +1,12 @@
-window.addEventListener('popstate', (event) => {
-    const state = event.state;
-    if (state && state.url) {
-        navigate(state.url, false); // Pass `false` to avoid pushing state again
-    }
-});
-
 let chatSocket = null;
 let statusSocket = null;
 let lobbySocket  = null;
 // let ws = null;
 
-async function navigate(url, pushHistory = true) {
+async function navigate(url) {
 
     if (statusSocket) {
         statusSocket.close();
-    }
-
-    if (chatSocket) {
-        chatSocket.close();
     }
     // if (ws) {
     //     ws.close();
@@ -36,20 +25,17 @@ async function navigate(url, pushHistory = true) {
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
-            console.log(doc);
+            console.log(doc)
             const newContent = doc.querySelector("#content");
-            
+            history.pushState(null, "", url);
+            updateUserLinks()
+            console.log(newContent)
             if (newContent) {
                 document.querySelector("#content").innerHTML = newContent.innerHTML;
-                if (pushHistory) {
-                history.pushState({ url: url }, "", url);
-                }
-                updateUserLinks();
-                executeScriptsInContent(html);
             } else {
                 console.error("Content block not found.");
             }
-            
+            executeScriptsInContent(html);
         } else {
             console.error("Failed to fetch page:", response.status);
         }
@@ -88,16 +74,17 @@ function executeScriptsInContent(html) {
         const newScript = document.createElement("script");
         newScript.src = script.src || '';
         newScript.text = script.textContent || script.innerText;
-        //const oldScripts = document.querySelectorAll("script");
-        //oldScripts.forEach(script => script.remove());
-        removeOldScripts();
+
+        const oldScripts = document.querySelectorAll("script");
+        oldScripts.forEach(script => script.remove());
         document.body.appendChild(newScript);
     });
 }
 
 function removeOldScripts() {
     const oldScripts = document.querySelectorAll("script");
-    oldScripts.forEach(script => {
+    const scriptsArray = Array.from(oldScripts);
+    scriptsArray.forEach(script => {
         script.remove();
     });
     console.log("Removed scripts:", scriptsArray);
