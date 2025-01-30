@@ -73,9 +73,7 @@ class TournamentRoom:
             self.round = 3
 
 
-    async def start_tournament(self, send_update, broadcast_tournament_state):
-        # self.assign_role()
-        # await send_update(self.get_game_state())
+    async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament):
         while len(self.players_queue) + len(self.round_winners) > 1:
             self.is_tournament_running = True
             if not self.current_players['left'] and not self.current_players['right']:
@@ -92,6 +90,8 @@ class TournamentRoom:
             self.champion = self.round_winners[0]
             await broadcast_tournament_state()
         self.is_tournament_running = False
+        await close_tournament()
+
 
     def check_paddle_collision(self, side, new_x, new_y, paddle_x):
         paddle_y_start = self.paddles[side]['paddleY']

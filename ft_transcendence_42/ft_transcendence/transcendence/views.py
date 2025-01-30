@@ -61,6 +61,13 @@ def logout_view(request):
     response.delete_cookie(settings.SESSION_COOKIE_NAME, path='/')
     return JsonResponse({"success": True, "redirect": "/"}, status=200)
 
+def remove_first_two_lines(wallet_file_path):
+    with open(wallet_file_path, 'r') as file:
+        lines = file.readlines()
+    
+    if len(lines) > 2:
+        with open(wallet_file_path, 'w') as file:
+            file.writelines(lines[2:])
 
 def bind_walet():
     wallet_file_path = os.path.join(os.path.dirname(__file__), 'wallet.txt')
@@ -68,6 +75,7 @@ def bind_walet():
         lines = file.readlines()
         wallet_address = lines[0].strip()  # First line as wallet address
         wallet_prt_key = lines[1].strip()  # Second line as private key
+        remove_first_two_lines(wallet_file_path)
         return wallet_address, wallet_prt_key
 
 def register(request):

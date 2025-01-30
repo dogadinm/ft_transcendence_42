@@ -28,11 +28,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             self.room.players_queue.remove(self.username)
         if self.username in self.room.spectators:
             self.room.spectators.remove(self.username)
+        if self.username in self.room.round_winners:
+            self.room.round_winners.remove(self.username)
 
         if not self.room.players_queue and not self.room.spectators and not self.room.round_winners:
             tournament_manager.remove_room(self.room_name)     
         
-        await self.broadcast_tournament_state()
+        print(tournament_manager.rooms)
 
 
     async def receive(self, text_data):
@@ -62,7 +64,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             if self.room.ready['left'] and self.room.ready['right']:
                 if not self.room.is_tournament_running:
                     self.room.is_tournament_running = True
-                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state))
+                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state, self.close_tournament))
             await self.broadcast_tournament_state()
 
         elif action in ["move", "stop"]:
@@ -136,6 +138,17 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 'game_state': game_state,
             },
         )
+
+    async def close_tournament(self):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'close_connection',
+            },
+        )
+
+    async def close_connection(self, event=None):
+        await self.close()
 
     async def game_update(self, event):
         game_state = event['game_state']
