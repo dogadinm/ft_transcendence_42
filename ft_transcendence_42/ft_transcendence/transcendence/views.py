@@ -54,12 +54,11 @@ def login_view(request):
 def logout_view(request):
     logout(request)
 
-    response = redirect('index')
-    response.delete_cookie(settings.SESSION_COOKIE_NAME)
+    response = JsonResponse({"success": True, "redirect": "/"}, status=200)
 
-    # Clear any other authentication cookies if you have them
-    response.delete_cookie(settings.SESSION_COOKIE_NAME, path='/')
-    return JsonResponse({"success": True, "redirect": "/"}, status=200)
+    for cookie in request.COOKIES:
+        response.delete_cookie(cookie)
+    return response
 
 def remove_first_two_lines(wallet_file_path):
     with open(wallet_file_path, 'r') as file:

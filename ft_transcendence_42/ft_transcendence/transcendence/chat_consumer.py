@@ -77,7 +77,7 @@ class ChatConsumer(WebsocketConsumer):
             while True:
                 random_length = random.randint(1, 8)
                 random_string = self.generate_random_string(random_length)
-                link = 'http://127.0.0.1:8000/pong_lobby/' + random_string + '/'
+                link = f'/pong_lobby/{random_string}/'
                 if(f'game_{random_string}' not in room_manager.rooms):
                     break
 

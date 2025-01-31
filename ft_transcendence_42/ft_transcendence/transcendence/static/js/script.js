@@ -90,8 +90,42 @@ function removeOldScripts() {
     console.log("Removed scripts:", scriptsArray);
 }
 
-function startSatus() {
-    if(statusSocket){
+// function startSatus() {
+//     if(statusSocket){
+//         statusSocket.close();
+//     }
+
+//     statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+
+//     statusSocket.onmessage = function (e) {
+//         const data = JSON.parse(e.data);
+//         console.log(data.type);
+
+//         if (data.type === 'user_status') {
+//             const friendItems = document.querySelectorAll('.friend-item');
+//             const onlineUsernames = new Set(data.users || []);
+
+//             friendItems.forEach((item) => {
+//                 const name = item.dataset.name;
+//                 const statusIndicator = item.querySelector('.status-indicator');
+
+//                 if (onlineUsernames.has(name)) {
+//                     statusIndicator.classList.remove('offline');
+//                     statusIndicator.classList.add('online');
+//                     statusIndicator.style.backgroundColor = 'green';
+//                 } else {
+//                     statusIndicator.classList.remove('online');
+//                     statusIndicator.classList.add('offline');
+//                     statusIndicator.style.backgroundColor = 'red';
+//                 }
+//             });
+//         }
+//     };
+// }
+
+
+function startStatus() {
+    if (statusSocket) {
         statusSocket.close();
     }
 
@@ -109,17 +143,16 @@ function startSatus() {
                 const name = item.dataset.name;
                 const statusIndicator = item.querySelector('.status-indicator');
 
-                if (onlineUsernames.has(name)) {
-                    statusIndicator.classList.remove('offline');
-                    statusIndicator.classList.add('online');
-                    statusIndicator.style.backgroundColor = 'green';
-                } else {
-                    statusIndicator.classList.remove('online');
-                    statusIndicator.classList.add('offline');
-                    statusIndicator.style.backgroundColor = 'red';
+                if (statusIndicator) {
+                    if (onlineUsernames.has(name)) {
+                        statusIndicator.style.backgroundColor = 'green'; 
+                    } else {
+                        statusIndicator.style.backgroundColor = 'red'; 
+                    }
                 }
             });
         }
     };
 }
-startSatus();
+// startSatus();
+document.addEventListener("DOMContentLoaded", startStatus);
