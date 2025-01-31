@@ -8,15 +8,13 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['tournament_id']
         self.room_group_name = f"tournament_{self.room_name}"
         self.user = self.scope['user']
-        self.username = self.scope['user'].username
         self.room = tournament_manager.get_or_create_room(self.room_name)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)       
 
-        # if self.username not in self.room.players_queue and self.username not in self.room.round_winners:
-        #     self.room.spectators.append(self.username)
-        if self.username not in self.room.all_ready:
-            self.room.spectators.append(self.username)
-
+        if self.user not in self.room.all_ready and self.user not in self.room.tournament_users:
+            self.room.tournament_users.add(self.user)
+            self.room.spectators.append(self.user)
+        print(self.room.tournament_users)
         await self.accept()
         await self.send_game_state()
         await self.broadcast_tournament_state()
@@ -24,12 +22,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-        if self.username in self.room.players_queue:
-            self.room.players_queue.remove(self.username)
-        if self.username in self.room.spectators:
-            self.room.spectators.remove(self.username)
-        if self.username in self.room.round_winners:
-            self.room.round_winners.remove(self.username)
+        if self.user in self.room.players_queue:
+            self.room.players_queue.remove(self.user)
+        if self.user in self.room.spectators:
+            self.room.spectators.remove(self.user)
+        if self.user in self.room.round_winners:
+            self.room.round_winners.remove(self.user)
+        if self.user in self.room.tournament_users:
+            self.room.tournament_users.remove(self.user)
 
         if not self.room.players_queue and not self.room.spectators and not self.room.round_winners:
             tournament_manager.remove_room(self.room_name)     
@@ -42,24 +42,25 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({'error': 'You are not part of the current game.'}))
             return
         
+        
         data = json.loads(text_data)
         action = data.get('action')
         
         if action == 'ready':
             self.room.add_ready_player(self.user)
-            self.room.spectators.remove(self.username)
-            self.room.players_queue.append(self.username)
+            self.room.spectators.remove(self.user)
             if len(self.room.all_ready) == 4:
                 self.room.assign_role()
                 await self.send_game_state()
             await self.broadcast_tournament_state()
+
             
 
 
         elif action == 'ready_game':
-            if self.username == self.room.current_players['left']:
+            if self.user == self.room.current_players['left']:
                 self.room.ready['left'] = True
-            elif self.username == self.room.current_players['right']:
+            elif self.user == self.room.current_players['right']:
                 self.room.ready['right'] = True
             if self.room.ready['left'] and self.room.ready['right']:
                 if not self.room.is_tournament_running:
@@ -75,14 +76,22 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 await self.handle_stop(direction)
 
     async def broadcast_tournament_state(self):
+        print(self.room.current_players['left'].tournament_nickname if self.room.current_players['left'] else None)
+        print(self.room.current_players['right'].tournament_nickname if self.room.current_players['right'] else None)
         state = {
             'type': 'tournament_state',
-            'players_queue': self.room.players_queue,
-            'spectators': self.room.spectators,
-            'round_winners': self.room.round_winners,
-            'current_players': self.room.current_players,
-            'ready': self.room.ready,
-            'all_ready': [user.username for user in self.room.all_ready],
+            # 'players_queue': self.room.players_queue,
+            'spectators': [user.tournament_nickname for user in self.room.spectators],
+            'round_winners': [user.tournament_nickname for user in self.room.round_winners],
+            'current_players': {
+                'left': self.room.current_players['left'].tournament_nickname if self.room.current_players['left'] else None,
+                'right': self.room.current_players['right'].tournament_nickname if self.room.current_players['right'] else None,
+            },
+            'ready': {
+                'left': self.room.ready['left'],
+                'right': self.room.ready['right'],
+            },
+            'all_ready': [user.tournament_nickname for user in self.room.all_ready],
             'champion': self.room.champion,
         }
         await self.channel_layer.group_send(
@@ -93,9 +102,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             },
         )
 
+
     async def tournament_state(self, event):
         state = event['state']
-        # print(state)
+        print(state)
         await self.send(text_data=json.dumps(state))
 
     async def handle_move(self, direction):
@@ -103,7 +113,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         move_dir = -1 if direction == 'up' else 1
         player_side = None
         for side, player in self.room.current_players.items():
-            if player == self.username:
+            if player == self.user:
                 player_side = side
                 break
         if player_side:
@@ -113,7 +123,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         if direction in ['up', 'down']:
             player_side = None
             for side, player in self.room.current_players.items():
-                if player == self.username:
+                if player == self.user:
                     player_side = side
                     break
             if player_side:

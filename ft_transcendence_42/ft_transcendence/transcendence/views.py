@@ -91,6 +91,7 @@ def register(request):
             # Create the user and other related objects
             user = User.objects.create_user(username=username, password=password, email=email)
             user.wallet_address, user.wallet_prt_key = bind_walet()
+            user.tournament_nickname = username
             user.save()
             Score.objects.create(user=user, score=10)
             ScoreDoubleJack.objects.create(user=user, score=1000)
@@ -227,7 +228,7 @@ def profile_settings(request):
     if request.method == "POST":
         form = ProfileSettingsForm(request.POST, request.FILES, user=user)
         if form.is_valid():
-            user.username = form.cleaned_data["username"]
+            user.tournament_nickname = form.cleaned_data["tournament_nickname"]
             user.description = form.cleaned_data["description"]
             if form.cleaned_data["photo"]:
                 user.photo = form.cleaned_data["photo"]
@@ -464,7 +465,7 @@ def tournament(request, tournament_id):
     
 	return render(request, 'pong_app/tournament.html', {
         'tournament_id': tournament_id,
-        'username': request.user.username,                                           
+        'tournament_nickname': request.user.tournament_nickname,                                           
     })
 
 

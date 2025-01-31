@@ -5,9 +5,9 @@ let lobbySocket  = null;
 
 async function navigate(url) {
 
-    if (statusSocket) {
-        statusSocket.close();
-    }
+    // if (statusSocket) {
+    //     statusSocket.close();
+    // }
     // if (ws) {
     //     ws.close();
     // }
@@ -90,7 +90,7 @@ function removeOldScripts() {
     console.log("Removed scripts:", scriptsArray);
 }
 
-// function startSatus() {
+// function startStatus() {
 //     if(statusSocket){
 //         statusSocket.close();
 //     }
@@ -154,5 +154,5 @@ function startStatus() {
         }
     };
 }
-// startSatus();
+// startStatus();
 document.addEventListener("DOMContentLoaded", startStatus);

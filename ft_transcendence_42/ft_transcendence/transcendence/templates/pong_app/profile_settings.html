@@ -23,8 +23,8 @@
         <form id="profile-settings-form" method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
             {% csrf_token %}
             <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                <label for="tournament_nickname" class="form-label">Tournament nickname</label>
+                <input type="text" class="form-control" id="tournament_nickname" name="tournament_nickname" value="{{ user.tournament_nickname }}" required>
             </div>
 
             <div class="mb-3">

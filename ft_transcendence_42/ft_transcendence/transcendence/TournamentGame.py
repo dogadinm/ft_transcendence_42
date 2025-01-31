@@ -24,7 +24,8 @@ class TournamentRoom:
 
     def __init__(self, tournament_id):
         self.tournament_id = tournament_id
-        self.players_queue = [] 
+        self.players_queue = []
+        self.tournament_users = set()
         self.current_players = {'left': None, 'right': None}
         self.spectators = []
         self.paddles = {
@@ -54,7 +55,7 @@ class TournamentRoom:
             raise ValueError("Not enough players to start the tournament.")
 
         ready_list = list(self.all_ready)
-        self.players_queue = [player.username for player in ready_list]
+        self.players_queue = [player for player in ready_list]
         random.shuffle(self.players_queue)
         self.set_next_match()
 
@@ -87,7 +88,7 @@ class TournamentRoom:
             await self.game_loop(send_update)
 
         if self.round_winners:
-            self.champion = self.round_winners[0]
+            self.champion = self.round_winners[0].tournament_nickname
             await broadcast_tournament_state()
         self.is_tournament_running = False
         await close_tournament()
@@ -165,7 +166,10 @@ class TournamentRoom:
             'paddle': {'width': TournamentRoom.PADDLE_WIDTH, 'height': TournamentRoom.PADDLE_HEIGHT},
             'paddles': self.paddles,
             'ball': self.ball,
-            'players': self.current_players,
+            'players': {
+                'left': self.current_players['left'].tournament_nickname if self.current_players['left'] else None,
+                'right': self.current_players['right'].tournament_nickname if self.current_players['right'] else None,
+            },
             'score': self.score,
         }
 
@@ -177,28 +181,24 @@ class TournamentRoom:
         return None
 
     @sync_to_async
-    def save_match(self, winner_username, loser_username):
-        winner = User.objects.get(username=winner_username)
-        loser = User.objects.get(username=loser_username)
+    def save_match(self, winner, loser):
 
         MatchHistory.objects.create(
             winner=winner,
             loser=loser,
-            winner_match_score=self.score['left'] if self.current_players['left'] == winner_username else self.score['right'],
-            loser_match_score=self.score['right'] if self.current_players['left'] == winner_username else self.score['left'],
+            winner_match_score=self.score['left'] if self.current_players['left'] == winner else self.score['right'],
+            loser_match_score=self.score['right'] if self.current_players['left'] == winner else self.score['left'],
             winner_change_score=TournamentRoom.WIN_POINTS,
             loser_change_score=TournamentRoom.LOSS_POINTS
         )
 
-        self.create_csv(winner.username, loser.username)
+        self.create_csv(winner.tournament_nickname, loser.tournament_nickname)
         # save_blockcahin(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
         self.round = 0
         
 
     @sync_to_async
-    def update_scores(self, winner_username, loser_username):
-        winner = User.objects.get(username=winner_username)
-        loser = User.objects.get(username=loser_username)
+    def update_scores(self, winner, loser):
         winner_score = Score.objects.get(user=winner)
         loser_score = Score.objects.get(user=loser)
         winner_score.score += TournamentRoom.WIN_POINTS
@@ -224,7 +224,7 @@ class TournamentRoom:
         game_id = self.round
         game_type = "semi_final" if game_id in [1, 2] else "final" if game_id == 3 else "unknown"
 
-        is_winner_left = winner in self.current_players['left']
+        is_winner_left = winner == self.current_players['left']
         winner_score = self.score['left'] if is_winner_left else self.score['right']
         loser_score = self.score['right'] if is_winner_left else self.score['left']
 
