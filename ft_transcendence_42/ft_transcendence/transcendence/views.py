@@ -181,6 +181,7 @@ def profile(request, username):
         "friend_request_taker": friend_request_taker,
         "friend_requests": friend_requests,
         "block_list": block_list,
+		"wallet":page_user.wallet_address,
 
     })
 
