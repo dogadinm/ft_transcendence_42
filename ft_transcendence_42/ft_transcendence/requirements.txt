@@ -6,3 +6,6 @@ channels_redis
 django-oauth-toolkit
 django-extensions
 social-auth-app-django
+web3
+pandas
+py-solc-x
