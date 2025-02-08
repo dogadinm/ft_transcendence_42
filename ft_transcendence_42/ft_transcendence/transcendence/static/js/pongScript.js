@@ -90,49 +90,20 @@ var Game = {
 
 // End game and display message, launch restart button
 endGameMenu: function() {
-    // Ensure the game loop stops
     this.over = true;
-
-    // Clear the canvas
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Draw the background
     this.context.fillStyle = this.color;
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Display the winner message
     this.context.font = '50px Arial';
     this.context.fillStyle = '#ffffff';
     this.context.textAlign = 'center';
     this.context.fillText(this.winnerText, this.canvas.width / 2, this.canvas.height / 2 - 60);
+    this.context.fillText("Restarting in 10 seconds...", this.canvas.width / 2, this.canvas.height / 2);
 
-    // Create and center the restart button below the winner text
-    const restartButton = document.createElement('button');
-    restartButton.textContent = 'Restart Game';
-    restartButton.style.position = 'absolute';
-
-    // Calculate the button's top position based on the canvas height and winner message
-    const winnerTextHeight = 50; // Height of the winner text
-    const winnerTextYPosition = this.canvas.height / 2 - 60;
-    const buttonOffset = 5; // Space between the winner text and the button
-    const buttonTop = winnerTextYPosition + winnerTextHeight + buttonOffset;
-
-    restartButton.style.top = buttonTop + 'px';  // Positioning below the winner text
-    restartButton.style.left = '50%';
-    restartButton.style.transform = 'translateX(-50%)';
-    restartButton.style.padding = '10px 20px';
-    restartButton.style.fontSize = '16px';
-    restartButton.style.cursor = 'pointer';
-    restartButton.style.zIndex = '1000';
-
-    // Append the button to the body
-    document.body.appendChild(restartButton);
-
-    // Restart the game when the button is clicked
-    restartButton.addEventListener('click', () => {
-        document.body.removeChild(restartButton); // Remove the button
-        this.initialize(); // Restart the game
-    });
+    setTimeout(() => {
+        this.initialize();
+    }, 10000);
 },
 
     // Main game loop
