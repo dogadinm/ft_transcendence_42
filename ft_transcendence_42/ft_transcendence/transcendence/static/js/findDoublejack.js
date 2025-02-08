@@ -6,7 +6,7 @@ function navigateToDoublejack() {
           displayErrorMessage("Doublejack must be at least 3 characters long.");
           return;
         } else if (doublejackInput.length > 8) {
-          displayErrorMessage("Doublejack cannot be more than 25 characters.");
+          displayErrorMessage("Doublejack cannot be more than 8 characters.");
           return;
         } else if (!/^[a-zA-Z0-9]+$/.test(doublejackInput)) {
           displayErrorMessage("Doublejack can only contain letters and digits.");

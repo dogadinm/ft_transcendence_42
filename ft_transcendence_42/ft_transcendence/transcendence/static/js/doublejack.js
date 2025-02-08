@@ -15,6 +15,7 @@
 	// Handle messages received from the WebSocket
 	ws.onmessage = function(event) {
 		const data = JSON.parse(event.data);
+		console.log(data);
 		if (data && data.joined) {
 			id = data.joined;
 		}
@@ -74,6 +75,7 @@
 
 		// }
 		if (data && 'points' in data) {
+			console.log(data);
 			if (data.role) {
 				if (id == data.role)
 					document.getElementById('points').innerHTML = data.points;

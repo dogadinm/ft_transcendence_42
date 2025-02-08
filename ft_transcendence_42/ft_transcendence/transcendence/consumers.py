@@ -121,7 +121,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                     'disable': 'true'
                 }))
             await self.send_player_info(self.role, bg_color)
-            if (self.table_game.status == GameStatus.FINISHED) :
+            if (self.table_game.status == GameStatus.FINISHED or self.table_game.status == GameStatus.ENDED) :
                 print("hit 4")
                 await self.channel_layer.group_send(
                 self.room_group_name,
@@ -146,7 +146,7 @@ class DoubleJackConsumer(AsyncWebsocketConsumer):
                     'disable': 'true'
                 }))
             await self.send_player_info(self.role, bg_color)
-            if (self.table_game.status == GameStatus.FINISHED) :
+            if (self.table_game.status == GameStatus.FINISHED or self.table_game.status == GameStatus.ENDED) :
                 print("stay 4")
                 await self.channel_layer.group_send(
                 self.room_group_name,

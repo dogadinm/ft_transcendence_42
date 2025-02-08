@@ -285,6 +285,8 @@ class TableGame:
 		if len(self.table.players) == self.table.standing:
 			self.status = GameStatus.FINISHED
 			self.table.eval()
+			print("P0: ", self.table.playerPoints(0))
+			print("P1: ", self.table.playerPoints(1))
 			if self.is_running:
 				self.task.cancel()
 			if self.table.playerPoints(0) > 99:
