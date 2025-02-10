@@ -3,39 +3,71 @@ let statusSocket = null;
 let lobbySocket  = null;
 // let ws = null;
 
-async function navigate(url) {
+// async function navigate(url) {
 
-    // if (statusSocket) {
-    //     statusSocket.close();
-    // }
-    // if (ws) {
-    //     ws.close();
-    // }
+//     // if (statusSocket) {
+//     //     statusSocket.close();
+//     // }
+//     // if (ws) {
+//     //     ws.close();
+//     // }
 
+//     try {
+//         const response = await fetch(url, {
+//             method: "GET",
+//             headers: {
+//                 "X-Requested-With": "XMLHttpRequest",
+//             },
+//         });
+
+//         if (response.ok) {
+//             const html = await response.text();
+
+//             const parser = new DOMParser();
+//             const doc = parser.parseFromString(html, "text/html");
+//             console.log(doc)
+//             const newContent = doc.querySelector("#content");
+//             history.pushState(null, "", url);
+//             updateUserLinks()
+//             console.log(newContent)
+//             if (newContent) {
+//                 document.querySelector("#content").innerHTML = newContent.innerHTML;
+//             } else {
+//                 console.error("Content block not found.");
+//             }
+//             executeScriptsInContent(html);
+//         } else {
+//             console.error("Failed to fetch page:", response.status);
+//         }
+//     } catch (error) {
+//         console.error("Error during navigation:", error);
+//     }
+// }
+async function navigate(url, addToHistory = true) {
     try {
         const response = await fetch(url, {
             method: "GET",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
+            headers: { "X-Requested-With": "XMLHttpRequest" },
         });
 
         if (response.ok) {
             const html = await response.text();
-
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
-            console.log(doc)
             const newContent = doc.querySelector("#content");
-            history.pushState(null, "", url);
-            updateUserLinks()
-            console.log(newContent)
+
             if (newContent) {
                 document.querySelector("#content").innerHTML = newContent.innerHTML;
+                executeScriptsInContent(html);
+                updateUserLinks();
+
+                // Только если это не вызов из popstate, добавляем в историю
+                if (addToHistory) {
+                    history.pushState(null, "", url);
+                }
             } else {
                 console.error("Content block not found.");
             }
-            executeScriptsInContent(html);
         } else {
             console.error("Failed to fetch page:", response.status);
         }
@@ -43,7 +75,6 @@ async function navigate(url) {
         console.error("Error during navigation:", error);
     }
 }
-
 
 async function updateUserLinks() {
     try {
@@ -156,3 +187,15 @@ function startStatus() {
 }
 // startStatus();
 document.addEventListener("DOMContentLoaded", startStatus);
+
+window.addEventListener("popstate", () => {
+    navigate(location.pathname, false); // Загружаем контент, но НЕ добавляем в историю
+});
+
+document.addEventListener("click", (event) => {
+    const link = event.target.closest("a.ajax-link");
+    if (link) {
+        event.preventDefault();
+        navigate(link.href);
+    }
+});

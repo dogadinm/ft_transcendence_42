@@ -1,12 +1,13 @@
 {% load static %}
-<a href="#" onclick="navigate('/profile/{{ user.username }}')">
+
+<a href="/profile/{{ user.username }}" class="ajax-link">
     <strong>{{ user.username }}</strong>
 </a>
 <a href="#" onclick="logOut()">Log out</a>
-<a href="#" onclick="navigate('/chat/')">Chat</a>
-<a href="#" onclick="navigate('/find_lobby/')">Pong</a>
-<a href="#" onclick="navigate('/bot/')">Play Pong With Bot</a>
-<a href="#" onclick="navigate('/find_doublejack/')">Doublejack</a>
-<a href="#" onclick="navigate('/find_tournament/')">Tournament</a>
+<a href="/chat/" class="ajax-link">Chat</a>
+<a href="/find_lobby/" class="ajax-link">Pong</a>
+<a href="/bot/" class="ajax-link">Play Pong With Bot</a>
+<a href="/find_doublejack/" class="ajax-link">Doublejack</a>
+<a href="/find_tournament/" class="ajax-link">Tournament</a>
 
 <script src="{% static 'js/logout.js' %}"></script>

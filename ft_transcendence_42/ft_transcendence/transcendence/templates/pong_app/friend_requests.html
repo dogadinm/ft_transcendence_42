@@ -4,39 +4,39 @@
 
 <div id="content" class="body">
 
-        <div class="sidebar">
-            <ul>
-                <a href="#" onclick="navigate('/profile/{{ user.username }}')">Profile</a>
-                    <a href="#" onclick="navigate('/profile_settings/')">Settings</a>
-                    <a href="#" onclick="navigate('/friend_requests/')">Friend Requests</a>
-                    <a href="#" onclick="navigate('/blockedPeople/')">Blocked people</a>
-                    <a href="#" onclick="navigate('/full_match_history/{{ user.username }}')">Match History</a>
-                    <a href="#" onclick="navigate('/full_friends_list/{{ user.username }}')">Friends</a>
-            </ul>
-        </div>
+    <div class="sidebar">
+        <ul>
+            <a href="/profile/{{ username }}" class="ajax-link">Profile</a>
+            <a href="/profile_settings/" class="ajax-link">Settings</a>
+            <a href="/friend_requests/" class="ajax-link">Friend Requests</a>
+            <a href="/blockedPeople/" class="ajax-link">Blocked people</a>
+            <a href="/full_match_history/{{ username }}" class="ajax-link">Match History</a>
+            <a href="/full_friends_list/{{ username }}" class="ajax-link">Friends</a>
+        </ul>
+    </div>
 
 
 
 
-            <h2 class="mx-5">Friend Requests:</h2>
-            <div id="friend-requests-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
-                {% csrf_token %}
-                {% for request in friend_requests %}
-                    <div class="friend-request" data-username="{{ request.sender.username }}">
-                        <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-                        <span style="font-size: 18px; margin-right: 20px;">
-                            <a href="{% url 'profile' request.sender.username %}">{{ request.sender.username }}</a>
-                        </span>
-                        <button class="accept-request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                            Accept
-                        </button>
-                        <button class="decline-request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
-                            Reject
-                        </button>
-                    </div>
-                {% endfor %}
+    <h2 class="mx-5">Friend Requests:</h2>
+    <div id="friend-requests-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+        {% csrf_token %}
+        {% for request in friend_requests %}
+            <div class="friend-request" data-username="{{ request.sender.username }}">
+                <img src="{{ request.sender.photo.url }}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
+                <span style="font-size: 18px; margin-right: 20px;">
+                    <a href="{% url 'profile' request.sender.username %}">{{ request.sender.username }}</a>
+                </span>
+                <button class="accept-request" style="background-color: green; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                    Accept
+                </button>
+                <button class="decline-request" style="background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer;">
+                    Reject
+                </button>
             </div>
-            <script src="{% static 'js/friend_requests.js' %}"></script>
+        {% endfor %}
+    </div>
+    <script src="{% static 'js/friend_requests.js' %}"></script>
 
 
 </div>

@@ -25,25 +25,24 @@
 
         <!-- <h1>Welcome to the Pong game!</h1> -->
         <nav>
-            <a href="#" onclick="navigate('/')">Main page</a>
+            <a href="/" class="ajax-link">Main page</a>
             <span id="user-links">
                 {% if user.is_authenticated %}
-                    <a href="#" onclick="navigate('/profile/{{ user.username }}')">
+                    <a href="/profile/{{ user.username }}" class="ajax-link">
                         <strong>{{ user.username }}</strong>
                         <span id="friend-requests-badge"></span>
                     </a>
                     <a href="#" onclick="logOut()">Log out</a>
-                    <a href="#" onclick="navigate('/chat')">Chat</a>
-                    <a href="#" onclick="navigate('/find_lobby')">Pong</a>
-                    <a href="#" onclick="navigate('/bot')">Play Pong With Bot</a>
-                    <a href="#" onclick="navigate('/find_doublejack')">Doublejack</a>
-					<a href="#" onclick="navigate('/find_tournament/')">Tournament</a>
-
+                    <a href="/chat" class="ajax-link">Chat</a>
+                    <a href="/find_lobby" class="ajax-link">Pong</a>
+                    <a href="/bot" class="ajax-link">Play Pong With Bot</a>
+                    <a href="/find_doublejack" class="ajax-link">Doublejack</a>
+                    <a href="/find_tournament/" class="ajax-link">Tournament</a>
+        
                     <script src="{% static 'js/logout.js' %}"></script>
-                {% endif %}
-                {% if not user.is_authenticated %}
-                    <a href="#" onclick="navigate('/login')">Login</a>
-                    <a href="#" onclick="navigate('/register')">Sign Up</a>
+                {% else %}
+                    <a href="/login" class="ajax-link">Login</a>
+                    <a href="/register" class="ajax-link">Sign Up</a>
                 {% endif %}
             </span>
         </nav>
