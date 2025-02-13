@@ -1,0 +1,92 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+
+}
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+.find-friend {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.find-friend a, .find-friend span {
+    margin: 0 5px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #007bff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.find-friend a:hover {
+    background-color: #f1f1f1;
+}
+
+.find-friend .current {
+    font-weight: bold;
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.profile-actions-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.profile-action-btn {
+    margin: 5px 0;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+}
+
+.friend-request-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.friend-request-actions button {
+    width: 48%;
+}
+
+@media (max-width: 768px) {
+  .profile-actions-container {
+      padding: 15px;
+  }
+
+  .profile-action-btn {
+      font-size: 16px;
+      padding: 12px 24px;
+  }
+
+  .friend-request-actions button {
+      width: 100%;
+      margin-bottom: 10px;
+  }
+}

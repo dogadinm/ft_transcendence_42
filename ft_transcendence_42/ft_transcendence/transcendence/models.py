@@ -23,7 +23,6 @@ class User(AbstractUser):
     tournament_nickname = models.CharField(max_length=30, blank=True, null=True, unique=True)
     tournament_lobby = models.CharField(max_length=30, blank=True, null=True)
 
-
     def save(self, *args, **kwargs):
         if self.pk:
             old_instance = User.objects.filter(pk=self.pk).first()
@@ -35,9 +34,6 @@ class User(AbstractUser):
                 except Exception as e:
                     logging.error(f"Error deleting old photo: {e}")
         super(User, self).save(*args, **kwargs)
-
-
-
 
 class Score (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="scores")
@@ -99,39 +95,5 @@ class PrivateMessage(models.Model):
     def __str__(self):
         return f"Chat: {self.sender.username}-{self.receiver.username}"
 
-class ChatGroup(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    password = models.CharField(max_length=100, blank=True)
-    photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/profile_standard.jpg")
-    
-    members = models.ManyToManyField(User, related_name='chats', symmetrical=False)
-
-    def save(self, *args, **kwargs):
-        if self.password and not self.password.startswith('pbkdf2_'):
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-class Message(models.Model):
-    chat = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.chat.name
 
 
-class Room(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    player1 = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='player1', null=True, blank=True)
-    player2 = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='player2', null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name

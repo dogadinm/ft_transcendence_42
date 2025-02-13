@@ -66,48 +66,6 @@
     <a href="/full_match_history/{{ username }}?page={{ page_obj.paginator.num_pages }}" class="ajax-link">Last</a>
   </div>
   </div>
-
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-    .pagination {
-      margin: 20px 0;
-      display: flex;
-      justify-content: center;
-    }
-    .pagination a, .pagination span {
-      margin: 0 5px;
-      padding: 8px 12px;
-      text-decoration: none;
-      color: #007bff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .pagination a:hover {
-      background-color: #f1f1f1;
-    }
-    .pagination .current {
-      font-weight: bold;
-      background-color: #007bff;
-      color: white;
-      border: 1px solid #007bff;
-    }
-  </style>
+  <link type="text/css" href="{% static 'transcendence/style_friends_list.css' %}" rel="stylesheet">
 </div>
 {% endblock %}

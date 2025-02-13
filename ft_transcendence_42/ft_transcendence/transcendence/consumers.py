@@ -2,12 +2,11 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Room, PrivateMessage
 from django.contrib.auth import get_user_model
 from .game import room_manager
 from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
-from .models import User, Score, Friend, Message, ChatGroup, ScoreDoubleJack
+from .models import User, Score, Friend, ScoreDoubleJack
 from django.contrib.auth.hashers import check_password
 from .doublejack import double_jack_table_manager
 from .doublejack import GameStatus

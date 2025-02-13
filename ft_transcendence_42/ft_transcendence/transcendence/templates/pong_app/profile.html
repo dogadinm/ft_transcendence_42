@@ -4,165 +4,67 @@
 
 <div id="content" class="body">
 
-        <div class="sidebar">
-            <ul>
-                <a href="/profile/{{ username }}" class="ajax-link">Profile</a>
-                {% if is_owner %}
-                    <a href="/profile_settings/" class="ajax-link">Settings</a>
-                    <a href="/friend_requests/" class="ajax-link">Friend Requests</a>
-                    <a href="/blockedPeople/" class="ajax-link">Blocked people</a>
-                {% endif %}
-                {% if is_owner or friend %}
-                    <a href="/full_match_history/{{ username }}" class="ajax-link">Match History</a>
-                    <a href="/full_friends_list/{{ username }}" class="ajax-link">Friends</a>
-                {% endif %}
-            </ul>
-        </div>
-
-
-
-        <div>
+    <div class="sidebar">
+        <ul>
+            <a href="/profile/{{ username }}" class="ajax-link">Profile</a>
             {% if is_owner %}
-                <h1 class="mx-5">Username:{{ user.username }}</h1>
-            {% else %}
-                <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+                <a href="/profile_settings/" class="ajax-link">Settings</a>
+                <a href="/friend_requests/" class="ajax-link">Friend Requests</a>
+                <a href="/blockedPeople/" class="ajax-link">Blocked people</a>
             {% endif %}
+            {% if is_owner or friend %}
+                <a href="/full_match_history/{{ username }}" class="ajax-link">Match History</a>
+                <a href="/full_friends_list/{{ username }}" class="ajax-link">Friends</a>
+            {% endif %}
+        </ul>
+    </div>
 
-            <div class="text-center my-3">
-                <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
-            </div>
-                <p>{{ description }}</p>
-            <div class="text-center mb-4"></div>
+    <div>
+        {% if is_owner %}
+            <h1 class="mx-5">Username:{{ user.username }}</h1>
+        {% else %}
+            <h2 class="mx-5">Nickname:{{ nickname }}</h2>
+        {% endif %}
 
-            <div class="row d-flex justify-content-center mb-4">
-                <h3 class="col-4">Rating Pong: {{ score }}</h3>
-                <h3 class="col-4">Rating DJ: {{ score_double_jack }}</h3>
-				<p>Wallet Address: {{wallet}}</p>
-            </div>
+        <div class="text-center my-3">
+            <img src="{{ photo }}" alt="{{ user.username }}" class="rounded-circle" width="150" height="150">
         </div>
+            <p>{{ description }}</p>
+        <div class="text-center mb-4"></div>
 
-
-
-<div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
-    {% if not is_owner %}
-        <!-- {% csrf_token %} -->
-        <div id="profile-actions-content">
-            {% if friend %}
-                <button id="remove-friend-btn" data-action="delete" class="profile-action-btn">Remove from friends</button>
-            {% elif friend_request_taker %}
-                <div class="friend-request-actions">
-                    <p id="already-sent-friend-request">This page user already sent friend request</p>
-                </div>
-            {% elif not friend_request_sent %}
-                <button id="send-request-btn" data-action="send_request" class="profile-action-btn">Send friend request</button>
-            {% else %}
-                <p id="request-sent-message">Request sent</p>
-            {% endif %}
-
-            {% if block_user %}
-                <button id="unblock-user-btn" data-action="unblock_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Unblock</button>
-            {% else %}
-                <button id="block-user-btn" data-action="block_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Block</button>
-            {% endif %}
+        <div class="row d-flex justify-content-center mb-4">
+            <h3 class="col-4">Rating Pong: {{ score }}</h3>
+            <h3 class="col-4">Rating DJ: {{ score_double_jack }}</h3>
+            <p>Wallet Address: {{wallet}}</p>
         </div>
-    {% endif %}
-</div>
+    </div>
 
+    <div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
+        {% if not is_owner %}
+            {% csrf_token %}
+            <div id="profile-actions-content">
+                {% if friend %}
+                    <button id="remove-friend-btn" data-action="delete" class="profile-action-btn">Remove from friends</button>
+                {% elif friend_request_taker %}
+                    <div class="friend-request-actions">
+                        <p id="already-sent-friend-request">This page user already sent friend request</p>
+                    </div>
+                {% elif not friend_request_sent %}
+                    <button id="send-request-btn" data-action="send_request" class="profile-action-btn">Send friend request</button>
+                {% else %}
+                    <p id="request-sent-message">Request sent</p>
+                {% endif %}
 
-
-
-      <script src="{% static 'js/profileActions.js' %}"></script>
-      <style>
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        th, td {
-          padding: 8px;
-          text-align: left;
-          border: 1px solid #ddd;
-        }
-        th {
-          background-color: #f4f4f4;
-        }
-        tr:nth-child(even) {
-          background-color: #f9f9f9;
-        }
-        tr:hover {
-          background-color: #f1f1f1;
-        }
-
-
-        .find-friend {
-          margin: 20px 0;
-          display: flex;
-          justify-content: center;
-        }
-        .find-friend a, .find-friend span {
-          margin: 0 5px;
-          padding: 8px 12px;
-          text-decoration: none;
-          color: #007bff;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-        }
-        .find-friend a:hover {
-          background-color: #f1f1f1;
-        }
-        .find-friend .current {
-          font-weight: bold;
-          background-color: #007bff;
-          color: white;
-          border: 1px solid #007bff;
-        }
-
-    .profile-actions-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        padding: 20px;
-    }
-
-    .profile-action-btn {
-        margin: 5px 0;
-        padding: 10px 20px;
-        font-size: 14px;
-        border: none;
-        cursor: pointer;
-        width: 100%;
-        max-width: 250px;
-    }
-
-    .friend-request-actions {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-    }
-
-    .friend-request-actions button {
-        width: 48%;
-    }
-
-    @media (max-width: 768px) {
-        .profile-actions-container {
-            padding: 15px;
-        }
-
-        .profile-action-btn {
-            font-size: 16px;
-            padding: 12px 24px;
-        }
-
-        .friend-request-actions button {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-    }
-    </style>
-
-
+                {% if block_user %}
+                    <button id="unblock-user-btn" data-action="unblock_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Unblock</button>
+                {% else %}
+                    <button id="block-user-btn" data-action="block_user" data-username="{{ username }}" class="profile-action-btn btn-danger">Block</button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    <script src="{% static 'js/profileActions.js' %}"></script>
+    <link type="text/css" href="{% static 'transcendence/style_profile.css' %}" rel="stylesheet">
 </div>
 {% endblock %}
 

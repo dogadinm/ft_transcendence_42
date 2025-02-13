@@ -3,9 +3,10 @@ channels[daphne]
 psycopg2-binary
 Pillow
 channels_redis
-django-oauth-toolkit
-django-extensions
-social-auth-app-django
 web3
 pandas
 py-solc-x
+
+django-oauth-toolkit
+django-extensions
+social-auth-app-django

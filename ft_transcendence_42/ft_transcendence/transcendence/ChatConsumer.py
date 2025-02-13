@@ -1,10 +1,9 @@
 import json
-from traceback import print_tb
 import random
 import string
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
-from .models import User, Score, Friend, Message, ChatGroup, PrivateMessage
+from .models import User, Score, Friend, PrivateMessage
 from .game import room_manager
 
 class ChatConsumer(WebsocketConsumer):
@@ -39,7 +38,6 @@ class ChatConsumer(WebsocketConsumer):
             }
             for message in messages
         ]
-        print(messages_data)
         self.send(text_data=json.dumps({
             'type': 'chat_history',
             'messages': messages_data,
