@@ -1,6 +1,4 @@
 function initializeProfileActionsScript() {
-    console.log('Initializing profile actions script...');
-
     if (document._profileActionsInitialized) {
         console.log('Profile actions script is already initialized.');
         return;

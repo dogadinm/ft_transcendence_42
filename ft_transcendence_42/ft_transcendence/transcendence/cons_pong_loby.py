@@ -62,7 +62,6 @@ class PongLobby(AsyncWebsocketConsumer):
         elif self.username in self.room_game.spectators:
             self.room_game.spectators.remove(self.username)
         if self.user in self.room_game.people:
-            print(self.user in self.room_game.people)
             self.room_game.people.remove(self.user)
         # Remove room if no players remain
         if (
@@ -71,11 +70,6 @@ class PongLobby(AsyncWebsocketConsumer):
             not self.room_game.spectators
         ):
             room_manager.remove_room(self.room_lobby_name)
-            try:
-                group = await sync_to_async(get_object_or_404)(ChatGroup, name=self.room_lobby)
-                await database_sync_to_async(group.delete)()
-            except:
-                print("ChatGroup doesnt exist")
         if not (self.user.lobby and self.user.lobby != self.room_lobby_name):
             self.user.lobby = None
             await database_sync_to_async(self.user.save)()

@@ -11,17 +11,11 @@
           <div>
               <input autofocus class="form-control" type="text" id="tournament-input" placeholder="tournament">
           </div>
-          <div class="find-tournament">
-              <a href="#" id="find-tournament-link" onclick="navigateToTournament()">Find tournament</a>
-          </div>
+          <button id="tournament-button">Join Lobby</button>
       </form>
       <p id="error-message" style="color: red;"></p>
-	  {% if blockchain_template %}
-	  	{% include blockchain_template %}
-	  {% endif %}
-      <script src="{% static 'js/findTournament.js' %}"></script>
-	  <script src="{% static 'js/wallet.js' %}"></script>
 
+      <script src="{% static 'js/findTournament.js' %}"></script>
 </div>
 
 {% endblock %}

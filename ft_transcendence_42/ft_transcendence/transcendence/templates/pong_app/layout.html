@@ -1,51 +1,39 @@
 {% load static %}
 
-<head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
-
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-
-        <head>
-            <title>Pong</title>
-            <link rel="icon" type="image/png" href="/static/transcendence/42po.png">
-          </head>
-
+    <head>       
+        <title>Pong</title>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}Pong{% endblock %}</title>
         <link rel="icon" type="image/png" href="{% static 'transcendence/42po.png' %}">
+        <link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
         <link type="text/css" href="{% static 'transcendence/style.css' %}" rel="stylesheet">
     </head>
     <body>
-
-
-        <!-- <h1>Welcome to the Pong game!</h1> -->
-        <nav>
-            <a href="/" class="ajax-link">Main page</a>
             <span id="user-links">
+                <div class="navbar">
+                    <a href="/" class="ajax-link">Main page</a>
                 {% if user.is_authenticated %}
-                    <a href="/profile/{{ user.username }}" class="ajax-link">
-                        <strong>{{ user.username }}</strong>
-                        <span id="friend-requests-badge"></span>
-                    </a>
-                    <a href="#" onclick="logOut()">Log out</a>
+                    <a href="/profile/{{ user.username }}" class="ajax-link">{{ user.username }}</a>
                     <a href="/chat" class="ajax-link">Chat</a>
                     <a href="/find_lobby" class="ajax-link">Pong</a>
                     <a href="/bot" class="ajax-link">Play Pong With Bot</a>
                     <a href="/find_doublejack" class="ajax-link">Doublejack</a>
                     <a href="/find_tournament/" class="ajax-link">Tournament</a>
-        
+                    <form id="logout-button-form" onsubmit="event.preventDefault(); logOut();">
+                        <button id="logout-button">Log out</button>
+                    </form>
                     <script src="{% static 'js/logout.js' %}"></script>
                 {% else %}
                     <a href="/login" class="ajax-link">Login</a>
                     <a href="/register" class="ajax-link">Sign Up</a>
                 {% endif %}
-            </span>
-        </nav>
+                </div>
+            </span>      
+        
 
         <!-- Content Block -->
 

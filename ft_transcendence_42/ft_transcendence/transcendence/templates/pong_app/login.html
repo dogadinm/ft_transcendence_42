@@ -3,16 +3,9 @@
 {% load static %}
 {% block body %}
 
-
-
-<head>
-	<link type="text/css"  href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
-
-
 <div id="content" class="body">
     <h2>Login</h2>
-    <form id="login-form">
+    <form id="login-form" onsubmit="event.preventDefault(); login();">
         {% csrf_token %}
         <div>
             <label for="username">Username:</label>
@@ -22,7 +15,8 @@
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <button type="submit">Login</button>
+        <!-- <button type="submit">Login</button> -->
+        <button id="login-button">Login</button>
     </form>
 
     <p id="error-message" style="color: red;"></p>

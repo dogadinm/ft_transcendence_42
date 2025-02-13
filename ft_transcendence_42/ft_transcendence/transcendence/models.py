@@ -21,6 +21,7 @@ class User(AbstractUser):
     wallet_address = models.CharField(max_length=100, blank=True, null=True)
     wallet_prt_key = models.CharField(max_length=150, blank=True, null=True)
     tournament_nickname = models.CharField(max_length=30, blank=True, null=True, unique=True)
+    tournament_lobby = models.CharField(max_length=30, blank=True, null=True)
 
 
     def save(self, *args, **kwargs):
@@ -33,7 +34,6 @@ class User(AbstractUser):
                         os.remove(old_photo.path)
                 except Exception as e:
                     logging.error(f"Error deleting old photo: {e}")
-
         super(User, self).save(*args, **kwargs)
 
 

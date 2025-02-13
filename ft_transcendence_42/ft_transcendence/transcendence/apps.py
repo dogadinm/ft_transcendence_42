@@ -5,6 +5,6 @@ class TranscendenceConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'transcendence'
 
-    def ready(self):
-        import transcendence.signals
+    # def ready(self):
+    #     import transcendence.signals
 

@@ -52,12 +52,12 @@ def login_view(request):
 
 @login_required(login_url='/login/')
 def logout_view(request):
+    response = JsonResponse({"success": True, "redirect": "/"}, status=200)
+    # for cookie in request.COOKIES:
+    #     response.delete_cookie(cookie)
+
     logout(request)
 
-    response = JsonResponse({"success": True, "redirect": "/"}, status=200)
-
-    for cookie in request.COOKIES:
-        response.delete_cookie(cookie)
     return response
 
 def remove_first_two_lines(wallet_file_path):
@@ -192,7 +192,7 @@ def friend_requests(request):
 
     if request.method == "GET":
         friend_requests = FriendRequest.objects.filter(receiver=main_user)
-        return render(request, "pong_app/friend_requests.html", {"friend_requests": friend_requests})
+        return render(request, "pong_app/friend_requests.html", {"friend_requests": friend_requests, "username":main_user.username})
 
     elif request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         action = request.POST.get('action')
@@ -241,6 +241,7 @@ def profile_settings(request):
                     "message": "Settings updated successfully.",
                     "updated_fields": {
                         "username": user.username,
+                        "tournament_nickname":user.tournament_nickname,
                         "description": user.description,
                     }
                 })
@@ -259,14 +260,17 @@ def profile_settings(request):
             "description": user.description,
         })
 
-    return render(request, "pong_app/profile_settings.html", {"form": form, "user": user})
+    return render(request, "pong_app/profile_settings.html", {
+        "form": form, "username": user.username, 
+        "tournament_nickname":user.tournament_nickname,
+        "description":user.description,
+        })
 
-
+@login_required(login_url='/login/')
 def find_friend(request):
     if request.method == "POST":
         form = FiendFriendForm(request.POST)
         if form.is_valid():
-            print(form)
             username = form.cleaned_data["username"]
             try:
                 user = User.objects.get(username=username)
@@ -304,13 +308,11 @@ def bot(request):
 
 @login_required(login_url='/login/')
 def chat(request):
-    groups = ChatGroup.objects.filter(members=request.user)
     friend_obj = Friend.objects.get(owner=request.user)
 
     return render(request, 'pong_app/chat.html', {
         "friends": friend_obj.friends.all(),
         "current_user": request.user.username,
-        "groups": groups,
     })
 
 
@@ -365,7 +367,6 @@ def full_friends_list(request, username):
 @login_required(login_url='/login/')
 def blocked_people(request):
     main_user = request.user
-
     if request.method == "GET":
         block_list = main_user.blocked_users.all()
         return render(request, "pong_app/blockedPeople.html", {"block_list": block_list})
@@ -514,10 +515,11 @@ def find_tournament(request):
         form = FiendTournamentForm(request.POST)
         if form.is_valid():
             tournament_name = form.cleaned_data["tournament_name"]
+            if main_user.tournament_lobby:
+                tournament_name = main_user.tournament_lobby
             return JsonResponse({"exists": True, "tournament_name": tournament_name})
         else:
             return JsonResponse({"exists": False, "message": "Invalid data."})
     if not (main_user.wallet_address and main_user.wallet_prt_key):
         return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
     return render(request, 'pong_app/find_tournament.html')
-

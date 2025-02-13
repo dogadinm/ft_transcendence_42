@@ -13,29 +13,18 @@
 </head>
 <body>
     <!-- Static Navbar -->
-    <nav>
-        <a href="/" class="ajax-link">Main page</a>
-        <span id="user-links">
-            {% include user_links_template %}
-            {% if content_template %}
-              {% include content_template %}
-            {% endif %}
-        </span>
-    </nav>
+    <span id="user-links">
+        {% include user_links_template %}
+        {% if content_template %}
+            {% include content_template %}
+        {% endif %}
+    </span>
 
     <!-- Dynamic Content -->
     <div id="content" class="body">
         <h1>Welcome to the Pong game!</h1>
-        <h5>hello page</h5>
     </div>
 
-
-    <!-- CSRF token -->
-    <script>
-        const csrfToken = '{{ csrf_token }}';
-    </script>
-
-    <!-- JavaScript -->
     <script src="{% static 'js/script.js' %}"></script>
 
 </body>

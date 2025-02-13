@@ -1,8 +1,9 @@
 function navigateToDoublejack() {
-      const doublejackInput = document.getElementById('doublejack-input').value.trim();
+      const doublejackInput = document.getElementById("doublejack-input").value.trim();
+      const doublejacButton = document.getElementById("doublejack-button");
 
       if (doublejackInput) {
-        if (doublejackInput.length < 1) {
+        if (doublejackInput.length < 3) {
           displayErrorMessage("Doublejack must be at least 3 characters long.");
           return;
         } else if (doublejackInput.length > 8) {
@@ -26,7 +27,8 @@ function navigateToDoublejack() {
         .then(data => {
             if (data.exists) {
                 const url = `/doublejack_lobby/${data.doublejack_name}`;
-                navigate(url);
+                doublejacButton.setAttribute("data-navigate", url);
+                doublejacButton.click();
             } else {
                 displayErrorMessage(data.message || "Doublejack not found.");
             }

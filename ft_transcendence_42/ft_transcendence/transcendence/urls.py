@@ -31,7 +31,6 @@ urlpatterns = [
     path("find_friend/", views.find_friend, name='find_friend'),
     path('invite_to_game/', views.invite_to_game, name='invite_to_game'),
 
-
     re_path(r'find_lobby/', views.find_lobby, name="find_lobby"),
     path('login/42/', views.login_with_42, name='login_with_42'),
     path('callback/', views.callback, name='callback'),

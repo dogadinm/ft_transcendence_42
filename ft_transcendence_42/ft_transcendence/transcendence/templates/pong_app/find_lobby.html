@@ -7,15 +7,15 @@
 </head>
 <div id="content" class="body">
       <form id="find-lobby-form" onsubmit="event.preventDefault(); navigateToLobby();">
-          {% csrf_token %}
+        {% csrf_token %}
           <div>
               <input autofocus class="form-control" type="text" id="lobby-input" placeholder="Lobby">
           </div>
-          <div class="find-lobby">
-              <a href="#" id="find-lobby-link" onclick="navigateToLobby()">Find lobby</a>
-          </div>
+          <button id="lobby-button">Join Lobby</button>
       </form>
       <p id="error-message" style="color: red;"></p>
       <script src="{% static 'js/findLobby.js' %}"></script>
 </div>
+
+
 {% endblock %}

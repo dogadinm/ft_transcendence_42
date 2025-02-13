@@ -41,19 +41,17 @@
       <div id="TournamentData" data-room-lobby="{{ tournament_id }}" data-username="{{ tournament_nickname }}"></div>
       <h1>Ping Pong Tournament</h1>
       <h1>Lobby {{ tournament_id }}</h1>
+      <button id="leaveLobbyButton">Leave Lobby</button>
+      <button id="readyButton">I'm Ready For Tournament</button>
+
       <p id="status">Waiting to connect...</p>
-      <div id="controls">
-        <button id="readyButton">I'm Ready For Tournament</button>
-      </div>
+
 
       <canvas id="gameCanvas" width="800" height="400"></canvas>
 
       <div id="connection-status"></div>
       <div id="tournamentState">
         <h2><ul id="ready-players-list"></ul></h2>
-
-        <!-- <h2>Players Queue</h2>
-        <ul id="players-list"></ul> -->
 
         <h2>Ready Tournament Players</h2>
         <ul id="ready-tournament-players-list"></ul>

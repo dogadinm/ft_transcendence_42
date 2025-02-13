@@ -1,24 +1,23 @@
 (function () {
     let movingDown = false;
     let movingUp = false;
-    let isReady = false;
-
 
     let gameDataElement = document.getElementById("gameData");
     let room = gameDataElement.dataset.roomLobby;
     let url = `ws://${window.location.host}/ws/lobby/${room}/`;
-    lobbySocket = new WebSocket(url);
 
-
+    if (window.lobbySocket){
+        window.lobbySocket.close();
+    }
+    window.lobbySocket = new WebSocket(url);        
 
     // Add event listeners for key events once
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
 
-    lobbySocket.onmessage = function (e) {
+    window.lobbySocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
-
 
         switch (data.type) {
             case "connection":
@@ -47,7 +46,6 @@
                 updateRoleDisplay(role);
                 break;
             case "redirect":
-                console.log(data.room_lobby);
                 navigate(`/pong_lobby/${data.room_lobby}/`);
 
 
@@ -56,7 +54,6 @@
                 break;
 
             case `game_update_${room}`:
-                console.log(data);
                 fieldWidth = data.field.width;
                 fieldHeight = data.field.height;
                 paddleWidth = data.paddle.width;
@@ -87,7 +84,7 @@
     }
 
     function sendMessage(message) {
-        lobbySocket.send(JSON.stringify(message));
+        window.lobbySocket.send(JSON.stringify(message));
     }
 
     function updateRoleDisplay(role) {
@@ -231,8 +228,8 @@
 
 
     function disconnectWebSocket() {
-        if (lobbySocket) {
-            lobbySocket.close(1000, "User disconnected"); // close with code 1000 (normal)
+        if (window.lobbySocket) {
+            window.lobbySocket.close(1000, "User disconnected"); // close with code 1000 (normal)
             console.log("Closing Lobby WebSocket...");
         }
         navigate('/');
@@ -243,6 +240,4 @@
     document.getElementById("readyButton").addEventListener("click", sendReadySignal);
     document.getElementById("leaveRoleButton").addEventListener("click", leaveRole);
     document.getElementById("leaveLobbyButton").addEventListener("click", disconnectWebSocket);
-    document.getElementById("sendMessage").addEventListener("click", sendChatMessage);
-
 })();

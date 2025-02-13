@@ -1,48 +1,22 @@
-let chatSocket = null;
-let statusSocket = null;
-let lobbySocket  = null;
-// let ws = null;
+if (!window.loadedScripts) {
+    window.loadedScripts = new Set();
+}
+if (!window.chatSocket) {
+    window.chatSocket = null;
+}
+if (!window.statusSocket) {
+    window.statusSocket = null;
+}
+if (!window.lobbySocket) {
+    window.lobbySocket = null;
+}
+if (!window.tournamentLobbySocket) {
+    window.tournamentLobbySocket = null;
+}
+if (!window.isEventListenerAdded) {
+    window.isEventListenerAdded = false;
+}
 
-// async function navigate(url) {
-
-//     // if (statusSocket) {
-//     //     statusSocket.close();
-//     // }
-//     // if (ws) {
-//     //     ws.close();
-//     // }
-
-//     try {
-//         const response = await fetch(url, {
-//             method: "GET",
-//             headers: {
-//                 "X-Requested-With": "XMLHttpRequest",
-//             },
-//         });
-
-//         if (response.ok) {
-//             const html = await response.text();
-
-//             const parser = new DOMParser();
-//             const doc = parser.parseFromString(html, "text/html");
-//             console.log(doc)
-//             const newContent = doc.querySelector("#content");
-//             history.pushState(null, "", url);
-//             updateUserLinks()
-//             console.log(newContent)
-//             if (newContent) {
-//                 document.querySelector("#content").innerHTML = newContent.innerHTML;
-//             } else {
-//                 console.error("Content block not found.");
-//             }
-//             executeScriptsInContent(html);
-//         } else {
-//             console.error("Failed to fetch page:", response.status);
-//         }
-//     } catch (error) {
-//         console.error("Error during navigation:", error);
-//     }
-// }
 async function navigate(url, addToHistory = true) {
     try {
         const response = await fetch(url, {
@@ -59,9 +33,7 @@ async function navigate(url, addToHistory = true) {
             if (newContent) {
                 document.querySelector("#content").innerHTML = newContent.innerHTML;
                 executeScriptsInContent(html);
-                updateUserLinks();
 
-                // Только если это не вызов из popstate, добавляем в историю
                 if (addToHistory) {
                     history.pushState(null, "", url);
                 }
@@ -76,93 +48,55 @@ async function navigate(url, addToHistory = true) {
     }
 }
 
-async function updateUserLinks() {
-    try {
-        const response = await fetch("/user-links/", {
-            method: "GET",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-            },
-        });
-
-        if (response.ok) {
-            const html = await response.text();
-            document.getElementById("user-links").innerHTML = html;
-        } else {
-            console.error("Failed to update user links:", response.status);
-        }
-    } catch (error) {
-        console.error("Error updating user links:", error);
-    }
-}
-
-
 function executeScriptsInContent(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const scripts = doc.querySelectorAll("script");
 
-    scripts.forEach(script => {
-        const newScript = document.createElement("script");
-        newScript.src = script.src || '';
-        newScript.text = script.textContent || script.innerText;
+    const exceptions = ["tournament.js", "pongLobby.js", "chat.js", "pongScript.js"];
 
-        const oldScripts = document.querySelectorAll("script");
-        oldScripts.forEach(script => script.remove());
+    scripts.forEach(script => {
+        const src = script.src;
+
+        if (src) {
+            const isException = exceptions.some(exception => src.includes(exception));
+
+            if (!isException && window.loadedScripts.has(src)) {
+                console.log(`Script ${src} is already loaded.`);
+                return;
+            }
+
+            if (!isException) {
+                window.loadedScripts.add(src);
+            }
+        }
+
+        const newScript = document.createElement("script");
+        if (src) {
+            newScript.src = src;
+            newScript.async = true;
+        } else {
+            newScript.text = script.textContent;
+        }
+
         document.body.appendChild(newScript);
     });
 }
 
-function removeOldScripts() {
-    const oldScripts = document.querySelectorAll("script");
-    const scriptsArray = Array.from(oldScripts);
-    scriptsArray.forEach(script => {
-        script.remove();
-    });
-    console.log("Removed scripts:", scriptsArray);
-}
-
-// function startStatus() {
-//     if(statusSocket){
-//         statusSocket.close();
-//     }
-
-//     statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
-
-//     statusSocket.onmessage = function (e) {
-//         const data = JSON.parse(e.data);
-//         console.log(data.type);
-
-//         if (data.type === 'user_status') {
-//             const friendItems = document.querySelectorAll('.friend-item');
-//             const onlineUsernames = new Set(data.users || []);
-
-//             friendItems.forEach((item) => {
-//                 const name = item.dataset.name;
-//                 const statusIndicator = item.querySelector('.status-indicator');
-
-//                 if (onlineUsernames.has(name)) {
-//                     statusIndicator.classList.remove('offline');
-//                     statusIndicator.classList.add('online');
-//                     statusIndicator.style.backgroundColor = 'green';
-//                 } else {
-//                     statusIndicator.classList.remove('online');
-//                     statusIndicator.classList.add('offline');
-//                     statusIndicator.style.backgroundColor = 'red';
-//                 }
-//             });
-//         }
-//     };
-// }
 
 
 function startStatus() {
-    if (statusSocket) {
-        statusSocket.close();
+    if (window.statusSocket && window.statusSocket.readyState === WebSocket.OPEN) {
+        console.log("WebSocket connection is already open.");
+        return;
     }
 
-    statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+    if (window.statusSocket) {
+        window.statusSocket.close();
+    }
 
-    statusSocket.onmessage = function (e) {
+    window.statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+
+    window.statusSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
         console.log(data.type);
 
@@ -184,18 +118,57 @@ function startStatus() {
             });
         }
     };
+
+    window.statusSocket.onclose = function () {
+        console.log("WebSocket connection closed. Reconnecting...");
+        setTimeout(startStatus, 3000);
+    };
+
+    window.statusSocket.onerror = function (error) {
+        console.error("WebSocket error:", error);
+    };
 }
-// startStatus();
-document.addEventListener("DOMContentLoaded", startStatus);
 
-window.addEventListener("popstate", () => {
-    navigate(location.pathname, false); // Загружаем контент, но НЕ добавляем в историю
-});
-
-document.addEventListener("click", (event) => {
-    const link = event.target.closest("a.ajax-link");
-    if (link) {
-        event.preventDefault();
-        navigate(link.href);
+document.addEventListener("DOMContentLoaded", function () {
+    if (!window.statusSocket || window.statusSocket.readyState !== WebSocket.OPEN) {
+        startStatus();
     }
 });
+
+
+function handleNavigation(event) {
+    const target = event.target.closest("[data-navigate]");
+    if (target) {
+        event.preventDefault();
+        const url = target.getAttribute("data-navigate");
+        navigate(url);
+    }
+}
+
+window.addEventListener("popstate", () => {
+    navigate(location.pathname, false);
+});
+
+function setupEventListeners() {
+    if (window.isEventListenerAdded) return;
+    window.isEventListenerAdded = true;
+
+    document.addEventListener("click", (event) => {
+        const link = event.target.closest("a.ajax-link");
+        if (link && event.target.tagName === "A") {
+            event.preventDefault();
+            navigate(link.href);
+        }
+    });
+
+    document.addEventListener("click", (event) => {
+        const target = event.target.closest("[data-navigate]");
+        if (target) {
+            event.preventDefault();
+            const url = target.getAttribute("data-navigate");
+            navigate(url);
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", setupEventListeners);

@@ -2,21 +2,20 @@
   const gameDataElement = document.getElementById("gameData");
   const currentUser = gameDataElement.dataset.currentUser;
   let currentChat = null;
-  let chatSocket = null;
 
   function openChat(type, name) {
     if (type !== "private") return;
 
-    if (chatSocket) chatSocket.close();
+    if (window.chatSocke) window.chatSocke.close();
 
     currentChat = { type, name };
     document.getElementById("chat-header").innerText = `Chat with: ${name}`;
     document.getElementById("messages").innerHTML = "";
 
     const wsPath = `ws://${window.location.host}/ws/chat_privet/${name}/`;
-    chatSocket = new WebSocket(wsPath);
+    window.chatSocke = new WebSocket(wsPath);
 
-    chatSocket.onmessage = function (e) {
+    window.chatSocke.onmessage = function (e) {
       const data = JSON.parse(e.data);
       console.log(data);
 
@@ -46,7 +45,6 @@
     if (event.target.classList.contains("invite-button")) {
       event.preventDefault();
       const url = event.target.dataset.url;
-      console.log("Navigating to:", url);
       navigate(url);
     }
   });
@@ -64,14 +62,13 @@
 
     if (!messageInput || !currentChat) return;
 
-    chatSocket.send(JSON.stringify({ action: "message", message: messageInput }));
+    window.chatSocke.send(JSON.stringify({ action: "message", message: messageInput }));
     document.getElementById("message-form").reset();
   });
 
   document.getElementById("game-invite-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const name = document.getElementById("chat-header").textContent.split(": ")[1];
-    console.log(name);
-    chatSocket.send(JSON.stringify({ invite: "invite", friend: name }));
+    window.chatSocke.send(JSON.stringify({ invite: "invite", friend: name }));
   });
 })();

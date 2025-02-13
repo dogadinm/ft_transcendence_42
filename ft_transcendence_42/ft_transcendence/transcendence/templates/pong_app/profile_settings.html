@@ -6,6 +6,7 @@
     <link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
 </head>
 <div id="content" class="body">
+    
     <div class="sidebar">
         <ul>
             <a href="/profile/{{ username }}" class="ajax-link">Profile</a>
@@ -16,14 +17,13 @@
             <a href="/full_friends_list/{{ username }}" class="ajax-link">Friends</a>
         </ul>
     </div>
-
     <div class="container mt-5">
         <h1 class="text-center">Profile settings</h1>
         <form id="profile-settings-form" method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
             {% csrf_token %}
             <div class="mb-3">
                 <label for="tournament_nickname" class="form-label">Tournament nickname</label>
-                <input type="text" class="form-control" id="tournament_nickname" name="tournament_nickname" value="{{ user.tournament_nickname }}" required>
+                <input type="text" class="form-control" id="tournament_nickname" name="tournament_nickname" value="{{ tournament_nickname }}" required>
             </div>
 
             <div class="mb-3">
@@ -33,7 +33,7 @@
 
             <div class="mb-3">
                 <label for="description" class="form-label">Descriptions</label>
-                <textarea class="form-control" id="description" name="description" rows="4">{{ user.profile.description }}</textarea>
+                <textarea class="form-control" id="description" name="description" rows="4">{{ description }}</textarea>
             </div>
 
             <!-- Keep type="button" or ensure preventDefault() is working -->

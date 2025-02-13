@@ -50,13 +50,13 @@
 
 <div class="d-flex justify-content-center profile-actions-container" id="profile-actions-container">
     {% if not is_owner %}
-        {% csrf_token %}
+        <!-- {% csrf_token %} -->
         <div id="profile-actions-content">
             {% if friend %}
                 <button id="remove-friend-btn" data-action="delete" class="profile-action-btn">Remove from friends</button>
             {% elif friend_request_taker %}
                 <div class="friend-request-actions">
-                    <p id="already-sent-friend-request<">This page user already sent friend request</p>
+                    <p id="already-sent-friend-request">This page user already sent friend request</p>
                 </div>
             {% elif not friend_request_sent %}
                 <button id="send-request-btn" data-action="send_request" class="profile-action-btn">Send friend request</button>

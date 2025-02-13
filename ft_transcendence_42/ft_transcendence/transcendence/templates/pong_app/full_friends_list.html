@@ -4,7 +4,6 @@
 
 <div id="content" class="body">
     <div class="profile-page-container">
-      <!-- Sidebar -->
       <div class="sidebar">
         <ul>
             <a href="/profile/{{ username }}" class="ajax-link">Profile</a>
@@ -22,88 +21,44 @@
 
     {% if is_owner %}
       <form id="find-friend-form" onsubmit="event.preventDefault(); navigateToProfile();">
+          {% csrf_token %}
           <div>
               <input autofocus class="form-control" type="text" id="username-input" placeholder="Username">
           </div>
-          <div class="find-friend">
-              <a href="#" id="find-friend-link" onclick="navigateToProfile()">Find friend</a>
-          </div>
-          {% csrf_token %}
+          <button id="username-button">Find friend</button>
       </form>
       <p id="error-message" style="color: red;"></p>
       <script src="{% static 'js/findFriend.js' %}"></script>
     {% endif %}
 
 
-  <h1>{{username}}'s friends</h1>
-
-      {% for friend in page_obj %}
+    <h1>{{username}}'s friends</h1>
+    {% for friend in page_obj %}
       <div class="friend-item" data-name="{{ friend.username }}" style="display: flex; align-items: center; margin-bottom: 10px;">
           <div class="status-indicator" style="width: 10px; height: 10px; border-radius: 50%; background-color: red; margin-right: 5px;"></div>
+          <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
           <img src="{{ friend.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
           <li style="font-size: 18px; margin-right: 20px;">
               <a href="/profile/{{ friend.username }}" class="ajax-link">{{ friend.username }}</a>
           </li>
-          <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
       </div>
-      {% endfor %}
-
-      <div class="pagination">
-        <a href="/full_friends_list/{{ username }}?page=1" class="ajax-link">First</a>
+    {% endfor %}
     
-        {% if page_obj.has_previous %}
-            <a href="/full_friends_list/{{ username }}?page={{ page_obj.previous_page_number }}" class="ajax-link">Previous</a>
-        {% endif %}
-        
-        {% if page_obj.has_next %}
-            <a href="/full_friends_list/{{ username }}?page={{ page_obj.next_page_number }}" class="ajax-link">Next</a>
-        {% endif %}
-        
-        <a href="/full_friends_list/{{ username }}?page={{ page_obj.paginator.num_pages }}" class="ajax-link">Last</a>
-      </div>
+
+    <div class="pagination">
+      <a href="/full_friends_list/{{ username }}?page=1" class="ajax-link">First</a>
+      {% if page_obj.has_previous %}
+          <a href="/full_friends_list/{{ username }}?page={{ page_obj.previous_page_number }}" class="ajax-link">Previous</a>
+      {% endif %}     
+      {% if page_obj.has_next %}
+          <a href="/full_friends_list/{{ username }}?page={{ page_obj.next_page_number }}" class="ajax-link">Next</a>
+      {% endif %}
+      
+      <a href="/full_friends_list/{{ username }}?page={{ page_obj.paginator.num_pages }}" class="ajax-link">Last</a>
+    </div>
   </div>
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px;
-      text-align: left;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-    .pagination {
-      margin: 20px 0;
-      display: flex;
-      justify-content: center;
-    }
-    .pagination a, .pagination span {
-      margin: 0 5px;
-      padding: 8px 12px;
-      text-decoration: none;
-      color: #007bff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .pagination a:hover {
-      background-color: #f1f1f1;
-    }
-    .pagination .current {
-      font-weight: bold;
-      background-color: #007bff;
-      color: white;
-      border: 1px solid #007bff;
-    }
-  </style>
+  <link type="text/css" href="{% static 'transcendence/style_friends_list.css' %}" rel="stylesheet">
+
 </div>
 
 

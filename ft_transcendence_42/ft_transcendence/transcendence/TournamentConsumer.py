@@ -2,6 +2,7 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .TournamentGame import tournament_manager
+from channels.db import database_sync_to_async
 
 class TournamentConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -14,7 +15,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         if self.user not in self.room.all_ready and self.user not in self.room.tournament_users:
             self.room.tournament_users.add(self.user)
             self.room.spectators.append(self.user)
-        print(self.room.tournament_users)
+            self.user.tournament_lobby = self.room_name
+            await database_sync_to_async(self.user.save)()
+
         await self.accept()
         await self.send_game_state()
         await self.broadcast_tournament_state()
@@ -30,11 +33,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             self.room.round_winners.remove(self.user)
         if self.user in self.room.tournament_users:
             self.room.tournament_users.remove(self.user)
+        self.user.tournament_lobby = None
+        await database_sync_to_async(self.user.save)()
 
         if not self.room.players_queue and not self.room.spectators and not self.room.round_winners:
-            tournament_manager.remove_room(self.room_name)     
+            tournament_manager.remove_room(self.room_name)
         
-        print(tournament_manager.rooms)
 
 
     async def receive(self, text_data):
@@ -76,8 +80,6 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 await self.handle_stop(direction)
 
     async def broadcast_tournament_state(self):
-        print(self.room.current_players['left'].tournament_nickname if self.room.current_players['left'] else None)
-        print(self.room.current_players['right'].tournament_nickname if self.room.current_players['right'] else None)
         state = {
             'type': 'tournament_state',
             # 'players_queue': self.room.players_queue,
@@ -105,7 +107,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
     async def tournament_state(self, event):
         state = event['state']
-        print(state)
+        # print(state)
         await self.send(text_data=json.dumps(state))
 
     async def handle_move(self, direction):

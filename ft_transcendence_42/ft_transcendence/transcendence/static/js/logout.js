@@ -1,16 +1,17 @@
 async function logOut() {
     try{
+        const logOutButton = document.getElementById("logout-button");
         const response = await fetch('/logout/', {
-            method: "GET",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest", // AJAX-запрос
-            },
+            method: "GET",     
         });
         const data = await response.json();
 
         if (response.ok) {
             if (data.redirect) {
-                navigate(data.redirect);
+                logOutButton.setAttribute("data-navigate", data.redirect);
+                logOutButton.click();
+                updateUserLinks();
+                // updateCSRFToken();
             }
         } else {
             const errorMessage = data.error || "An error occurred.";

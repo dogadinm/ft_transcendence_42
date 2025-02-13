@@ -6,7 +6,10 @@
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
 }
-
+#logout-button {
+    padding: 5px 10px;
+    font-size: 14px;
+}
 
 body {
     background-color: #e66649;
@@ -24,16 +27,24 @@ h1 {
     color: #333;
 }
 
-nav {
-    margin: 20px 0;
+.navbar {
+    margin-top: 0.5%;
+    display: flex;
+    align-items: center;
 }
-
-nav a {
+.navbar a {
     text-decoration: none;
     margin: 0 15px;
     color: #1c0303;
     font-weight: bold;
 }
+
+#logout-button {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+
 
 .section {
     display: none;
@@ -74,3 +85,4 @@ pong-game-section canvas {
     height: 500px;
     margin-top: 20px;
 }
+

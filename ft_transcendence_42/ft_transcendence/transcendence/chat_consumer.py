@@ -39,7 +39,7 @@ class ChatConsumer(WebsocketConsumer):
             }
             for message in messages
         ]
-
+        print(messages_data)
         self.send(text_data=json.dumps({
             'type': 'chat_history',
             'messages': messages_data,

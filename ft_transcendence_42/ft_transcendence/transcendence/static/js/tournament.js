@@ -7,15 +7,11 @@
       if (!gameDataElement) return;
 
           const tournamentId = gameDataElement.dataset.roomLobby;
-          // const wsUrl = `ws://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
         
-          const connectionStatus = document.getElementById("connection-status");
-          const playersList = document.getElementById("players-list");
           const username = document.getElementById("TournamentData").dataset.username;
           const spectatorsList = document.getElementById("spectators-list");
           const readyPlayersList = document.getElementById("ready-players-list");
           const readyPlayersTournamentList = document.getElementById("ready-tournament-players-list");
-          const teamsList = document.getElementById("teams-list");
           const winnersList = document.getElementById("winners-list");
           // const readyButton = document.getElementById("ready-button");
           const readyButton = document.getElementById("readyButton");
@@ -24,30 +20,26 @@
           document.addEventListener('keyup', handleKeyUp);
         
           const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-          const roomName = "example_room"; // Replace with dynamic room name if needed
           const wsUrl = `ws://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
           
           const canvas = document.getElementById("gameCanvas");
           const ctx = canvas.getContext("2d");
           
           const statusElement = document.getElementById("status");
-
-          
-          let ws;
-          let gameState = null;
-          
-          // Paddle movement states
-          let paddleDirection = 0;
           
           // Connect to WebSocket
           function connectWebSocket() {
-            ws = new WebSocket(wsUrl);
+            if (window.tournamentLobbySocket){
+              window.tournamentLobbySocket.close();
+            }
+            window.tournamentLobbySocket = new WebSocket(wsUrl);
+                    
           
-            ws.onopen = () => {
+            window.tournamentLobbySocket.onopen = () => {
               statusElement.textContent = "Connected!";
             };
           
-            ws.onmessage = (event) => {
+            window.tournamentLobbySocket.onmessage = (event) => {
               const data = JSON.parse(event.data);
               console.log(data.type);
           
@@ -66,13 +58,13 @@
               }
             };
           
-            ws.onclose = () => {
+            window.tournamentLobbySocket.onclose = () => {
               statusElement.textContent = "Disconnected. Refresh to reconnect.";
             };
           }
           
           function sendMessage(message) {
-              ws.send(JSON.stringify(message));
+              window.tournamentLobbySocket.send(JSON.stringify(message));
           }
 
           function sendReadySignal() {
@@ -82,7 +74,6 @@
           
           // Draw game state on canvas
           function drawGame(data) {
-            console.log(data);
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             canvas.width = fieldWidth;
@@ -131,11 +122,6 @@
         }
           
           function updateTournamentState(state) {
-            console.log(state);
-        
-            // playersList.innerHTML = state.players_queue
-            //     .map(player => `<li>${player}</li>`)
-            //     .join("");
             readyPlayersTournamentList.innerHTML = state.all_ready
                 .map(player => `<li>${player}</li>`)
                 .join("");
@@ -146,17 +132,12 @@
             winnersList.innerHTML = state.round_winners
                 .map(winner => `<li>${winner}</li>`)
                 .join("");
-            console.log(username)
-            console.log(state.all_ready)
 
             if (state.all_ready.includes(username) || state.all_ready.length === 4) {
-              console.log("You are ready!");
               readyButton.style.display = "none";
             } else {
-              console.log("You are not ready!");
               readyButton.style.display = "block";
             }
-            console.log(state.champion)
             if (state.champion) {
               alert(state.champion);
               // const h2Element = document.createElement('h2');
@@ -224,15 +205,26 @@
           // Initialize WebSocket connection
           document.getElementById("readyButton").addEventListener("click", sendReadySignal);
           connectWebSocket();
+          function disconnectWebSocket() {
+            if (window.tournamentLobbySocket) {
+                window.tournamentLobbySocket.close(1000, "User disconnected"); // close with code 1000 (normal)
+                console.log("Closing Lobby WebSocket...");
+            }
+            navigate('/');
+        }
+        document.getElementById("leaveLobbyButton").addEventListener("click", disconnectWebSocket);    
     }
+    
 
     function reinitializeOnNavigation() {
       initializeGame();
     }
 
-  if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", reinitializeOnNavigation);
-  } else {
-      reinitializeOnNavigation();
-  }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", reinitializeOnNavigation);
+    } else {
+        reinitializeOnNavigation();
+    }
+
 })();
