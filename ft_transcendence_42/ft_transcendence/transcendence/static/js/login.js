@@ -37,7 +37,6 @@ async function login() {
                     loginButton.setAttribute("data-navigate", data.redirect);
                     loginButton.click();
                     updateUserLinks();
-                    // updateCSRFToken();
                 }
             } else {
                 errorMessage.textContent = data.error;

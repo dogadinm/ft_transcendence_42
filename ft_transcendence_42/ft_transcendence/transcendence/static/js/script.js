@@ -63,7 +63,7 @@ function executeScriptsInContent(html) {
             const isException = exceptions.some(exception => src.includes(exception));
 
             if (!isException && window.loadedScripts.has(src)) {
-                console.log(`Script ${src} is already loaded.`);
+                // console.log(`Script ${src} is already loaded.`);
                 return;
             }
 

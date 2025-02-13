@@ -5,7 +5,7 @@
 <div id="content" class="body">
     <h2>Register</h2>
     <div id="error-message" style="color: red;"></div>  <!-- General error message container -->
-    <form id="register-form">
+    <form id="register-form" onsubmit="event.preventDefault(); register();">
         {% csrf_token %}
         <div class="form-group">
             <input class="form-control" autofocus type="text" name="username" id="username" placeholder="Username" required>
@@ -23,7 +23,8 @@
             <input class="form-control" type="password" name="confirmation" id="confirmation" placeholder="Confirm Password" required>
             <div id="confirmation-error" style="color: red;"></div>  <!-- Error message for confirmation -->
         </div>
-        <button class="btn btn-primary" type="submit">Register</button>
+
+        <button id="register-button">Login</button>
     </form>
     <script src="{% static 'js/register.js' %}"></script>
 
