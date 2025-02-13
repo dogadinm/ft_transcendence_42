@@ -1,10 +1,6 @@
 {% extends "pong_app/layout.html" %}
 {% load static %}
 {% block body %}
-
-<head>
-	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
 <div id="content" class="body">
       <form id="find-tournament-form" onsubmit="event.preventDefault(); navigateToTournament();">
           {% csrf_token %}

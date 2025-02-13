@@ -33,6 +33,8 @@ async function navigate(url, addToHistory = true) {
             if (newContent) {
                 document.querySelector("#content").innerHTML = newContent.innerHTML;
                 executeScriptsInContent(html);
+                // updateUserLinks();
+
 
                 if (addToHistory) {
                     history.pushState(null, "", url);
@@ -82,7 +84,25 @@ function executeScriptsInContent(html) {
     });
 }
 
+async function updateUserLinks() {
+    try {
+        const response = await fetch("/user-links/", {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
 
+        if (response.ok) {
+            const html = await response.text();
+            document.getElementById("user-links").innerHTML = html;
+        } else {
+            console.error("Failed to update user links:", response.status);
+        }
+    } catch (error) {
+        console.error("Error updating user links:", error);
+    }
+}
 
 function startStatus() {
     if (window.statusSocket && window.statusSocket.readyState === WebSocket.OPEN) {

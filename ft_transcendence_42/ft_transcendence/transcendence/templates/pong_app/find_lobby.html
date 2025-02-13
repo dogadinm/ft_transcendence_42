@@ -1,10 +1,6 @@
 {% extends "pong_app/layout.html" %}
 {% load static %}
 {% block body %}
-
-<head>
-	<link type="text/css" href="{% static 'transcendence/style_other.css' %}" rel="stylesheet">
-</head>
 <div id="content" class="body">
       <form id="find-lobby-form" onsubmit="event.preventDefault(); navigateToLobby();">
         {% csrf_token %}
