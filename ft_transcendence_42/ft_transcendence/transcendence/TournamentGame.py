@@ -1,31 +1,24 @@
 import asyncio
 import random
-from .models import User, Score, MatchHistory
-from asgiref.sync import sync_to_async
-from django.conf import settings
 import csv
 import os
-import pandas as pd
-import json
-from solcx import compile_standard
-from web3 import Web3
+from asgiref.sync import sync_to_async
+from django.conf import settings
+from .models import User, Score, MatchHistory
 from . import blockchain
 
 class TournamentRoom:
     # Game constants
     PADDLE_HEIGHT = 100
     PADDLE_WIDTH = 10
-
     BALL_INITIAL_SPEED = 2.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
     WIN_SCORE = 10
     WIN_POINTS = 10
     LOSS_POINTS = -5
-
     FIELD_WIDTH = 800
     FIELD_HEIGHT = 400
-    
 
     def __init__(self, tournament_id):
         self.tournament_id = tournament_id
@@ -34,14 +27,14 @@ class TournamentRoom:
         self.current_players = {'left': None, 'right': None}
         self.spectators = []
         self.paddles = {
-            'left': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
-            'right': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
+            'left': {'paddleY': (self.FIELD_HEIGHT - self.PADDLE_HEIGHT) // 2, 'direction': 0},
+            'right': {'paddleY': (self.FIELD_HEIGHT - self.PADDLE_HEIGHT) // 2, 'direction': 0},
         }
-        self.ball = {'x': TournamentRoom.FIELD_WIDTH / 2, 'y': TournamentRoom.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
+        self.ball = {'x': self.FIELD_WIDTH / 2, 'y': self.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
         self.score = {'left': 0, 'right': 0}
         self.ready = {'left': False, 'right': False}
         self.all_ready = set()
-        self.speed = TournamentRoom.BALL_INITIAL_SPEED
+        self.speed = self.BALL_INITIAL_SPEED
         self.round_winners = []
         self.round = 0
         self.is_tournament_running = False
@@ -51,16 +44,12 @@ class TournamentRoom:
         if len(self.all_ready) < 4:
             self.all_ready.add(player)
             return False
-        else:
-            return True
-        
+        return True
 
     def assign_role(self):
         if len(self.all_ready) < 4:
             raise ValueError("Not enough players to start the tournament.")
-
-        ready_list = list(self.all_ready)
-        self.players_queue = [player for player in ready_list]
+        self.players_queue = list(self.all_ready)
         random.shuffle(self.players_queue)
         self.set_next_match()
 
@@ -77,7 +66,6 @@ class TournamentRoom:
             self.current_players['left'] = self.round_winners.pop(0)
             self.current_players['right'] = self.round_winners.pop(0)
             self.round = 3
-
 
     async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament):
         while len(self.players_queue) + len(self.round_winners) > 1:
@@ -98,23 +86,19 @@ class TournamentRoom:
         self.is_tournament_running = False
         await close_tournament()
 
-
     def check_paddle_collision(self, side, new_x, new_y, paddle_x):
         paddle_y_start = self.paddles[side]['paddleY']
-        paddle_y_end = paddle_y_start + TournamentRoom.PADDLE_HEIGHT
+        paddle_y_end = paddle_y_start + self.PADDLE_HEIGHT
 
-        if ((side == 'left' and new_x - TournamentRoom.PADDLE_WIDTH / 2 <= paddle_x + TournamentRoom.PADDLE_WIDTH) or
-                (side == 'right' and new_x + TournamentRoom.PADDLE_WIDTH / 2 >= paddle_x - TournamentRoom.PADDLE_WIDTH)):
+        if ((side == 'left' and new_x - self.PADDLE_WIDTH / 2 <= paddle_x + self.PADDLE_WIDTH) or
+                (side == 'right' and new_x + self.PADDLE_WIDTH / 2 >= paddle_x - self.PADDLE_WIDTH)):
             if paddle_y_start <= new_y <= paddle_y_end:
-                # Adjust ball's vertical direction based on where it hit the paddle
-                paddle_center = paddle_y_start + TournamentRoom.PADDLE_HEIGHT / 2
-                offset = (new_y - paddle_center) / (TournamentRoom.PADDLE_HEIGHT / 2)  # Normalize offset (-1 to 1)
-                self.ball['dy'] += offset * 2  # Adjust vertical speed slightly
-                self.ball['dy'] = max(-5, min(5, self.ball['dy']))  # Clamp dy to avoid excessive vertical speed
-
+                paddle_center = paddle_y_start + self.PADDLE_HEIGHT / 2
+                offset = (new_y - paddle_center) / (self.PADDLE_HEIGHT / 2)
+                self.ball['dy'] += offset * 2
+                self.ball['dy'] = max(-5, min(5, self.ball['dy']))
                 return True
         return False
-    
 
     async def game_loop(self, send_update):
         while self.ready['left'] and self.ready['right']:
@@ -123,7 +107,7 @@ class TournamentRoom:
             await send_update(self.get_game_state())
 
             winner = self.end_game()
-            if winner:        
+            if winner:
                 loser = self.current_players['right'] if winner == self.current_players['left'] else self.current_players['left']
                 await self.update_scores(winner, loser)
                 await self.save_match(winner, loser)
@@ -135,8 +119,8 @@ class TournamentRoom:
 
     def update_paddles(self):
         for side, paddle in self.paddles.items():
-            paddle['paddleY'] += paddle['direction'] * TournamentRoom.PADDLE_SPEED
-            paddle['paddleY'] = max(0, min(TournamentRoom.BALL_MAX_Y - TournamentRoom.PADDLE_HEIGHT, paddle['paddleY']))
+            paddle['paddleY'] += paddle['direction'] * self.PADDLE_SPEED
+            paddle['paddleY'] = max(0, min(self.BALL_MAX_Y - self.PADDLE_HEIGHT, paddle['paddleY']))
 
     def update_ball(self):
         dx = self.ball['dx'] * self.speed
@@ -145,30 +129,30 @@ class TournamentRoom:
         self.ball['x'] += dx
         self.ball['y'] += dy
 
-        if self.ball['y'] <= 0 or self.ball['y'] >= TournamentRoom.FIELD_HEIGHT:
+        if self.ball['y'] <= 0 or self.ball['y'] >= self.FIELD_HEIGHT:
             self.ball['dy'] *= -1
 
         for side, paddle in self.paddles.items():
-            paddle_x = 20 if side == 'left' else TournamentRoom.FIELD_WIDTH - 20
+            paddle_x = 20 if side == 'left' else self.FIELD_WIDTH - 20
             if self.check_paddle_collision(side, self.ball['x'], self.ball['y'], paddle_x):
                 self.ball['dx'] *= -1
                 self.speed += 0.1
-        
+
         if self.ball['x'] <= 20:
             self.score['right'] += 1
             self.reset_ball()
-        elif self.ball['x'] >= TournamentRoom.FIELD_WIDTH - 20:
+        elif self.ball['x'] >= self.FIELD_WIDTH - 20:
             self.score['left'] += 1
             self.reset_ball()
 
     def reset_ball(self):
-        self.ball = {'x': TournamentRoom.FIELD_WIDTH / 2, 'y': TournamentRoom.FIELD_HEIGHT / 2, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}
-        self.speed = TournamentRoom.BALL_INITIAL_SPEED
+        self.ball = {'x': self.FIELD_WIDTH / 2, 'y': self.FIELD_HEIGHT / 2, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}
+        self.speed = self.BALL_INITIAL_SPEED
 
     def get_game_state(self):
         return {
-            'field': {'width': TournamentRoom.FIELD_WIDTH, 'height': TournamentRoom.FIELD_HEIGHT},
-            'paddle': {'width': TournamentRoom.PADDLE_WIDTH, 'height': TournamentRoom.PADDLE_HEIGHT},
+            'field': {'width': self.FIELD_WIDTH, 'height': self.FIELD_HEIGHT},
+            'paddle': {'width': self.PADDLE_WIDTH, 'height': self.PADDLE_HEIGHT},
             'paddles': self.paddles,
             'ball': self.ball,
             'players': {
@@ -179,186 +163,33 @@ class TournamentRoom:
         }
 
     def end_game(self):
-        if self.score['left'] >= TournamentRoom.WIN_SCORE:
+        if self.score['left'] >= self.WIN_SCORE:
             return self.current_players['left']
-        elif self.score['right'] >= TournamentRoom.WIN_SCORE:
+        elif self.score['right'] >= self.WIN_SCORE:
             return self.current_players['right']
         return None
-        
-    # def save_blockchain(winner, loser, csv_file_name):
-
-    #     # Player and loser details
-    #     player1_addr = winner.wallet_address
-    #     player1_prvt_key = winner.wallet_prt_key
-
-    #     loser_addr = loser.wallet_address
-    #     loser_prvt_key = loser.wallet_prt_key
-
-
-    #     # Load CSV into a DataFrame
-    #     csv_file = csv_file_name
-    #     df = pd.read_csv(csv_file)
-
-    #     # Display the data
-    #     print("Loaded Data:")
-    #     print(df.head())
-
-    #     # Load the contract JSON file (update the path to your file)
-    #     with open("./blockchain/build/contracts/MultisigTournament.json", "r") as file:
-    #         contract_json = json.load(file)
-
-        # # Extract the ABI from the JSON file
-        # contract_abi = contract_json["abi"]
-
-        # # Define the contract address
-        # contract_address = "0xf4361f0606E3A5e322523858f32116DAD93feA0D"  # Replace with your deployed address
-
-        # # Connect to the Ethereum provider
-        # web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
-
-        # # Initialize the contract instance
-        # contract = web3.eth.contract(address=contract_address, abi=contract_abi)
-
-        # # Get the starting nonce for both users
-        # player1_nonce = web3.eth.get_transaction_count(player1_addr)
-        # loser_nonce = web3.eth.get_transaction_count(loser_addr)
-
-        # # Iterate through the CSV rows
-        # for index, row in df.iterrows():
-        #     print(f"Processing row {index}...")
-
-            # # Pre-check if the game already exists in the contract
-            # try:
-            #     game_exists = contract.functions.getGame(
-            #         row['tournament_id'], 
-            #         int(row['game_id'])
-            #     ).call()
-
-            #     if game_exists[1] != 0:  # If the game ID is non-zero, it exists
-            #         print(f"Skipping existing game: {row['tournament_id']} - {row['game_id']}")
-            #         continue
-            # except Exception as e:
-            #     print(f"Error checking game existence: {e}")
-            #     continue
-
-            # # Step 1: Add a game dynamically
-            # try:
-            #     tx_add_game = contract.functions.addGame(
-            #         row["tournament_id"],
-            #         int(row["game_id"]),
-            #         row["game_type"],
-            #         row["loser_name"],
-            #         int(row["loser_score"]),
-            #         row["winner_name"],
-            #         int(row["winner_score"]),
-            #         player1_addr,
-            #         loser_addr
-            #     ).build_transaction({
-            #         'from': player1_addr,
-            #         'gas': 300000,
-            #         'gasPrice': web3.eth.gas_price,
-            #         'nonce': player1_nonce
-            #     })
-
-            #     signed_tx_add_game = web3.eth.account.sign_transaction(tx_add_game, player1_prvt_key)
-            #     tx_hash_add_game = web3.eth.send_raw_transaction(signed_tx_add_game.raw_transaction)
-            #     print(f"Game added. Transaction hash: {tx_hash_add_game.hex()}")
-
-            #     player1_nonce += 1
-
-            # except Exception as e:
-            #     print(f"Error adding game: {e}")
-            #     continue
-
-    # # Step 2: Approvals
-    # try:
-    #     # Player 1 approves
-    #     tx_approve_1 = contract.functions.approve(row["tournament_id"], int(row["game_id"])).build_transaction({
-    #         'from': player1_addr,
-    #         'gas': 200000,
-    #         'gasPrice': web3.eth.gas_price,
-    #         'nonce': player1_nonce
-    #     })
-
-    #     signed_tx_approve_1 = web3.eth.account.sign_transaction(tx_approve_1, player1_prvt_key)
-    #     tx_hash_approve_1 = web3.eth.send_raw_transaction(signed_tx_approve_1.raw_transaction)
-    #     print(f"Player 1 approval sent: {tx_hash_approve_1.hex()}")
-
-    #     player1_nonce += 1
-
-    #     # Loser approves
-    #     tx_approve_2 = contract.functions.approve(row["tournament_id"], int(row["game_id"])).build_transaction({
-    #         'from': loser_addr,
-    #         'gas': 200000,
-    #         'gasPrice': web3.eth.gas_price,
-    #         'nonce': loser_nonce
-    #     })
-
-    #     signed_tx_approve_2 = web3.eth.account.sign_transaction(tx_approve_2, loser_prvt_key)
-    #     tx_hash_approve_2 = web3.eth.send_raw_transaction(signed_tx_approve_2.raw_transaction)
-    #     print(f"Loser approval sent: {tx_hash_approve_2.hex()}")
-
-    #     loser_nonce += 1
-
-    # except Exception as e:
-    #     print(f"Error during approvals: {e}")
-    #     #continue
-
-    # # Step 3: Execute the transaction
-    # try:
-    #     tx_execute = contract.functions.execute(
-    #         row["tournament_id"],
-    #         int(row["game_id"]),
-    #         row["game_type"],
-    #         row["loser_name"],
-    #         int(row["loser_score"]),
-    #         row["winner_name"],
-    #         int(row["winner_score"]),
-    #         player1_addr,
-    #         loser_addr
-    #     ).build_transaction({
-    #         'from': player1_addr,
-    #         'gas': 300000,
-    #         'gasPrice': web3.eth.gas_price,
-    #         'nonce': player1_nonce
-    #     })
-
-    #     signed_tx_execute = web3.eth.account.sign_transaction(tx_execute, player1_prvt_key)
-    #     tx_hash_execute = web3.eth.send_raw_transaction(signed_tx_execute.raw_transaction)
-    #     print(f"Execution transaction sent for row {index}: {tx_hash_execute.hex()}")
-
-
-
-    #     player1_nonce += 1
-
-    # except Exception as e:
-    #     print(f"Error during execution: {e}")
-    #     #continue
-
 
     @sync_to_async
     def save_match(self, winner, loser):
-
         MatchHistory.objects.create(
             winner=winner,
             loser=loser,
             winner_match_score=self.score['left'] if self.current_players['left'] == winner else self.score['right'],
             loser_match_score=self.score['right'] if self.current_players['left'] == winner else self.score['left'],
-            winner_change_score=TournamentRoom.WIN_POINTS,
-            loser_change_score=TournamentRoom.LOSS_POINTS
+            winner_change_score=self.WIN_POINTS,
+            loser_change_score=self.LOSS_POINTS
         )
 
         self.create_csv(winner.tournament_nickname, loser.tournament_nickname)
         blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
         self.round = 0
-        
 
     @sync_to_async
     def update_scores(self, winner, loser):
         winner_score = Score.objects.get(user=winner)
         loser_score = Score.objects.get(user=loser)
-        winner_score.score += TournamentRoom.WIN_POINTS
-        loser_score.score += TournamentRoom.LOSS_POINTS
+        winner_score.score += self.WIN_POINTS
+        loser_score.score += self.LOSS_POINTS
 
         winner_score.save()
         loser_score.save()
@@ -367,24 +198,20 @@ class TournamentRoom:
         self.score = {'left': 0, 'right': 0}
         self.ready = {'left': False, 'right': False}
         self.current_players = {'left': None, 'right': None}
-        self.ball = {'x': TournamentRoom.FIELD_WIDTH / 2, 'y': TournamentRoom.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
-        self.speed = TournamentRoom.BALL_INITIAL_SPEED
+        self.ball = {'x': self.FIELD_WIDTH / 2, 'y': self.FIELD_HEIGHT / 2, 'dx': 4, 'dy': 4}
+        self.speed = self.BALL_INITIAL_SPEED
         self.paddles = {
-            'left': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
-            'right': {'paddleY': (TournamentRoom.FIELD_HEIGHT - TournamentRoom.PADDLE_HEIGHT) // 2, 'direction': 0},
+            'left': {'paddleY': (self.FIELD_HEIGHT - self.PADDLE_HEIGHT) // 2, 'direction': 0},
+            'right': {'paddleY': (self.FIELD_HEIGHT - self.PADDLE_HEIGHT) // 2, 'direction': 0},
         }
 
-
     def create_csv(self, winner, loser):
-        tournament_id = self.tournament_id
-        game_id = self.round
-        game_type = "semi_final" if game_id in [1, 2] else "final" if game_id == 3 else "unknown"
-
+        game_type = "semi_final" if self.round in [1, 2] else "final" if self.round == 3 else "unknown"
         is_winner_left = winner == self.current_players['left']
         winner_score = self.score['left'] if is_winner_left else self.score['right']
         loser_score = self.score['right'] if is_winner_left else self.score['left']
 
-        csv_file_path = os.path.join(settings.MEDIA_ROOT, f'tournament_{tournament_id}_game_{game_id}.csv')
+        csv_file_path = os.path.join(settings.MEDIA_ROOT, f'tournament_{self.tournament_id}_game_{self.round}.csv')
 
         with open(csv_file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -399,8 +226,8 @@ class TournamentRoom:
             ])
 
             writer.writerow([
-                tournament_id,
-                game_id,
+                self.tournament_id,
+                self.round,
                 game_type,
                 loser,
                 loser_score,
@@ -409,7 +236,7 @@ class TournamentRoom:
             ])
 
         return csv_file_path
-      
+
 class TournamentRoomManager:
     def __init__(self):
         self.rooms = {}
@@ -422,6 +249,5 @@ class TournamentRoomManager:
     def remove_room(self, room_name):
         if room_name in self.rooms:
             del self.rooms[room_name]
-
 
 tournament_manager = TournamentRoomManager()
