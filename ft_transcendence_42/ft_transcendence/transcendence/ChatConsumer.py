@@ -21,7 +21,6 @@ class ChatConsumer(WebsocketConsumer):
         )
         self.accept()
 
-
         blocked_users = self.user.blocked_users.all()
 
         friend = User.objects.get(username=self.friend_username)

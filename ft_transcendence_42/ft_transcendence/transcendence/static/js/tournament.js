@@ -6,62 +6,61 @@
       const gameDataElement = document.getElementById("gameData");
       if (!gameDataElement) return;
 
-          const tournamentId = gameDataElement.dataset.roomLobby;
-        
+          const tournamentId = gameDataElement.dataset.roomLobby;     
           const username = document.getElementById("TournamentData").dataset.username;
           const spectatorsList = document.getElementById("spectators-list");
           const readyPlayersList = document.getElementById("ready-players-list");
           const readyPlayersTournamentList = document.getElementById("ready-tournament-players-list");
           const winnersList = document.getElementById("winners-list");
-          // const readyButton = document.getElementById("ready-button");
           const readyButton = document.getElementById("readyButton");
-
-          document.addEventListener('keydown', handleKeyDown);
-          document.addEventListener('keyup', handleKeyUp);
-        
-          const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-          const wsUrl = `ws://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
-          
+          const statusElement = document.getElementById("status");
           const canvas = document.getElementById("gameCanvas");
           const ctx = canvas.getContext("2d");
+  
+          const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
+          const wsUrl = `${wsProtocol}://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
           
-          const statusElement = document.getElementById("status");
+
+      
+          // Event listeners for key controls
+          document.addEventListener('keydown', handleKeyDown);
+          document.addEventListener('keyup', handleKeyUp);
+  
           
-          // Connect to WebSocket
-          function connectWebSocket() {
-            if (window.tournamentLobbySocket){
-              window.tournamentLobbySocket.close();
+        // WebSocket connection
+        function connectWebSocket() {
+            if (window.tournamentLobbySocket) {
+                window.tournamentLobbySocket.close();
             }
+
             window.tournamentLobbySocket = new WebSocket(wsUrl);
-                    
-          
+
             window.tournamentLobbySocket.onopen = () => {
-              statusElement.textContent = "Connected!";
+                statusElement.textContent = "Connected!";
             };
-          
+
             window.tournamentLobbySocket.onmessage = (event) => {
-              const data = JSON.parse(event.data);
-              console.log(data.type);
-          
-              if (data.type === "game_update") {
-                fieldWidth = data.game_state.field.width;
-                fieldHeight = data.game_state.field.height;
-                paddleWidth = data.game_state.paddle.width;
-                paddleHeight = data.game_state.paddle.height;
-                // gameState = data.game_state;
-                drawGame(data);
-              } else if (data.type === "tournament_end") {
-                statusElement.textContent = `Tournament Winner: ${data.champion}`;
-                readyButton.disabled = false;
-              }else if (data.type === "tournament_state") {
-                updateTournamentState(data);
-              }
+                const data = JSON.parse(event.data);
+                console.log(data.type);
+
+                switch (data.type) {
+                    case "game_update":
+                        drawGame(data.game_state);
+                        break;
+                    case "tournament_end":
+                        statusElement.textContent = `Tournament Winner: ${data.champion}`;
+                        break;
+                    case "tournament_state":
+                        updateTournamentState(data);
+                        break;
+                }
             };
           
             window.tournamentLobbySocket.onclose = () => {
               statusElement.textContent = "Disconnected. Refresh to reconnect.";
             };
           }
+
           
           function sendMessage(message) {
               window.tournamentLobbySocket.send(JSON.stringify(message));
@@ -72,63 +71,70 @@
           }
       
           
-          // Draw game state on canvas
-          function drawGame(data) {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = fieldWidth;
-            canvas.height = fieldHeight;
-    
-            ctx.clearRect(0, 0, fieldWidth, fieldHeight);
-    
-            // Set background color to green
-            ctx.fillStyle = '#1abc9c';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-            // Draw intermittent vertical line at the middle
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            const lineHeight = 20;
-            const gap = 10;
-    
-            for (let y = 0; y < canvas.height; y += lineHeight + gap) {
-                ctx.beginPath();
-                ctx.moveTo(canvas.width / 2, y);
-                ctx.lineTo(canvas.width / 2, y + lineHeight);
-                ctx.stroke();
-            }
-    
-            // Draw paddles
-            ctx.fillStyle = 'white';
-            ctx.fillRect(20, data.game_state.paddles.left.paddleY, paddleWidth, paddleHeight); // Left paddle
-            ctx.fillRect(fieldWidth - 20 - paddleWidth, data.game_state.paddles.right.paddleY, paddleWidth, paddleHeight); // Right paddle
-    
-            // Draw ball
-            ctx.beginPath();
-            ctx.arc(data.game_state.ball.x, data.game_state.ball.y, 10, 0, Math.PI * 2);
-            ctx.fill();
-    
-            // Draw score
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'white';
-            const leftPlayer = data.game_state.players.left || "Left";
-            const rightPlayer = data.game_state.players.right || "Right";
-            const text = `${leftPlayer}: ${data.game_state.score.left}  ${'    ' + rightPlayer}: ${data.game_state.score.right}`;
-            const textWidth = ctx.measureText(text).width;
-            const centerX = fieldWidth / 2;
-            const maxHalfWidth = fieldWidth / 2;
-            const startX = Math.max(centerX - textWidth / 2, centerX - maxHalfWidth);
-            ctx.fillText(text, startX, 20);
-        }
+        // Draw game state on canvas
+        function drawGame(gameState) {
+          const { field, paddles, ball, players, score } = gameState;
+
+          canvas.width = field.width;
+          canvas.height = field.height;
+
+          ctx.clearRect(0, 0, field.width, field.height);
+
+          // Draw background
+          ctx.fillStyle = '#1abc9c';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Draw middle line
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = 2;
+          const lineHeight = 20;
+          const gap = 10;
+
+          for (let y = 0; y < canvas.height; y += lineHeight + gap) {
+              ctx.beginPath();
+              ctx.moveTo(canvas.width / 2, y);
+              ctx.lineTo(canvas.width / 2, y + lineHeight);
+              ctx.stroke();
+          }
+
+          // Draw paddles
+          ctx.fillStyle = 'white';
+          ctx.fillRect(20, paddles.left.paddleY, 10, 100); // Left paddle
+          ctx.fillRect(field.width - 30, paddles.right.paddleY, 10, 100); // Right paddle
+
+          // Draw ball
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw score
+          ctx.font = '20px Arial';
+          ctx.fillStyle = 'white';
+
+          const leftPlayer = players.left || "Left";
+          const rightPlayer = players.right || "Right";
+
+          // Left player score
+          const leftText = `${leftPlayer}: ${score.left}`;
+          const leftTextWidth = ctx.measureText(leftText).width;
+          const leftTextX = (field.width / 2) - leftTextWidth - 20;
+          ctx.fillText(leftText, leftTextX, 20);
+
+          // Right player score
+          const rightText = `${rightPlayer}: ${score.right}`;
+          const rightTextX = (field.width / 2) + 20;
+          ctx.fillText(rightText, rightTextX, 20);
+      }
           
           function updateTournamentState(state) {
             readyPlayersTournamentList.innerHTML = state.all_ready
-                .map(player => `<li>${player}</li>`)
-                .join("");
+            .map(player => `<li>${player}</li>`)
+            .join("");
+        
             spectatorsList.innerHTML = state.spectators
                 .map(spectator => `<li>${spectator}</li>`)
                 .join("");
-        
+            
             winnersList.innerHTML = state.round_winners
                 .map(winner => `<li>${winner}</li>`)
                 .join("");
@@ -139,33 +145,29 @@
               readyButton.style.display = "block";
             }
             if (state.champion) {
-              alert(state.champion);
-              // const h2Element = document.createElement('h2');
-              // h2Element.textContent = `Champion: ${state.champion}`;
-              
-              // document.body.appendChild(h2Element);
+              alert(`Champion: ${state.champion}`);
             }
 
             readyPlayersList.innerHTML = `
-            <li>
-              Left: ${state.current_players.left || "Waiting"} - 
-              ${state.ready.left ? "Ready" : "Not Ready"}
-              ${
-                state.current_players.left === username
-                  ? '<button class="ready-button" data-side="left">Ready</button>'
-                  : ""
-              }
-            </li>
-            <li>
-              Right: ${state.current_players.right || "Waiting"} - 
-              ${state.ready.right ? "Ready" : "Not Ready"}
-              ${
-                state.current_players.right === username
-                  ? '<button class="ready-button" data-side="right">Ready</button>'
-                  : ""
-              }
-            </li>
-          `;
+              <h4>
+                Left: ${state.current_players.left || "Waiting"} - 
+                ${state.ready.left ? "Ready" : "Not Ready"}
+                ${
+                  state.current_players.left === username
+                    ? '<button class="ready-button" data-side="left">Ready</button>'
+                    : ""
+                }
+              </h4>
+              <h4>
+                Right: ${state.current_players.right || "Waiting"} - 
+                ${state.ready.right ? "Ready" : "Not Ready"}
+                ${
+                  state.current_players.right === username
+                    ? '<button class="ready-button" data-side="right">Ready</button>'
+                    : ""
+                }
+              </h4>
+            `;
         
           document.querySelectorAll(".ready-button").forEach(button => {
             button.addEventListener("click", () => {
@@ -190,37 +192,42 @@
               }
           }
       
-          function handleKeyUp(e) {
-      
-              if (e.key === 'w' && movingUp) {
-                  movingUp = false;
-                  sendMessage({ action: 'stop', direction: 'up' });
-              }
-              if (e.key === 's' && movingDown) {
-                  movingDown = false;
-                  sendMessage({ action: 'stop', direction: 'down' });
-              }
-          }
-          
-          // Initialize WebSocket connection
-          document.getElementById("readyButton").addEventListener("click", sendReadySignal);
-          connectWebSocket();
-          function disconnectWebSocket() {
-            if (window.tournamentLobbySocket) {
-                window.tournamentLobbySocket.close(1000, "User disconnected"); // close with code 1000 (normal)
-                console.log("Closing Lobby WebSocket...");
-            }
-            navigate('/');
+        // Handle keyup events
+      function handleKeyUp(e) {
+        if (e.key === 'w' && movingUp) {
+            movingUp = false;
+            sendMessage({ action: 'stop', direction: 'up' });
         }
-        document.getElementById("leaveLobbyButton").addEventListener("click", disconnectWebSocket);    
-    }
-    
+        if (e.key === 's' && movingDown) {
+            movingDown = false;
+            sendMessage({ action: 'stop', direction: 'down' });
+        }
+      }
+          
 
+      // Disconnect WebSocket
+      function disconnectWebSocket() {
+        if (window.tournamentLobbySocket) {
+            window.tournamentLobbySocket.close(1000, "User disconnected");
+            console.log("Closing Lobby WebSocket...");
+        }
+        navigate('/');
+      }
+
+      // Event listeners
+      readyButton.addEventListener("click", sendReadySignal);
+      document.getElementById("leaveLobbyButton").addEventListener("click", disconnectWebSocket);
+
+      // Initialize WebSocket
+      connectWebSocket();
+    }
+
+    // Reinitialize on navigation
     function reinitializeOnNavigation() {
-      initializeGame();
+        initializeGame();
     }
 
-
+    // Initialize on DOM load
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", reinitializeOnNavigation);
     } else {

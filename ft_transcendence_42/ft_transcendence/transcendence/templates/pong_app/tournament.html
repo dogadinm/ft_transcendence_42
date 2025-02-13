@@ -6,24 +6,32 @@
 <div id="content" class="body">
     <div id="gameData" data-room-lobby="{{ tournament_id }}"></div>
       <div id="TournamentData" data-room-lobby="{{ tournament_id }}" data-username="{{ tournament_nickname }}"></div>
-      <h1>Ping Pong Tournament</h1>
-      <h1>Lobby {{ tournament_id }}</h1>
+      <h1>Tournament  {{ tournament_id }}</h1>
       <button id="leaveLobbyButton">Leave Lobby</button>
-      <button id="readyButton">I'm Ready For Tournament</button>
+      
+        
       <p id="status">Waiting to connect...</p>
 
       <canvas id="gameCanvas" width="800" height="400"></canvas>
-
+  
       <div id="connection-status"></div>
-      <div id="tournamentState">
-        <h2><ul id="ready-players-list"></ul></h2>
-        <h2>Ready Tournament Players</h2>
-        <ul id="ready-tournament-players-list"></ul>
-        <h2>Spectators</h2>
-        <ul id="spectators-list"></ul>
-        <h2>Round Winners</h2>
-        <ul id="winners-list"></ul>
-      </div>
+      <button id="readyButton">I'm Ready For Tournament</button>    
+      <h2><ul id="ready-players-list"></ul></h2>
+      <div class="columns-container">
+        <div class="column">
+            <h3>Spectators</h3>
+            <ul id="spectators-list"></ul>
+        </div>
+        <div class="column">
+            <h3>Ready Tournament Players</h3>
+            <ul id="ready-tournament-players-list"></ul>
+        </div>
+        <div class="column">
+            <h3>Round Winners</h3>
+            <ul id="winners-list"></ul>
+        </div>
+    </div>
+    
       
       <link type="text/css" href="{% static 'transcendence/style_tournament.css' %}" rel="stylesheet">
       <script src="{% static 'js/tournament.js' %}"></script>

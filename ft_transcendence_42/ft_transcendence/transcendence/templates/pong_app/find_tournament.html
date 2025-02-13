@@ -5,11 +5,11 @@
       <form id="find-tournament-form" onsubmit="event.preventDefault(); navigateToTournament();">
           {% csrf_token %}
           <div>
-              <input autofocus class="form-control" type="text" id="tournament-input" placeholder="tournament">
+              <input autofocus class="form-control" type="text" id="tournament-input" placeholder="Tournament">
           </div>
           <button id="tournament-button">Join Lobby</button>
       </form>
-      <p id="error-message" style="color: red;"></p>
+      <p id="error-message" style="color: #1abc9c;"></p>
 
       <script src="{% static 'js/findTournament.js' %}"></script>
 </div>

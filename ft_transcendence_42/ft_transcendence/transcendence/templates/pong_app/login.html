@@ -4,7 +4,6 @@
 {% block body %}
 
 <div id="content" class="body">
-    <h2>Login</h2>
     <form id="login-form" onsubmit="event.preventDefault(); login();">
         {% csrf_token %}
         <div>
@@ -19,7 +18,7 @@
         <button id="login-button">Login</button>
     </form>
 
-    <p id="error-message" style="color: red;"></p>
+    <p id="error-message" style="color: #1abc9c;"></p>
 
     <script src="{% static 'js/login.js' %}"></script>
 

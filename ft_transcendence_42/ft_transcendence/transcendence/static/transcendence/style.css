@@ -11,19 +11,25 @@
     font-size: 14px;
 }
 body {
-    background-color: #e66649;
+    /* background-color: #e66649; */
+    background-image: url('/static/transcendence/background.jpg');
+    background-size: cover; 
+    background-position: center; 
+    background-repeat: no-repeat;
+    background-attachment: fixed; 
+
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     min-height: 100vh;
     color: #333;
-    background-image: url('/static/transcendence/42po.png'); /* Path to your image */
-    background-repeat: no-repeat; /* Prevent the image from repeating */
-    background-position: 10px 10px; /* Adjust positioning */
-    background-size: 84px 84px; /* Set size of the image */
+    /* background-image: url('/static/transcendence/42po.png'); /* Path to your image 
+    background-repeat: no-repeat;
+    background-position: 10px 10px; 
+    background-size: 84px 84px; 
     margin: 0;
-    padding: 0;
+    padding: 0; */
 }
 
 #other_name, #name {
@@ -58,10 +64,30 @@ body {
 }
 
 
+
+.navbar a.ajax-link {
+    color: pink; /* Этот стиль будет иметь более высокий приоритет */
+    font-size: 1.3rem;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
 h1 {
     font-size: 2.5rem;
     margin-top: 20px;
-    color: #333;
+    color: black; 
+}
+
+h2, h3, h4, h5, h6 {
+    color: pink; 
+}
+h3 {
+    color: black; 
+}
+
+.sidebar a {
+    color: pink;
+    text-decoration: none; 
 }
 
 .navbar {

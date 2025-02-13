@@ -23,7 +23,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         await self.broadcast_tournament_state()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        
 
         if self.user in self.room.players_queue:
             self.room.players_queue.remove(self.user)
@@ -33,11 +33,16 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             self.room.round_winners.remove(self.user)
         if self.user in self.room.tournament_users:
             self.room.tournament_users.remove(self.user)
-        self.user.tournament_lobby = None
-        await database_sync_to_async(self.user.save)()
+        if self.user in self.room.all_ready:
+            self.room.all_ready.remove(self.user)
+        if not (self.user.tournament_lobby and self.user.lobby != self.room_name):
+            self.user.tournament_lobby = None
+            await database_sync_to_async(self.user.save)()
 
-        if not self.room.players_queue and not self.room.spectators and not self.room.round_winners:
+        if not self.room.players_queue and not self.room.spectators and not self.room.round_winners and not self.room.tournament_users:
             tournament_manager.remove_room(self.room_name)
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.broadcast_tournament_state()
         
 
 
