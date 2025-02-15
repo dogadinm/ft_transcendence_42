@@ -434,6 +434,7 @@ def invite_to_game(request):
 def find_lobby(request):
     if request.method == "POST":
         form = FiendLobbyForm(request.POST)
+        
         if form.is_valid():
             lobby_name = form.cleaned_data["lobby_name"]
             return JsonResponse({"exists": True, "lobby_name": lobby_name})

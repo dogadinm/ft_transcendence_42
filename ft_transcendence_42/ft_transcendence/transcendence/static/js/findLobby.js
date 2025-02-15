@@ -5,8 +5,8 @@ function navigateToLobby() {
     if (lobbyInput.length < 3) {
         displayErrorMessage("Lobby must be at least 3 characters long.");
         return;
-    } else if (lobbyInput.length > 25) {
-        displayErrorMessage("Lobby cannot be more than 25 characters.");
+    } else if (lobbyInput.length > 8) {
+		displayErrorMessage("Tournament name cannot be more than 8 charaters.");
         return;
     } else if (!/^[a-zA-Z0-9]+$/.test(lobbyInput)) {
         displayErrorMessage("Lobby can only contain letters and digits.");

@@ -14,7 +14,7 @@
           const winnersList = document.getElementById("winners-list");
           const readyButton = document.getElementById("readyButton");
           const statusElement = document.getElementById("status");
-          const canvas = document.getElementById("gameCanvas");
+          const canvas = document.getElementById("tournamentCanvas");
           const ctx = canvas.getContext("2d");
   
           const wsProtocol = location.protocol === "https:" ? "wss" : "ws";

@@ -37,7 +37,7 @@ def save_blockchain(winner, loser, csv_file_name):
 	contract_abi = contract_json["abi"]
 
 	# Define the contract address
-	contract_address = "0xf4361f0606E3A5e322523858f32116DAD93feA0D"  # Replace with your deployed address
+	contract_address = "0xF58EF4135f649D2fca71Aa816B3Bd655b2D4080A"  # Replace with your deployed address
 
 	# Connect to the Ethereum provider
 	web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
