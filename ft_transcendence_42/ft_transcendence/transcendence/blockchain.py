@@ -10,6 +10,23 @@ import json
 from solcx import compile_standard
 from web3 import Web3
 
+def contract_creation():
+	with open("blockchain/build/contracts/MultisigTournament.json", "r") as file:
+		contract_json = json.load(file)
+
+	# Extract the ABI from the JSON file
+	contract_abi = contract_json["abi"]
+
+	# Define the contract address
+	contract_address = "0xF58EF4135f649D2fca71Aa816B3Bd655b2D4080A"  # Replace with your deployed address
+
+	# Connect to the Ethereum provider
+	web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
+
+	# Initialize the contract instance
+	contract = web3.eth.contract(address=contract_address, abi=contract_abi)
+	return contract, web3
+
 def save_blockchain(winner, loser, csv_file_name):
 
 	# Player and loser details
@@ -28,22 +45,10 @@ def save_blockchain(winner, loser, csv_file_name):
 	print("Loaded Data:")
 	print(df.head())
 
-	# Load the contract JSON file (update the path to your file)
+	
+	contract, web3 = contract_creation()
 	#blockchain/build/contracts
-	with open("blockchain/build/contracts/MultisigTournament.json", "r") as file:
-		contract_json = json.load(file)
 
-	# Extract the ABI from the JSON file
-	contract_abi = contract_json["abi"]
-
-	# Define the contract address
-	contract_address = "0xF58EF4135f649D2fca71Aa816B3Bd655b2D4080A"  # Replace with your deployed address
-
-	# Connect to the Ethereum provider
-	web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
-
-	# Initialize the contract instance
-	contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
 	# Get the starting nonce for both users
 	player1_nonce = web3.eth.get_transaction_count(player1_addr)
@@ -160,6 +165,3 @@ def save_blockchain(winner, loser, csv_file_name):
 	except Exception as e:
 		print(f"Error during execution: {e}")
 		#continue
-
-
-   

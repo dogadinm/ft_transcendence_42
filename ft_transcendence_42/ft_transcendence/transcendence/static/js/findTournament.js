@@ -30,7 +30,10 @@ function navigateToTournament() {
                 const url = `/tournament/${data.tournament_name}`;
                 tournamentButton.setAttribute("data-navigate", url);
                 tournamentButton.click();
-            } else {
+            } else if (data.results){
+                displayErrorMessage(data.results);
+            }
+            else {
                 displayErrorMessage(data.message || "Lobby not found.");
             }
         })
@@ -42,5 +45,11 @@ function navigateToTournament() {
 function displayErrorMessage(message) {
 	const errorElement = document.getElementById("error-message");
 	errorElement.textContent = message;
-	errorElement.style.color = "red";
+	errorElement.style.color = "#1abc9c";
+}
+
+function displayResults(message) {
+	const resultsElement = document.getElementById("results-message");
+	resultsElement.textContent = message;
+	resultsElement.style.color = "#1abc9c";
 }

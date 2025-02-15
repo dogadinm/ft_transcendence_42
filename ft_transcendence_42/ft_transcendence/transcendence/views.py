@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 import json
 import os
+from . import blockchain
+from .TournamentGame import tournament_manager
 
 # Main Page
 def index(request):
@@ -462,17 +464,37 @@ def pong_lobby(request, room_lobby):
 @login_required(login_url='/login/')
 def bot(request):
     return render(request, 'pong_app/bot.html')
+    
+def check_tournament(tournament_id):
+    contract, web3 = blockchain.contract_creation()
+    games = []
+    for game_id in range(1, 4):
+        try:
+            is_approved = contract.functions.getApproval(tournament_id, game_id).call()
+            game = contract.functions.getGame(tournament_id, game_id).call()
+            if game[1] != 0 and is_approved:
+                games.append(game)  # If the game ID is non-zero, it exists
+        except Exception as e:
+            print(f"Error retrieving game {game_id}: {e}")
+    return games
+
 
 @login_required(login_url='/login/')
 def find_tournament(request):
     main_user = request.user
+    
     if request.method == "POST":
         if not (main_user.wallet_address and main_user.wallet_prt_key):
             return JsonResponse({"exists": False, "message": "Wallet data is missing."}, status=403)
-
         form = FiendTournamentForm(request.POST)
         if form.is_valid():
             tournament_name = form.cleaned_data["tournament_name"]
+            room = tournament_manager.get_or_create_room(tournament_name, True)
+            results = check_tournament(tournament_name)
+            print(results)
+            if(results and not room):
+                print(results)
+                return JsonResponse({"exists": False, "results": results})
             if main_user.tournament_lobby:
                 tournament_name = main_user.tournament_lobby
             return JsonResponse({"exists": True, "tournament_name": tournament_name})

@@ -9,7 +9,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['tournament_id']
         self.room_group_name = f"tournament_{self.room_name}"
         self.user = self.scope['user']
-        self.room = tournament_manager.get_or_create_room(self.room_name)
+        self.room = tournament_manager.get_or_create_room(self.room_name, False)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)       
 
         if self.user not in self.room.all_ready and self.user not in self.room.tournament_users:
@@ -35,12 +35,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             self.room.tournament_users.remove(self.user)
         if self.user in self.room.all_ready:
             self.room.all_ready.remove(self.user)
-        if not (self.user.tournament_lobby and self.user.lobby != self.room_name):
-            self.user.tournament_lobby = None
-            await database_sync_to_async(self.user.save)()
+        # if not (self.user.tournament_lobby and self.user.lobby != self.room_name):
+        self.user.tournament_lobby = None
+        
+        await database_sync_to_async(self.user.save)()
 
         if not self.room.players_queue and not self.room.spectators and not self.room.round_winners and not self.room.tournament_users:
             tournament_manager.remove_room(self.room_name)
+
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.broadcast_tournament_state()
         

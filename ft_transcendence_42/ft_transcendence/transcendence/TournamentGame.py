@@ -14,8 +14,8 @@ class TournamentRoom:
     BALL_INITIAL_SPEED = 2.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
-    WIN_SCORE = 10
-    WIN_POINTS = 10
+    WIN_SCORE = 1
+    WIN_POINTS = 1
     LOSS_POINTS = -5
     FIELD_WIDTH = 800
     FIELD_HEIGHT = 400
@@ -241,7 +241,9 @@ class TournamentRoomManager:
     def __init__(self):
         self.rooms = {}
 
-    def get_or_create_room(self, room_name):
+    def get_or_create_room(self, room_name, views_check):
+        if(views_check and room_name not in self.rooms):
+            return False
         if room_name not in self.rooms:
             self.rooms[room_name] = TournamentRoom(room_name)
         return self.rooms[room_name]
