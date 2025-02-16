@@ -67,6 +67,7 @@ class TournamentRoom:
             self.current_players['right'] = self.round_winners.pop(0)
             self.round = 3
         
+        
 
     async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament):
         while len(self.players_queue) + len(self.round_winners) > 1:

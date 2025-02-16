@@ -174,7 +174,9 @@ def register(request):
             Score.objects.create(user=user, score=10)
             ScoreDoubleJack.objects.create(user=user, score=1000)
             Friend.objects.create(owner=user)
-
+            chatbot = User.objects.get(username="chatbot")
+            bot = Friend.objects.get(owner=chatbot)
+            bot.friends.add(user)
             login(request, user)
             return JsonResponse({"redirect": "/"})
         else:
