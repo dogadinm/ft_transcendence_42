@@ -491,8 +491,8 @@ def find_tournament(request):
             tournament_name = form.cleaned_data["tournament_name"]
             room = tournament_manager.get_or_create_room(tournament_name, True)
             results = check_tournament(tournament_name)
-            print(results)
             if(results and not room):
+                print("hello")
                 print(results)
                 return JsonResponse({"exists": False, "results": results})
             if main_user.tournament_lobby:

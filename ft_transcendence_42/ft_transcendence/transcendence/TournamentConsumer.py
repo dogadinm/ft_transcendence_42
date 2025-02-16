@@ -3,6 +3,7 @@ import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .TournamentGame import tournament_manager
 from channels.db import database_sync_to_async
+from .models import User
 
 class TournamentConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -16,36 +17,53 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             self.room.tournament_users.add(self.user)
             self.room.spectators.append(self.user)
             self.user.tournament_lobby = self.room_name
+            print(f"connect:{self.user.tournament_lobby }")
             await database_sync_to_async(self.user.save)()
 
         await self.accept()
         await self.send_game_state()
         await self.broadcast_tournament_state()
 
+    # async def disconnect(self, close_code):
+    #     if self.user in self.room.players_queue:
+    #         self.room.players_queue.remove(self.user)
+    #     if self.user in self.room.spectators:
+    #         self.room.spectators.remove(self.user)
+    #     if self.user in self.room.round_winners:
+    #         self.room.round_winners.remove(self.user)
+    #     if self.user in self.room.tournament_users:
+    #         self.room.tournament_users.remove(self.user)
+    #     if self.user in self.room.all_ready:
+    #         self.room.all_ready.remove(self.user)
+
+    #     self.user.tournament_lobby = None
+    #     # print(self.user.tournament_lobby)
+    #     await database_sync_to_async(self.user.save)()
+
+    #     if not self.room.players_queue and not self.room.spectators and not self.room.round_winners and not self.room.tournament_users:
+    #         tournament_manager.remove_room(self.room_name)
+
+    #     await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+    #     await self.broadcast_tournament_state()
+        
     async def disconnect(self, close_code):
-        
+        user = self.user
+        room = self.room
 
-        if self.user in self.room.players_queue:
-            self.room.players_queue.remove(self.user)
-        if self.user in self.room.spectators:
-            self.room.spectators.remove(self.user)
-        if self.user in self.room.round_winners:
-            self.room.round_winners.remove(self.user)
-        if self.user in self.room.tournament_users:
-            self.room.tournament_users.remove(self.user)
-        if self.user in self.room.all_ready:
-            self.room.all_ready.remove(self.user)
-        # if not (self.user.tournament_lobby and self.user.lobby != self.room_name):
-        self.user.tournament_lobby = None
-        
-        await database_sync_to_async(self.user.save)()
+        lists_to_check = [room.players_queue, room.spectators, room.round_winners, room.tournament_users, room.all_ready]
+        for lst in lists_to_check:
+            if user in lst:
+                lst.remove(user)
 
-        if not self.room.players_queue and not self.room.spectators and not self.room.round_winners and not self.room.tournament_users:
+        await database_sync_to_async(
+            lambda: User.objects.filter(id=self.user.id).update(tournament_lobby=None)
+        )()
+
+        if not any([room.players_queue, room.spectators, room.round_winners, room.tournament_users]):
             tournament_manager.remove_room(self.room_name)
 
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.broadcast_tournament_state()
-        
 
 
     async def receive(self, text_data):

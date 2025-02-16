@@ -5,7 +5,7 @@ from .game import room_manager
 from django.shortcuts import get_object_or_404
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
-
+from .models import User
 
 class PongLobby(AsyncWebsocketConsumer):
     async def connect(self):
@@ -36,6 +36,7 @@ class PongLobby(AsyncWebsocketConsumer):
             await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
             self.user.lobby = self.room_lobby_name
             await database_sync_to_async(self.user.save)()
+            
 
 
         await self.accept()
@@ -70,8 +71,11 @@ class PongLobby(AsyncWebsocketConsumer):
         ):
             room_manager.remove_room(self.room_lobby_name)
         if not (self.user.lobby and self.user.lobby != self.room_lobby_name):
-            self.user.lobby = None
-            await database_sync_to_async(self.user.save)()
+            lobby = self.user.lobby 
+            await database_sync_to_async(
+                lambda: User.objects.filter(id=self.user.id).update(lobby = None)
+            )()
+
 
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)

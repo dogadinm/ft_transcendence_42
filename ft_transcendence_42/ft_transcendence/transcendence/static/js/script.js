@@ -18,15 +18,19 @@ if (!window.isEventListenerAdded) {
 }
 
 async function navigate(url, addToHistory = true) {
-    if (window.chatSocket) {
-        window.chatSocket.close();
-    }
-    if (window.lobbySocket) {
-        window.lobbySocket.close();
-    }
-    if (window.tournamentLobbySocket) {
-        window.tournamentLobbySocket.close();
-    }
+    // console.log(window.lobbySocket)
+    // console.log(window.tournamentLobbySocket)
+    // if (window.chatSocket) {
+    //     window.chatSocket.close();
+    // }
+    // if (window.lobbySocket) {
+    //     window.lobbySocket.close();
+    // }
+    // if (window.tournamentLobbySocket) {
+    //     window.tournamentLobbySocket.close();
+    // }
+    // console.log(window.lobbySocket)
+    // console.log(window.tournamentLobbySocket)
     try {
         const response = await fetch(url, {
             method: "GET",
