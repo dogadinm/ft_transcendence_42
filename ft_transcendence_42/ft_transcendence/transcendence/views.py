@@ -194,6 +194,11 @@ def register(request):
 def profile(request, username):
     page_user = get_object_or_404(User, username=username)
     main_user = request.user
+    if(page_user.username == "chatbot"):
+        if request.user.is_authenticated:
+            return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_authenticated.html"})
+        else:
+            return render(request, "pong_app/index.html", {"user_links_template": "pong_app/user_links_guest.html"})
     score = Score.objects.get(user=page_user)
     score_double_jack = ScoreDoubleJack.objects.get(user=page_user)
 
@@ -201,6 +206,8 @@ def profile(request, username):
     page_user_friends = Friend.objects.get(owner=page_user)
 
     block_list = main_user.blocked_users.all()
+
+
 
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         action = request.POST.get('action')
@@ -360,6 +367,8 @@ def find_friend(request):
         form = FiendFriendForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data["username"]
+            if (username == "chatbot"):
+                return JsonResponse({"exists": False, "username": "its bot"})
             try:
                 user = User.objects.get(username=username)
                 return JsonResponse({"exists": True, "username": user.username})
@@ -418,9 +427,11 @@ def full_friends_list(request, username):
 @login_required(login_url='/login/')
 def chat(request):
     friend_obj = Friend.objects.get(owner=request.user)
+    chatbot = User.objects.get(username="chatbot")
 
     return render(request, 'pong_app/chat.html', {
         "friends": friend_obj.friends.all(),
+        "chatbot": chatbot,
         "current_user": request.user.username,
     })
 @login_required(login_url='/login/')

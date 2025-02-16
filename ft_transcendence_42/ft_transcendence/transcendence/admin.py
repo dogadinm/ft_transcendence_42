@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Score, Friend, PrivateMessage, FriendRequest, MatchHistory
+from .models import User, Score, Friend, PrivateMessage, FriendRequest, MatchHistory, ScoreDoubleJack
 from django import forms
 
 # Register your models here.
@@ -9,3 +9,4 @@ admin.site.register(Friend)
 admin.site.register(PrivateMessage)
 admin.site.register(FriendRequest)
 admin.site.register(MatchHistory)
+admin.site.register(ScoreDoubleJack)

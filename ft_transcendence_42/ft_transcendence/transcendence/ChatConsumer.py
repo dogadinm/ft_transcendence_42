@@ -11,7 +11,7 @@ class ChatConsumer(WebsocketConsumer):
         self.user = self.scope['user']
         self.friend_username = self.scope['url_route']['kwargs']['friend_username']
 
-        if not Friend.objects.filter(owner=self.user, friends__username=self.friend_username).exists():
+        if not Friend.objects.filter(owner=self.user, friends__username=self.friend_username).exists() and self.friend_username != "chatbot":
             return
 
         self.room_name = self.create_room_name(self.user.username, self.friend_username)
@@ -53,6 +53,8 @@ class ChatConsumer(WebsocketConsumer):
         message = data.get('message')
         invite = data.get('invite')
         friend = User.objects.get(username=self.friend_username)
+        if not Friend.objects.filter(owner=self.user, friends__username=self.friend_username).exists() and self.friend_username == "chatbot":
+            return
 
         if message:
             PrivateMessage.objects.create(
