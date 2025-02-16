@@ -6,6 +6,8 @@ channels_redis
 web3
 pandas
 py-solc-x
+python-dotenv
+dj-database-url
 
 django-oauth-toolkit
 django-extensions

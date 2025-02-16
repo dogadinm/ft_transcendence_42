@@ -10,7 +10,8 @@ ft_transcendence_42/ft_transcendence/ft_transcendence/__pycache__/__init__.cpyth
 ft_transcendence_42/ft_transcendence/ft_transcendence/__pycache__/asgi.cpython-310.pyc
 ft_transcendence_42/ft_transcendence/ft_transcendence/__pycache__/settings.cpython-310.pyc
 ft_transcendence_42/ft_transcendence/ft_transcendence/__pycache__/urls.cpython-310.pyc
-
+.env
+.DS_Store
 ft_transcendence_42/ft_transcendence/transcendence/migrations/__pycache__/0009_alter_user_photo.cpython-310.pyc
 ft_transcendence_42/ft_transcendence/transcendence/migrations/__pycache__/0008_alter_user_photo.cpython-310.pyc
 ft_transcendence_42/ft_transcendence/transcendence/migrations/__pycache__/0007_alter_user_nickname.cpython-310.pyc

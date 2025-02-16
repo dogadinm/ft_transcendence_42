@@ -117,56 +117,56 @@ async function updateUserLinks() {
     }
 }
 
-function startStatus() {
-    if (window.statusSocket && window.statusSocket.readyState === WebSocket.OPEN) {
-        console.log("WebSocket connection is already open.");
-        return;
-    }
+// function startStatus() {
+//     if (window.statusSocket && window.statusSocket.readyState === WebSocket.OPEN) {
+//         console.log("WebSocket connection is already open.");
+//         return;
+//     }
 
-    if (window.statusSocket) {
-        window.statusSocket.close();
-    }
+//     if (window.statusSocket) {
+//         window.statusSocket.close();
+//     }
 
-    window.statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+//     window.statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
 
-    window.statusSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        console.log(data.type);
+//     window.statusSocket.onmessage = function (e) {
+//         const data = JSON.parse(e.data);
+//         console.log(data.type);
 
-        if (data.type === 'user_status') {
-            const friendItems = document.querySelectorAll('.friend-item');
-            const onlineUsernames = new Set(data.users || []);
+//         if (data.type === 'user_status') {
+//             const friendItems = document.querySelectorAll('.friend-item');
+//             const onlineUsernames = new Set(data.users || []);
 
-            friendItems.forEach((item) => {
-                const name = item.dataset.name;
-                const statusIndicator = item.querySelector('.status-indicator');
+//             friendItems.forEach((item) => {
+//                 const name = item.dataset.name;
+//                 const statusIndicator = item.querySelector('.status-indicator');
 
-                if (statusIndicator) {
-                    if (onlineUsernames.has(name)) {
-                        statusIndicator.style.backgroundColor = 'green'; 
-                    } else {
-                        statusIndicator.style.backgroundColor = 'red'; 
-                    }
-                }
-            });
-        }
-    };
+//                 if (statusIndicator) {
+//                     if (onlineUsernames.has(name)) {
+//                         statusIndicator.style.backgroundColor = 'green'; 
+//                     } else {
+//                         statusIndicator.style.backgroundColor = 'red'; 
+//                     }
+//                 }
+//             });
+//         }
+//     };
 
-    window.statusSocket.onclose = function () {
-        console.log("WebSocket connection closed. Reconnecting...");
-        setTimeout(startStatus, 3000);
-    };
+//     window.statusSocket.onclose = function () {
+//         console.log("WebSocket connection closed. Reconnecting...");
+//         setTimeout(startStatus, 3000);
+//     };
 
-    window.statusSocket.onerror = function (error) {
-        console.error("WebSocket error:", error);
-    };
-}
+//     window.statusSocket.onerror = function (error) {
+//         console.error("WebSocket error:", error);
+//     };
+// }
 
-document.addEventListener("DOMContentLoaded", function () {
-    if (!window.statusSocket || window.statusSocket.readyState !== WebSocket.OPEN) {
-        startStatus();
-    }
-});
+// document.addEventListener("DOMContentLoaded", function () {
+//     if (!window.statusSocket || window.statusSocket.readyState !== WebSocket.OPEN) {
+//         startStatus();
+//     }
+// });
 
 
 function handleNavigation(event) {
