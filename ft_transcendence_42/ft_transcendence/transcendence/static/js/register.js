@@ -18,14 +18,16 @@ function register() {
                 registerButton.setAttribute("data-navigate", url);
                 registerButton.click();
                 updateUserLinks();
-            } else {
+
+            } else if (data.wallet_error) {
+                displayErrorMessage(data.wallet_error);   
+            } else {   
                 const errorMessages = {
                     username: document.getElementById("username-error"),
                     email: document.getElementById("email-error"),
                     password: document.getElementById("password-error"),
                     confirmation: document.getElementById("confirmation-error"),
                 };
-
                 // Reset error messages
                 Object.values(errorMessages).forEach((element) => element.textContent = "");
                 if (data.error.username) {
@@ -40,6 +42,10 @@ function register() {
                 if (data.error.confirmation) {
                     errorMessages.confirmation.textContent = data.error.confirmation[0];
                 }
+                if (data.error.confirmation) {
+                    errorMessages.confirmation.textContent = data.error.confirmation[0];
+                }
+    
     
                 // If no specific error is found
                 if (!data.error.username && !data.error.email && !data.error.password && !data.error.confirmation) {

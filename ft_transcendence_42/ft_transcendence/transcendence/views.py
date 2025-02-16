@@ -148,12 +148,25 @@ def logout_view(request):
 # Registration
 def bind_walet():
     wallet_file_path = os.path.join(os.path.dirname(__file__), 'wallet.txt')
+    
     with open(wallet_file_path, 'r') as file:
         lines = file.readlines()
+        
+        if len(lines) <= 1:  # Check if the file doesn't contain enough lines
+            return False, False
+        
+        # Extract wallet address and private key
         wallet_address = lines[0].strip()  # First line as wallet address
         wallet_prt_key = lines[1].strip()  # Second line as private key
-        remove_first_two_lines(wallet_file_path)
-        return wallet_address, wallet_prt_key
+        
+        # Remove the first two lines
+        lines = lines[2:]
+
+    # Rewrite the file with the remaining lines
+    with open(wallet_file_path, 'w') as file:
+        file.writelines(lines)
+        
+    return wallet_address, wallet_prt_key
 
 def register(request):
     if request.user.is_authenticated:
@@ -165,10 +178,15 @@ def register(request):
             username = form.cleaned_data["username"]
             email = form.cleaned_data["email"]
             password = form.cleaned_data["password"]
-
+            wallet_address, wallet_prt_key = bind_walet()
+            if not wallet_address:
+                return JsonResponse({"wallet_error":  "No wallet addresses found. Please wait!"}, status=400)
             # Create the user and other related objects
             user = User.objects.create_user(username=username, password=password, email=email)
-            user.wallet_address, user.wallet_prt_key = bind_walet()
+
+
+            user.wallet_address = wallet_address
+            user.wallet_prt_key = wallet_prt_key
             user.tournament_nickname = username
             user.save()
             Score.objects.create(user=user, score=10)
@@ -180,6 +198,7 @@ def register(request):
             login(request, user)
             return JsonResponse({"redirect": "/"})
         else:
+            print(form.errors)
             return JsonResponse({"error": form.errors}, status=400)
 
     elif request.method == "GET":
