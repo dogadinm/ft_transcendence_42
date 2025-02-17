@@ -187,7 +187,7 @@ class TournamentRoom:
         )
 
         self.create_csv(winner.tournament_nickname, loser.tournament_nickname)
-        # blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
+        blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
         self.round = 0
 
     @sync_to_async
