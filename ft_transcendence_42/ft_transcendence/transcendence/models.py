@@ -75,7 +75,7 @@ class FriendRequest(models.Model):
             ),
             models.UniqueConstraint(
                 name='unique_friend_request_inverse',
-                condition=Q(sender__lt=models.F('receiver')),  # Гарантия уникальности в обе стороны
+                condition=Q(sender__lt=models.F('receiver')),
                 fields=['sender', 'receiver']
             ),
         ]

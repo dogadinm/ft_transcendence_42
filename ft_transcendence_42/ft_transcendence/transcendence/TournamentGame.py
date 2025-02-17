@@ -4,7 +4,7 @@ import csv
 import os
 from asgiref.sync import sync_to_async
 from django.conf import settings
-from .models import User, Score, MatchHistory
+from .models import User, Score, MatchHistory, PrivateMessage, Friend 
 from . import blockchain
 
 class TournamentRoom:
@@ -53,6 +53,7 @@ class TournamentRoom:
         random.shuffle(self.players_queue)
         self.set_next_match()
 
+
     def set_next_match(self):
         if len(self.players_queue) > 2:
             self.current_players['left'] = self.players_queue.pop(0)
@@ -69,17 +70,20 @@ class TournamentRoom:
         
         
 
-    async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament):
+    async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament, send_notification):
+        print("hello2")
         while len(self.players_queue) + len(self.round_winners) > 1:
+            print("hello1")
             self.is_tournament_running = True
+
             if not self.current_players['left'] and not self.current_players['right']:
                 self.set_next_match()
                 await broadcast_tournament_state()
                 await send_update(self.get_game_state())
 
+            await send_notification()
             while not self.ready['left'] or not self.ready['right']:
                 await asyncio.sleep(0.1)
-
             await self.game_loop(send_update)
 
         if self.round_winners:
@@ -183,7 +187,7 @@ class TournamentRoom:
         )
 
         self.create_csv(winner.tournament_nickname, loser.tournament_nickname)
-        blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
+        # blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
         self.round = 0
 
     @sync_to_async

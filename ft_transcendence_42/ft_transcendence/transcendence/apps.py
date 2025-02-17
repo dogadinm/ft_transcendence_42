@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 import threading
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class TranscendenceConfig(AppConfig):
     name = 'transcendence'
 
     def ready(self):
-        """Run bot creation in a separate thread to avoid database access issues."""
+        if "migrate" in sys.argv or "makemigrations" in sys.argv:
+            return  # Skip bot user creation during migrations
         threading.Thread(target=create_bot_user, daemon=True).start()
 

@@ -84,6 +84,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             if len(self.room.all_ready) == 4:
                 self.room.assign_role()
                 await self.send_game_state()
+                if not self.room.is_tournament_running:
+                    print("hello0")
+                    self.room.is_tournament_running = True
+                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state, self.close_tournament, self.send_notification))
             await self.broadcast_tournament_state()
 
             
@@ -94,11 +98,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 self.room.ready['left'] = True
             elif self.user == self.room.current_players['right']:
                 self.room.ready['right'] = True
-            if self.room.ready['left'] and self.room.ready['right']:
-                if not self.room.is_tournament_running:
-                    self.room.is_tournament_running = True
-                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state, self.close_tournament))
-            await self.broadcast_tournament_state()
+            if len(self.room.all_ready) == 4:
+
+                await self.broadcast_tournament_state()
 
         elif action in ["move", "stop"]:
             direction = data.get('direction')
@@ -131,6 +133,24 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 'state': state,
             },
         )
+
+    async def send_notification(self):
+        state = {   
+                    'type': 'notification',
+                    'massage': f"""Tournament {self.room_name}: {self.room.current_players['left'].tournament_nickname if self.room.current_players['left'] else None} vs {self.room.current_players['right'].tournament_nickname if self.room.current_players['right'] else None}""",
+                }
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'notification',
+                'state': state,
+            },
+        )
+
+
+    async def notification(self, event):
+        state = event['state']
+        await self.send(text_data=json.dumps(state))
 
 
     async def tournament_state(self, event):

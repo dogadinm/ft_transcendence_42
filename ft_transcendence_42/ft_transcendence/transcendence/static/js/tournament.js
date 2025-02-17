@@ -53,6 +53,9 @@
                     case "tournament_state":
                         updateTournamentState(data);
                         break;
+                    case "notification":
+                          alert(data.massage);
+                          break;
                 }
             };
           
