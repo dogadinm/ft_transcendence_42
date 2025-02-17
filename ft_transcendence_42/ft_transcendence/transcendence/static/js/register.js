@@ -55,7 +55,7 @@ function register() {
             }
         })
         .catch(() => {
-            displayErrorMessage("An error occurred while checking the lobby.");
+            displayErrorMessage("An error occurred while registering");
         });
 }
 

@@ -50,7 +50,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         user = self.user
         room = self.room
 
-        lists_to_check = [room.players_queue, room.spectators, room.round_winners, room.tournament_users, room.all_ready]
+        lists_to_check = [room.spectators, room.tournament_users]
         for lst in lists_to_check:
             if user in lst:
                 lst.remove(user)
@@ -59,7 +59,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
             lambda: User.objects.filter(id=self.user.id).update(tournament_lobby=None)
         )()
 
-        if not any([room.players_queue, room.spectators, room.round_winners, room.tournament_users]):
+        if not room.tournament_users:
             tournament_manager.remove_room(self.room_name)
 
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -67,6 +67,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 
     async def receive(self, text_data):
+        if self.room.champion:
+            await self.send(text_data=json.dumps({'error': 'Tournament finished.'}))
+            return
         if len(self.room.all_ready) == 4 and self.user not in self.room.all_ready:
             await self.send(text_data=json.dumps({'error': 'You are not part of the current game.'}))
             return
