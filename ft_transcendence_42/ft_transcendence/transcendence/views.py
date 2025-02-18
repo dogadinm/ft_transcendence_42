@@ -514,34 +514,51 @@ def check_tournament(tournament_id):
 @login_required(login_url='/login/')
 def find_tournament(request):
     main_user = request.user
-    
     if request.method == "POST":
+
         if not (main_user.wallet_address and main_user.wallet_prt_key):
             return JsonResponse({"exists": False, "message": "Wallet data is missing."}, status=403)
+        
         form = FiendTournamentForm(request.POST)
         if form.is_valid():
             tournament_name = form.cleaned_data["tournament_name"]
             room = tournament_manager.get_or_create_room(tournament_name, True)
             results = check_tournament(tournament_name)
+
             if(results and not room):
-                print("hello")
-                print(results)
+                if(main_user.tournament_lobby == room):
+                    main_user.tournament_lobby = None
+                    main_user.save()
                 return JsonResponse({"exists": False, "results": results})
-            if main_user.tournament_lobby:
+            elif main_user.tournament_lobby:
                 tournament_name = main_user.tournament_lobby
+
             return JsonResponse({"exists": True, "tournament_name": tournament_name})
         else:
             return JsonResponse({"exists": False, "message": "Invalid data."})
-    if not (main_user.wallet_address and main_user.wallet_prt_key):
-        return render(request, "pong_app/find_tournament.html", {"blockchain_template": "pong_app/wallet_data.html"})
+    
     return render(request, 'pong_app/find_tournament.html')
 
 @login_required(login_url='/login/')
 def tournament(request, tournament_id):
-	return render(request, 'pong_app/tournament.html', {
-        'tournament_id': tournament_id,
-        'tournament_nickname': request.user.tournament_nickname,                                           
-    })
+    main_user = request.user
+    results = check_tournament(tournament_id)
+
+    if(results):
+        if(main_user.tournament_lobby == tournament_id):
+            main_user.tournament_lobby = None
+            main_user.save()
+        return render(request, 'pong_app/find_tournament.html')
+    if(main_user.tournament_lobby and main_user.tournament_lobby != tournament_id):
+        return render(request, 'pong_app/tournament.html', {
+        'tournament_id': main_user.tournament_lobby,
+        'tournament_nickname': main_user.tournament_nickname,                                           
+        })
+    else:
+        return render(request, 'pong_app/tournament.html', {
+            'tournament_id': tournament_id,
+            'tournament_nickname': main_user.tournament_nickname,                                           
+        })
 
 
 

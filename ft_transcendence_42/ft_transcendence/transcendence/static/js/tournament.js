@@ -25,7 +25,7 @@
           // Event listeners for key controls
           document.addEventListener('keydown', handleKeyDown);
           document.addEventListener('keyup', handleKeyUp);
-  
+        
           
         // WebSocket connection
         function connectWebSocket() {
