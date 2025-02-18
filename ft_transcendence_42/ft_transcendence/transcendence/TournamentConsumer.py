@@ -72,8 +72,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 self.room.ready['left'] = True
             elif self.user == self.room.current_players['right']:
                 self.room.ready['right'] = True
-            if self.room.ready['right'] and self.room.ready['left']:
-                await self.start_countdown()
+
             if len(self.room.all_ready) == 4:
 
                 await self.broadcast_tournament_state()
@@ -124,7 +123,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         )
 
     async def start_countdown(self):
-        asyncio.create_task(self.countdown_and_start_game())
+        await self.countdown_and_start_game()
 
     async def countdown_and_start_game(self):
         for seconds in range(5, 0, -1):
@@ -135,6 +134,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                     'countdown': seconds,
                 }
             )
+            await self.broadcast_tournament_state()
             await asyncio.sleep(1)
 
 

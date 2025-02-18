@@ -16,6 +16,7 @@
           const statusElement = document.getElementById("status");
           const canvas = document.getElementById("tournamentCanvas");
           const ctx = canvas.getContext("2d");
+          const timerElement = document.getElementById("timer");
   
           const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
           const wsUrl = `${wsProtocol}://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
@@ -57,8 +58,9 @@
                         updateTournamentState(data);
                         break;
                     case "notification":
-                          alert(data.massage);
-                          break;
+                        timerElement.innerText = "Waiting for players...";
+                        alert(data.massage);
+                        break;
                 }
             };
           
@@ -187,7 +189,7 @@
         }
 
         function startCountdown(seconds) {
-          const timerElement = document.getElementById("timer");
+          
 
           // Initialize the timer display
           timerElement.innerText = `Game starts in: ${seconds} seconds`;

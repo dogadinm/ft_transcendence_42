@@ -83,9 +83,9 @@ class TournamentRoom:
             while not self.ready['left'] or not self.ready['right']:
                 await asyncio.sleep(0.1)
             
-            await start_countdown()    
-            await asyncio.sleep(5) # bad need to fix
-            await self.game_loop(send_update)
+            
+            await start_countdown()
+            await self.game_loop(send_update) 
 
         if self.round_winners:
             self.champion = self.round_winners[0].tournament_nickname
