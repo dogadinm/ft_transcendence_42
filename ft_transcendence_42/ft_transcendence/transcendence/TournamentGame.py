@@ -70,10 +70,8 @@ class TournamentRoom:
         
         
 
-    async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament, send_notification):
-        print("hello2")
+    async def start_tournament(self, send_update, broadcast_tournament_state, close_tournament, send_notification, start_countdown):
         while len(self.players_queue) + len(self.round_winners) > 1:
-            print("hello1")
             self.is_tournament_running = True
 
             if not self.current_players['left'] and not self.current_players['right']:
@@ -84,6 +82,9 @@ class TournamentRoom:
             await send_notification()
             while not self.ready['left'] or not self.ready['right']:
                 await asyncio.sleep(0.1)
+            
+            await start_countdown()    
+            await asyncio.sleep(5) # bad need to fix
             await self.game_loop(send_update)
 
         if self.round_winners:
@@ -187,7 +188,7 @@ class TournamentRoom:
         )
 
         self.create_csv(winner.tournament_nickname, loser.tournament_nickname)
-        blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
+        # blockchain.save_blockchain(winner, loser, f'tournament_{self.tournament_id}_game_{self.round}.csv')
         self.round = 0
 
     @sync_to_async

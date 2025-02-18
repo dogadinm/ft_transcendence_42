@@ -47,6 +47,9 @@
                     case "game_update":
                         drawGame(data.game_state);
                         break;
+                    case "timer_start":
+                        startCountdown(data.countdown);
+                        break;
                     case "tournament_end":
                         statusElement.textContent = `Tournament Winner: ${data.champion}`;
                         break;
@@ -183,7 +186,26 @@
           
         }
 
-          function handleKeyDown(e) {
+        function startCountdown(seconds) {
+          const timerElement = document.getElementById("timer");
+
+          // Initialize the timer display
+          timerElement.innerText = `Game starts in: ${seconds} seconds`;
+
+          // Countdown interval
+          const countdown = setInterval(() => {
+              seconds -= 1;
+
+              if (seconds > 0) {
+                  timerElement.innerText = `Game starts in: ${seconds} seconds`;
+              } else {
+                  clearInterval(countdown); // Stop the timer
+                  timerElement.innerText = "Starting game...";
+              }
+          }, 1000);
+        }
+
+        function handleKeyDown(e) {
       
               if (e.key === 'w' && !movingUp) {
                   movingUp = true;

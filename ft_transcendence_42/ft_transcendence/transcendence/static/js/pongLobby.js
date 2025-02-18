@@ -133,20 +133,20 @@
         spectatorList.innerHTML = state.spectators.join("<br>");
     }
 
-    function startCountdown(seconds) {
-        const timerElement = document.getElementById("timer");
-        timerElement.innerText = `Game starts in: ${seconds} seconds`;
+    // function startCountdown(seconds) {
+    //     const timerElement = document.getElementById("timer");
+    //     timerElement.innerText = `Game starts in: ${seconds} seconds`;
 
-        const countdown = setInterval(() => {
-            seconds -= 1;
-            timerElement.innerText = `Game starts in: ${seconds} seconds`;
+    //     const countdown = setInterval(() => {
+    //         seconds -= 1;
+    //         timerElement.innerText = `Game starts in: ${seconds} seconds`;
 
-            if (seconds <= 0) {
-                clearInterval(countdown);
-                timerElement.innerText = "Starting game...";
-            }
-        }, 1000);
-    }
+    //         if (seconds <= 0) {
+    //             clearInterval(countdown);
+    //             timerElement.innerText = "Starting game...";
+    //         }
+    //     }, 1000);
+    // }
 
     function handleKeyDown(e) {
         if (role !== "left" && role !== "right") {

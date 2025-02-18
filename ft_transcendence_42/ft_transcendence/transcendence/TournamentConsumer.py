@@ -38,7 +38,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
         if not room.tournament_users:
             tournament_manager.remove_room(self.room_name)
-        print(room.spectators, room.tournament_users, self.room.all_ready)
+        # print(room.spectators, room.tournament_users, self.room.all_ready)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.broadcast_tournament_state()
 
@@ -62,12 +62,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 self.room.assign_role()
                 await self.send_game_state()
                 if not self.room.is_tournament_running:
-                    print("hello0")
                     self.room.is_tournament_running = True
-                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state, self.close_tournament, self.send_notification))
+                    asyncio.create_task(self.room.start_tournament(self.send_update, self.broadcast_tournament_state, self.close_tournament, self.send_notification, self.start_countdown))
             await self.broadcast_tournament_state()
-
-            
 
 
         elif action == 'ready_game':
@@ -75,6 +72,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 self.room.ready['left'] = True
             elif self.user == self.room.current_players['right']:
                 self.room.ready['right'] = True
+            if self.room.ready['right'] and self.room.ready['left']:
+                await self.start_countdown()
             if len(self.room.all_ready) == 4:
 
                 await self.broadcast_tournament_state()
@@ -123,6 +122,29 @@ class TournamentConsumer(AsyncWebsocketConsumer):
                 'state': state,
             },
         )
+
+    async def start_countdown(self):
+        asyncio.create_task(self.countdown_and_start_game())
+
+    async def countdown_and_start_game(self):
+        for seconds in range(5, 0, -1):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'timer_start',
+                    'countdown': seconds,
+                }
+            )
+            await asyncio.sleep(1)
+
+
+
+    async def timer_start(self, event):
+        # Send the countdown value to all connected users
+        await self.send(text_data=json.dumps({
+            'type': 'timer_start',
+            'countdown': event['countdown'],
+        }))
 
 
     async def notification(self, event):
