@@ -15,7 +15,15 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://192.168.1.100:8080",  # If accessing from LAN
+]
+
+CSRF_TRUSTED_ORIGINS += [f"http://10.1{i}.{j}.{k}:8080" for i in range(4) for j in range(11) for k in range(8)]
 
 # Application definition
 INSTALLED_APPS = [

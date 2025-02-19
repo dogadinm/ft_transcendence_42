@@ -18,32 +18,32 @@ from django.conf import settings
 from unicodedata import category
 
 
-# from django.contrib import admin
-# from django.urls import path, include
-# from django.conf.urls.static import static
-# # from transcendence.views import page_not_found
-
-# urlpatterns = [
-#     path('admin/', admin.site.urls),
-#     path('', include('transcendence.urls')),
-# ]
-
-# if settings.DEBUG:
-#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# handler404 = page_not_found
-
 from django.contrib import admin
-from django.urls import path
-from django.urls import include, re_path
-from ft_transcendence import settings_docker
+from django.urls import path, include
 from django.conf.urls.static import static
+# from transcendence.views import page_not_found
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^', include('transcendence.urls'))
+    path('', include('transcendence.urls')),
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if settings_docker.DEBUG:
-    urlpatterns += static(settings_docker.MEDIA_URL, document_root=settings_docker.MEDIA_ROOT)
+# handler404 = page_not_found
+
+# from django.contrib import admin
+# from django.urls import path
+# from django.urls import include, re_path
+# from ft_transcendence import settings
+# from django.conf.urls.static import static
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     re_path(r'^', include('transcendence.urls'))
+# ]
+
+
+# if settings_docker.DEBUG:
+#     urlpatterns += static(settings_docker.MEDIA_URL, document_root=settings_docker.MEDIA_ROOT)
