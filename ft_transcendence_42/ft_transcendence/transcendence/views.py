@@ -543,8 +543,8 @@ def find_tournament(request):
 def tournament(request, tournament_id):
     main_user = request.user
     results = check_tournament(tournament_id)
-
-    if(results):
+    room = tournament_manager.get_or_create_room(tournament_id, True)
+    if(results and not room):
         if(main_user.tournament_lobby == tournament_id):
             main_user.tournament_lobby = None
             main_user.save()

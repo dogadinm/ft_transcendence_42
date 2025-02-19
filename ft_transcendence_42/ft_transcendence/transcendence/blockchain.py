@@ -133,6 +133,7 @@ def save_blockchain(winner, loser, csv_file_name):
 
 	except Exception as e:
 		print(f"Error during approvals: {e}")
+		os.remove(csv_file)
 		#continue
 
 	# Step 3: Execute the transaction
@@ -153,7 +154,6 @@ def save_blockchain(winner, loser, csv_file_name):
 			'gasPrice': web3.eth.gas_price,
 			'nonce': player1_nonce
 		})
-
 		signed_tx_execute = web3.eth.account.sign_transaction(tx_execute, player1_prvt_key)
 		tx_hash_execute = web3.eth.send_raw_transaction(signed_tx_execute.raw_transaction)
 		print(f"Execution transaction sent for row {index}: {tx_hash_execute.hex()}")
@@ -162,6 +162,11 @@ def save_blockchain(winner, loser, csv_file_name):
 
 		player1_nonce += 1
 
+
 	except Exception as e:
 		print(f"Error during execution: {e}")
-		#continue
+		os.remove(csv_file)
+		# continue
+	
+
+	os.remove(csv_file)

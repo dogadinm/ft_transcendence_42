@@ -35,12 +35,15 @@ class TournamentConsumer(AsyncWebsocketConsumer):
         await database_sync_to_async(
             lambda: User.objects.filter(id=self.user.id).update(tournament_lobby=None)
         )()
-
+        user.tournament_lobby = None
+        await database_sync_to_async(user.save)()
+        print(self.user.tournament_lobby)
         if not room.tournament_users:
             tournament_manager.remove_room(self.room_name)
         # print(room.spectators, room.tournament_users, self.room.all_ready)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.broadcast_tournament_state()
+        
 
 
     async def receive(self, text_data):
