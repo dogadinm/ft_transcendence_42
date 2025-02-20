@@ -15,6 +15,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -24,6 +26,30 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CSRF_TRUSTED_ORIGINS += [f"http://10.1{i}.{j}.{k}:8080" for i in range(4) for j in range(11) for k in range(8)]
+
+# Application definition
+INSTALLED_APPS = [
+    'channels',
+    'daphne',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'transcendence.apps.TranscendenceConfig',
+    'oauth2_provider',
+    'social_django',
+    'django_extensions',
+]
+
+CSRF_TRUSTED_ORIGINS += [
+    "https://127.0.0.1:4443",
+    "https://localhost:4443",
+    "https://192.168.1.100:4443",  # If accessing from LAN
+]
+
+CSRF_TRUSTED_ORIGINS += [f"https://10.1{i}.{j}.{k}:4443" for i in range(4) for j in range(11) for k in range(8)]
 
 # Application definition
 INSTALLED_APPS = [

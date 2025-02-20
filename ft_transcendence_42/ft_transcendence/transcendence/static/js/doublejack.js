@@ -4,7 +4,7 @@
 	id = 0;
 	const gameDataElement = document.getElementById("gameData");
     const room = gameDataElement.dataset.roomLobby;
-    const ws = new WebSocket(`ws://${window.location.host}/ws/doublejack_lobby/${room}/`);
+    const ws = new WebSocket(`wss://${window.location.host}/ws/doublejack_lobby/${room}/`);
 	// ws = new WebSocket(`ws://${window.location.host}/ws/doublejack/`);
 	console.log(ws.onopen);
 	// Set status message when WebSocket opens

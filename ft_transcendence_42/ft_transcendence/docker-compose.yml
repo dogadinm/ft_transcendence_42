@@ -35,13 +35,10 @@ services:
       - web
     ports:
       - "8080:80"
-      # - "443:443"
+      - "4443:443"  # Map external 4443 to internal 443
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # - ./nginx/certbot/www:/var/www/certbot:ro
-      # - ./nginx/certbot/conf:/etc/letsencrypt
-    # environment:
-    #   - IP_ADDRESS=127.0.0.1
+      - ./nginx/ssl:/etc/nginx/ssl:ro  # Mount SSL certificates
     command: ["nginx", "-g", "daemon off;"]
  
 volumes:

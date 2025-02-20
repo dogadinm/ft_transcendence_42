@@ -12,7 +12,7 @@
     document.getElementById("chat-header").innerText = `Chat with: ${name}`;
     document.getElementById("messages").innerHTML = "";
 
-    const wsPath = `ws://${window.location.host}/ws/chat_privet/${name}/`;
+    const wsPath = `wss://${window.location.host}/ws/chat_privet/${name}/`;
     window.chatSocke = new WebSocket(wsPath);
 
     window.chatSocke.onmessage = function (e) {
