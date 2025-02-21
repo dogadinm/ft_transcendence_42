@@ -247,29 +247,29 @@ class TableGame:
 	def playerHand(self, n):
 		print("status")
 		print(self.status)
-		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED]:
+		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED, GameStatus.ENDED]:
 			return self.table.playerHand(n - 1)
 		else:
 			return "game not in progress"
 	def playerStatus(self, n):
-		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED]:
+		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED, GameStatus.ENDED]:
 			return self.table.playerStatus(n - 1)
 		else:
 			return "game not in progress"
 	def playerPoints(self, n):
-		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED]:
+		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED, GameStatus.ENDED]:
 			return self.table.playerPoints(n - 1)
 		else:
 			return "game not in progress"
 	def playerName(self, n):
 		return self.table.playerName(n - 1)
 	def playerScore(self, n):
-		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED]:
+		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED, GameStatus.ENDED]:
 			return self.table.playerScore(n - 1)
 		else:
 			return "game not in progress"
 	def tableGames(self, n):
-		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED]:
+		if self.status in [GameStatus.IN_PROGRESS, GameStatus.FINISHED, GameStatus.ENDED]:
 			return self.table.games
 		else:
 			return "game not in progress"
@@ -285,6 +285,8 @@ class TableGame:
 		if len(self.table.players) == self.table.standing:
 			self.status = GameStatus.FINISHED
 			self.table.eval()
+			print("P0: ", self.table.playerPoints(0))
+			print("P1: ", self.table.playerPoints(1))
 			if self.is_running:
 				self.task.cancel()
 			if self.table.playerPoints(0) > 99:
