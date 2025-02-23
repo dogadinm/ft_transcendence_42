@@ -4,7 +4,8 @@
 
     let gameDataElement = document.getElementById("gameData");
     let room = gameDataElement.dataset.roomLobby;
-    let url = `wss://${window.location.host}/ws/lobby/${room}/`;
+    // let url = `wss://${window.location.host}/ws/lobby/${room}/`;
+    let url = `ws://${window.location.host}/ws/lobby/${room}/`;
 
     if (window.lobbySocket){
         window.lobbySocket.close();

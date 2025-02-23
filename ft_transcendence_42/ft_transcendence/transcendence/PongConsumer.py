@@ -160,17 +160,19 @@ class PongLobby(AsyncWebsocketConsumer):
         asyncio.create_task(self.countdown_and_start_game())
 
     async def countdown_and_start_game(self):
-        for seconds in range(5, 0, -1):
-            await self.channel_layer.group_send(
-                self.room_lobby_name,
-                {
-                    'type': 'timer_start',
-                    'countdown': seconds,
-                }
-            )
-            await asyncio.sleep(1)
+        # for seconds in range(5, 0, -1):
+        #     await self.channel_layer.group_send(
+        #         self.room_lobby_name,
+        #         {
+        #             'type': 'timer_start',
+        #             'countdown': seconds,
+        #         }
+        #     )
+        #     await asyncio.sleep(1)
 
-        asyncio.create_task(self.room_game.game_loop(self.send_game_update))
+        if not self.room_game.is_running:
+            # self.room_game.is_running = True
+            asyncio.create_task(self.room_game.game_loop(self.send_game_update))
 
 
     async def timer_start(self, event):
@@ -209,7 +211,7 @@ class PongLobby(AsyncWebsocketConsumer):
                 'game_state': game_state,
             }
         )
-        winner = self.room_game.end_game()
+        winner = self.room_game.check_winner()
         if winner:
             await self.channel_layer.group_send(
                 self.room_lobby_name,
