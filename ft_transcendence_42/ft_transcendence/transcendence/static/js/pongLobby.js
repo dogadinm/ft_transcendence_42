@@ -2,10 +2,11 @@
     let movingDown = false;
     let movingUp = false;
 
-    let gameDataElement = document.getElementById("gameData");
+    let gameDataElement = document.getElementById("pongData");
     let room = gameDataElement.dataset.roomLobby;
+    let username = gameDataElement.dataset.username;
     let url = `wss://${window.location.host}/ws/lobby/${room}/`;
-    
+
     if (window.lobbySocket){
         window.lobbySocket.close();
     }
@@ -26,9 +27,20 @@
 
             case "lobby_state":
                 updateLobbyState(data.state);
+                // Determine role based on lobby state
+                const { left, right } = data.state;
+                if (username === left.name) {
+                    role = "left";
+                } else if (username === right.name) {
+                    role = "right";
+                } else {
+                    role = "spectator";
+                }
                 break;
             case "redirect":
                 navigate(`/pong_lobby/${data.room_lobby}/`);
+
+
             case "timer_start":
                 startCountdown(data.state);
                 break;
@@ -67,8 +79,6 @@
         window.lobbySocket.send(JSON.stringify(message));
     }
 
-
-
     function startCountdown(seconds) {
         const timerElement = document.getElementById("timer");
 
@@ -91,7 +101,6 @@
     function updateLobbyState(state) {
         const playerList = document.getElementById("players");
         const spectatorList = document.getElementById("spectators");
-
         // Update players with ready status
         const left = state.left.name
             ? `${state.left.name} ${state.left.ready ? "(Ready)" : ""}`
@@ -104,7 +113,7 @@
         <h4>
             Player left: ${left}<br>
             Player right: ${right}
-                                    </h4>
+                                </h4>
         `;
 
         // Update spectators list

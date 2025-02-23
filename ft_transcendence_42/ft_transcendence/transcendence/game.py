@@ -51,11 +51,27 @@ class RoomGame:
         """Update paddle positions based on their movement direction."""
         for side in ('left', 'right'):
             self.paddles[side]['paddleY'] = max(0, min(self.FIELD_HEIGHT - self.PADDLE_HEIGHT, self.paddles[side]['paddleY'] + self.paddles[side]['direction'] * self.PADDLE_SPEED))
+  
+    def check_paddle_collision(self, side, new_x, new_y, paddle_x):
+        """Check if the ball collides with the paddle."""
+        paddle_y_start = self.paddles[side]['paddleY']
+        paddle_y_end = paddle_y_start + self.PADDLE_HEIGHT
+
+        if ((side == 'left' and new_x - self.PADDLE_WIDTH / 2 <= paddle_x + self.PADDLE_WIDTH) or
+                (side == 'right' and new_x + self.PADDLE_WIDTH / 2 >= paddle_x - self.PADDLE_WIDTH)):
+            if paddle_y_start <= new_y <= paddle_y_end:
+                # Adjust ball's vertical direction based on where it hit the paddle
+                paddle_center = paddle_y_start + self.PADDLE_HEIGHT / 2
+                offset = (new_y - paddle_center) / (self.PADDLE_HEIGHT / 2)  # Normalize offset (-1 to 1)
+                self.ball['dy'] += offset * 2  # Adjust vertical speed slightly
+                self.ball['dy'] = max(-5, min(5, self.ball['dy']))  # Clamp dy to avoid excessive vertical speed
+                return True
+        return False
 
 
     def update_ball(self):
         """Update ball position and handle collisions."""
-        step_size = 0.5
+        step_size = 1
 
         # Normalize ball speed
         self.normalize_ball_speed()
@@ -71,8 +87,7 @@ class RoomGame:
             # Handle wall collisions
             if new_y <= 0 or new_y >= self.FIELD_HEIGHT:
                 self.ball['dy'] *= -1
-                dy = self.ball['dy']
-                step_dy = dy / steps
+                step_dy = self.ball['dy'] / steps
                 new_y = self.ball['y'] + step_dy  # Update new_y after reflection
 
             # Handle paddle collisions
@@ -81,8 +96,7 @@ class RoomGame:
                 if self.check_paddle_collision(side, new_x, new_y, paddle_x):
                     self.ball['dx'] *= -1
                     self.adjust_ball_speed()
-                    dx = self.ball['dx']
-                    step_dx = dx / steps
+                    step_dx = self.ball['dx'] / steps
                     new_x = self.ball['x'] + step_dx  # Update new_x after reflection
                     break
 
@@ -99,22 +113,6 @@ class RoomGame:
                 self.reset_ball()
                 return
 
-    def check_paddle_collision(self, side, new_x, new_y, paddle_x):
-        """Check if the ball collides with the paddle."""
-        paddle_y_start = self.paddles[side]['paddleY']
-        paddle_y_end = paddle_y_start + self.PADDLE_HEIGHT
-
-        if ((side == 'left' and new_x - self.PADDLE_WIDTH / 2 <= paddle_x + self.PADDLE_WIDTH) or
-                (side == 'right' and new_x + self.PADDLE_WIDTH / 2 >= paddle_x - self.PADDLE_WIDTH)):
-            if paddle_y_start <= new_y <= paddle_y_end:
-                # Adjust ball's vertical direction based on where it hit the paddle
-                paddle_center = paddle_y_start + self.PADDLE_HEIGHT / 2
-                offset = (new_y - paddle_center) / (self.PADDLE_HEIGHT / 2)  # Normalize offset (-1 to 1)
-                self.ball['dy'] += offset * 2  # Adjust vertical speed slightly
-                self.ball['dy'] = max(-5, min(5, self.ball['dy']))  # Clamp dy to avoid excessive vertical speed
-                return True
-        return False
-         
     def normalize_ball_speed(self):
         """Ensure the ball maintains its speed after collisions."""
         speed = (self.ball['dx'] ** 2 + self.ball['dy'] ** 2) ** 0.5
@@ -153,12 +151,15 @@ class RoomGame:
 
     async def finalize_game(self, winner):
         """Finalize the game by updating scores and saving match history."""
+        self.ready['left'] = False
+        self.ready['right'] = False
+        self.is_running = False
         loser = self.players['right'] if winner == self.players['left'] else self.players['left']
         winner = await sync_to_async(User.objects.get)(username=winner)
         loser = await sync_to_async(User.objects.get)(username=loser)
         await self.update_scores(winner, loser)
         await self.save_match(winner, loser)
-        self.is_running = False
+
 
     @sync_to_async
     def save_match(self, winner, loser):

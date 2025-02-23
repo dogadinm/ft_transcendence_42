@@ -11,11 +11,12 @@ class TournamentRoom:
     # Game constants
     PADDLE_HEIGHT = 100
     PADDLE_WIDTH = 10
-    BALL_INITIAL_SPEED = 2.0
+    MAX_BALL_SPEED = 15.0
+    BALL_INITIAL_SPEED = 9.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
     WIN_SCORE = 1
-    WIN_POINTS = 1
+    WIN_POINTS = 10
     LOSS_POINTS = -5
     FIELD_WIDTH = 800
     FIELD_HEIGHT = 400
@@ -93,19 +94,30 @@ class TournamentRoom:
         self.is_tournament_running = False
         await close_tournament()
 
-    def check_paddle_collision(self, side, new_x, new_y, paddle_x):
-        paddle_y_start = self.paddles[side]['paddleY']
-        paddle_y_end = paddle_y_start + self.PADDLE_HEIGHT
 
-        if ((side == 'left' and new_x - self.PADDLE_WIDTH / 2 <= paddle_x + self.PADDLE_WIDTH) or
-                (side == 'right' and new_x + self.PADDLE_WIDTH / 2 >= paddle_x - self.PADDLE_WIDTH)):
-            if paddle_y_start <= new_y <= paddle_y_end:
-                paddle_center = paddle_y_start + self.PADDLE_HEIGHT / 2
-                offset = (new_y - paddle_center) / (self.PADDLE_HEIGHT / 2)
-                self.ball['dy'] += offset * 2
-                self.ball['dy'] = max(-5, min(5, self.ball['dy']))
-                return True
-        return False
+    
+    # def update_ball(self):
+    #     dx = self.ball['dx'] * self.speed
+    #     dy = self.ball['dy'] * self.speed
+
+    #     self.ball['x'] += dx
+    #     self.ball['y'] += dy
+
+    #     if self.ball['y'] <= 0 or self.ball['y'] >= self.FIELD_HEIGHT:
+    #         self.ball['dy'] *= -1
+
+    #     for side, paddle in self.paddles.items():
+    #         paddle_x = 20 if side == 'left' else self.FIELD_WIDTH - 20
+    #         if self.check_paddle_collision(side, self.ball['x'], self.ball['y'], paddle_x):
+    #             self.ball['dx'] *= -1
+    #             self.speed += 0.1
+
+    #     if self.ball['x'] <= 20:
+    #         self.score['right'] += 1
+    #         self.reset_ball()
+    #     elif self.ball['x'] >= self.FIELD_WIDTH - 20:
+    #         self.score['left'] += 1
+    #         self.reset_ball()
 
     async def game_loop(self, send_update):
         while self.ready['left'] and self.ready['right']:
@@ -128,29 +140,76 @@ class TournamentRoom:
         for side, paddle in self.paddles.items():
             paddle['paddleY'] += paddle['direction'] * self.PADDLE_SPEED
             paddle['paddleY'] = max(0, min(self.BALL_MAX_Y - self.PADDLE_HEIGHT, paddle['paddleY']))
+            
+    def check_paddle_collision(self, side, new_x, new_y, paddle_x):
+        paddle_y_start = self.paddles[side]['paddleY']
+        paddle_y_end = paddle_y_start + self.PADDLE_HEIGHT
 
+        if ((side == 'left' and new_x - self.PADDLE_WIDTH / 2 <= paddle_x + self.PADDLE_WIDTH) or
+                (side == 'right' and new_x + self.PADDLE_WIDTH / 2 >= paddle_x - self.PADDLE_WIDTH)):
+            if paddle_y_start <= new_y <= paddle_y_end:
+                paddle_center = paddle_y_start + self.PADDLE_HEIGHT / 2
+                offset = (new_y - paddle_center) / (self.PADDLE_HEIGHT / 2)
+                self.ball['dy'] += offset * 2
+                self.ball['dy'] = max(-5, min(5, self.ball['dy']))
+                return True
+        return False
+    
     def update_ball(self):
-        dx = self.ball['dx'] * self.speed
-        dy = self.ball['dy'] * self.speed
+        """Update ball position and handle collisions."""
+        step_size = 1
 
-        self.ball['x'] += dx
-        self.ball['y'] += dy
+        # Normalize ball speed
+        self.normalize_ball_speed()
 
-        if self.ball['y'] <= 0 or self.ball['y'] >= self.FIELD_HEIGHT:
-            self.ball['dy'] *= -1
+        dx, dy = self.ball['dx'], self.ball['dy']
+        steps = int(max(abs(dx), abs(dy)) / step_size) + 1
+        step_dx, step_dy = dx / steps, dy / steps
 
-        for side, paddle in self.paddles.items():
-            paddle_x = 20 if side == 'left' else self.FIELD_WIDTH - 20
-            if self.check_paddle_collision(side, self.ball['x'], self.ball['y'], paddle_x):
-                self.ball['dx'] *= -1
-                self.speed += 0.1
+        for _ in range(steps):
+            new_x = self.ball['x'] + step_dx
+            new_y = self.ball['y'] + step_dy
 
-        if self.ball['x'] <= 20:
-            self.score['right'] += 1
-            self.reset_ball()
-        elif self.ball['x'] >= self.FIELD_WIDTH - 20:
-            self.score['left'] += 1
-            self.reset_ball()
+            # Handle wall collisions
+            if new_y <= 0 or new_y >= self.FIELD_HEIGHT:
+                self.ball['dy'] *= -1
+                step_dy = self.ball['dy'] / steps
+                new_y = self.ball['y'] + step_dy  # Update new_y after reflection
+
+            # Handle paddle collisions
+            for side, paddle in self.paddles.items():
+                paddle_x = 20 if side == 'left' else self.FIELD_WIDTH - 20
+                if self.check_paddle_collision(side, new_x, new_y, paddle_x):
+                    self.ball['dx'] *= -1
+                    self.adjust_ball_speed()
+                    step_dx = self.ball['dx'] / steps
+                    new_x = self.ball['x'] + step_dx  # Update new_x after reflection
+                    break
+
+            # Update ball position
+            self.ball['x'], self.ball['y'] = new_x, new_y
+
+            # Check for goals
+            if self.ball['x'] <= 35:
+                self.score['right'] += 1
+                self.reset_ball()
+                return
+            elif self.ball['x'] >= self.FIELD_WIDTH - 35:
+                self.score['left'] += 1
+                self.reset_ball()
+                return
+
+    def normalize_ball_speed(self):
+        """Ensure the ball maintains its speed after collisions."""
+        speed = (self.ball['dx'] ** 2 + self.ball['dy'] ** 2) ** 0.5
+        if speed:
+            self.ball['dx'] = (self.ball['dx'] / speed) * self.speed
+            self.ball['dy'] = (self.ball['dy'] / speed) * self.speed
+
+    def adjust_ball_speed(self):
+        """Increase ball speed on paddle collision."""
+        self.speed = min(self.speed + 0.05, self.MAX_BALL_SPEED)
+        self.normalize_ball_speed()
 
     def reset_ball(self):
         self.ball = {'x': self.FIELD_WIDTH / 2, 'y': self.FIELD_HEIGHT / 2, 'dx': random.choice([-4, 4]), 'dy': random.choice([-3, -2, 2, 3])}
