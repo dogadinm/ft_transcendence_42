@@ -4,9 +4,8 @@
 
     let gameDataElement = document.getElementById("gameData");
     let room = gameDataElement.dataset.roomLobby;
-    // let url = `wss://${window.location.host}/ws/lobby/${room}/`;
-    let url = `ws://${window.location.host}/ws/lobby/${room}/`;
-
+    let url = `wss://${window.location.host}/ws/lobby/${room}/`;
+    
     if (window.lobbySocket){
         window.lobbySocket.close();
     }
@@ -21,37 +20,17 @@
         console.log(data.type);
 
         switch (data.type) {
-            case "connection":
-                username = data.username;
-                updateRoleDisplay(data.role);
-                break;
-
             case "game_over":
-                alert(data.winner);
+                alert(data.state);
                 break;
 
             case "lobby_state":
                 updateLobbyState(data.state);
-
-                // Determine role based on lobby state
-                const { left, right } = data.state;
-
-                if (username === left.name) {
-                    role = "left";
-                } else if (username === right.name) {
-                    role = "right";
-                } else {
-                    role = "spectator";
-                }
-
-                updateRoleDisplay(role);
                 break;
             case "redirect":
                 navigate(`/pong_lobby/${data.room_lobby}/`);
-
-
             case "timer_start":
-                startCountdown(data.countdown);
+                startCountdown(data.state);
                 break;
 
             case `game_update_${room}`:
@@ -88,11 +67,7 @@
         window.lobbySocket.send(JSON.stringify(message));
     }
 
-    function updateRoleDisplay(role) {
-        const roleElement = document.getElementById("role");
-        const roleText = role === "left" || role === "right" ? `Player (${role})` : "Spectator";
-        roleElement.innerText = `You are: ${roleText}`;
-    }
+
 
     function startCountdown(seconds) {
         const timerElement = document.getElementById("timer");
@@ -126,28 +101,16 @@
             : "Available";
 
         playerList.innerHTML = `
+        <h4>
             Player left: ${left}<br>
             Player right: ${right}
+                                    </h4>
         `;
 
         // Update spectators list
         spectatorList.innerHTML = state.spectators.join("<br>");
     }
 
-    // function startCountdown(seconds) {
-    //     const timerElement = document.getElementById("timer");
-    //     timerElement.innerText = `Game starts in: ${seconds} seconds`;
-
-    //     const countdown = setInterval(() => {
-    //         seconds -= 1;
-    //         timerElement.innerText = `Game starts in: ${seconds} seconds`;
-
-    //         if (seconds <= 0) {
-    //             clearInterval(countdown);
-    //             timerElement.innerText = "Starting game...";
-    //         }
-    //     }, 1000);
-    // }
 
     function handleKeyDown(e) {
         if (role !== "left" && role !== "right") {

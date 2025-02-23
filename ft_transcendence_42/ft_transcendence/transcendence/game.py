@@ -12,7 +12,7 @@ class RoomGame:
     BALL_INITIAL_SPEED = 9.0
     BALL_MAX_Y = 400
     PADDLE_SPEED = 20
-    WIN_SCORE = 5
+    WIN_SCORE = 1
     WIN_POINTS = 10
     LOSS_POINTS = -5
     FIELD_WIDTH = 800

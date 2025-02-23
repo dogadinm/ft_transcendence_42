@@ -21,10 +21,7 @@ class PongLobby(AsyncWebsocketConsumer):
 
         if(self.user.lobby and self.user.lobby != self.room_lobby_name):
                 await self.accept()
-                await self.send(text_data=json.dumps({
-                    'type': 'redirect',
-                    'room_lobby': self.user.lobby[5:]
-                }))
+                await self.send(text_data=json.dumps({'type': 'redirect','room_lobby': self.user.lobby[5:]}))
                 await self.close()
                 return
 
@@ -38,21 +35,12 @@ class PongLobby(AsyncWebsocketConsumer):
             await database_sync_to_async(self.user.save)()
             
 
-
         await self.accept()
         await self.broadcast_lobby_state()
-
-        # Notify user of connection and initial state
-        await self.send(text_data=json.dumps({
-            'type': 'connection',
-            'role': self.role,
-            'username': self.username,
-        }))
         await self.send_game_update(self.room_game.get_game_state())
 
     async def disconnect(self, close_code):
         # Handle player or spectator disconnecti
-
         if self.username == self.room_game.players.get('left'):
             self.room_game.players['left'] = None
             self.room_game.ready['left'] = False
@@ -70,13 +58,11 @@ class PongLobby(AsyncWebsocketConsumer):
             not self.room_game.spectators
         ):
             room_manager.remove_room(self.room_lobby_name)
+
         if not (self.user.lobby and self.user.lobby != self.room_lobby_name):
-            lobby = self.user.lobby 
             await database_sync_to_async(
                 lambda: User.objects.filter(id=self.user.id).update(lobby = None)
             )()
-
-
         # Update lobby state and remove user from WebSocket group
         await self.channel_layer.group_discard(self.room_lobby_name, self.channel_name)
         await self.broadcast_lobby_state()
@@ -106,9 +92,7 @@ class PongLobby(AsyncWebsocketConsumer):
         if self.username in self.room_game.players.values():
             role = 'left' if self.username == self.room_game.players['left'] else 'right'
             self.room_game.ready[role] = True
-
             await self.broadcast_lobby_state()
-
             # Start the game loop if both players are ready
             if self.room_game.ready['left'] and self.room_game.ready['right']:
                 await self.start_countdown()
@@ -160,27 +144,13 @@ class PongLobby(AsyncWebsocketConsumer):
         asyncio.create_task(self.countdown_and_start_game())
 
     async def countdown_and_start_game(self):
-        # for seconds in range(5, 0, -1):
-        #     await self.channel_layer.group_send(
-        #         self.room_lobby_name,
-        #         {
-        #             'type': 'timer_start',
-        #             'countdown': seconds,
-        #         }
-        #     )
-        #     await asyncio.sleep(1)
+        for seconds in range(5, 0, -1):
+            await self.send_group_message('timer_start', seconds)
+            await asyncio.sleep(1)
 
         if not self.room_game.is_running:
-            # self.room_game.is_running = True
             asyncio.create_task(self.room_game.game_loop(self.send_game_update))
 
-
-    async def timer_start(self, event):
-        # Send the countdown value to all connected users
-        await self.send(text_data=json.dumps({
-            'type': 'timer_start',
-            'countdown': event['countdown'],
-        }))
 
     async def broadcast_lobby_state(self):
         # Notify all users about the updated lobby state
@@ -195,56 +165,43 @@ class PongLobby(AsyncWebsocketConsumer):
             },
             'spectators': self.room_game.spectators,
         }
-        await self.channel_layer.group_send(
-            self.room_lobby_name, {
-                'type': 'lobby_state',
-                'state': lobby_state,
-            }
-        )
+        await self.send_group_message('lobby_state', lobby_state)
+
 
     async def send_game_update(self, game_state):
         # Send updated game state to all users
+        await self.send_group_message(self.game_update, game_state)
+        winner = self.room_game.check_winner()
+        if winner:
+            await self.send_group_message("game_over", winner)
+
+    async def send_group_message(self, message_type, state):
         await self.channel_layer.group_send(
             self.room_lobby_name,
             {
-                'type':  self.game_update,
-                'game_state': game_state,
-            }
+                'type': message_type,
+                'state': state,
+            },
         )
-        winner = self.room_game.check_winner()
-        if winner:
-            await self.channel_layer.group_send(
-                self.room_lobby_name,
-                {
-                    'type': 'game_over',
-                    'winner': winner,
-                }
-            )
+
+
+
+
+    async def _dynamic_game_update(self, event):
+        await self.send(text_data=json.dumps({'type': self.game_update,**event['state'],}))
 
     async def send_error(self, message):
         # Send an error message to the client
-        await self.send(text_data=json.dumps({
-            'type': 'error',
-            'lobby_message': message,
-        }))
+        await self.send(text_data=json.dumps({'type': 'error', 'lobby_message': message,}))
+
+    async def game_over(self, event):
+        await self.send(text_data=json.dumps({'type': 'game_over', 'state': event['state']}))
+        await self.broadcast_lobby_state()
 
     # Event handlers for group messages
     async def lobby_state(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'lobby_state',
-            'state': event['state'],
-        }))
+        await self.send(text_data=json.dumps({'type': 'lobby_state', 'state': event['state'],}))
 
-    async def _dynamic_game_update(self, event):
-        await self.send(text_data=json.dumps({
-            'type': self.game_update,
-            **event['game_state'],
-        }))
-
-    async def game_over(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'game_over',
-            'winner': event['winner'],
-        }))
-        await self.broadcast_lobby_state()
-
+    async def timer_start(self, event):
+        # Send the countdown value to all connected users
+        await self.send(text_data=json.dumps({'type': 'timer_start','state': event['state'],}))
