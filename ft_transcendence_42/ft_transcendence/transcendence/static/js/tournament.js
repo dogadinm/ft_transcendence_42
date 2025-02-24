@@ -46,20 +46,20 @@
 
                 switch (data.type) {
                     case "game_update":
-                        drawGame(data.game_state);
+                        drawGame(data.state);
                         break;
                     case "timer_start":
-                        startCountdown(data.countdown);
+                        startCountdown(data.state);
                         break;
                     case "tournament_end":
-                        statusElement.textContent = `Tournament Winner: ${data.champion}`;
+                        statusElement.textContent = `Tournament Winner: ${data.state}`;
                         break;
                     case "tournament_state":
-                        updateTournamentState(data);
+                        updateTournamentState(data.state);
                         break;
                     case "notification":
                         timerElement.innerText = "Waiting for players...";
-                        alert(data.massage);
+                        alert(data.state.massage);
                         break;
                 }
             };

@@ -28,7 +28,6 @@ class PongLobby(AsyncWebsocketConsumer):
         if self.user not in self.room_game.people:
             self.room_game.people.add(self.user)
             self.room_game.spectators.append(self.username)
-
             # Add user to WebSocket group and accept connection
             await self.channel_layer.group_add(self.room_lobby_name, self.channel_name)
             self.user.lobby = self.room_lobby_name
@@ -147,7 +146,6 @@ class PongLobby(AsyncWebsocketConsumer):
         for seconds in range(5, 0, -1):
             await self.send_group_message('timer_start', seconds)
             await asyncio.sleep(1)
-
         if not self.room_game.is_running:
             asyncio.create_task(self.room_game.game_loop(self.send_game_update))
 
@@ -183,9 +181,6 @@ class PongLobby(AsyncWebsocketConsumer):
                 'state': state,
             },
         )
-
-
-
 
     async def _dynamic_game_update(self, event):
         await self.send(text_data=json.dumps({'type': self.game_update,**event['state'],}))
