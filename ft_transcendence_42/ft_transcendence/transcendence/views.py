@@ -285,10 +285,12 @@ def profile(request, username):
 
     })
 
+
+
 @login_required
 def profile_settings(request):
     user = request.user
-    print("hello")
+
     if request.method == "POST":
         form = ProfileSettingsForm(request.POST, request.FILES, user=user)
         print(form)
@@ -296,13 +298,13 @@ def profile_settings(request):
         if form.is_valid():
             user.tournament_nickname = form.cleaned_data["tournament_nickname"]
             user.description = form.cleaned_data["description"]
-            if form.cleaned_data["photo"]:
+            if "photo" in request.FILES:
                 user.photo = form.cleaned_data["photo"]
             user.save()
 
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({
-                    "success": True,
+                    "exists": True,
                     "message": "Settings updated successfully.",
                     "updated_fields": {
                         "username": user.username,
@@ -314,7 +316,7 @@ def profile_settings(request):
         else:
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({
-                    "success": False,
+                    "exists": False,
                     "message": "Validation failed.",
                     "errors": form.errors,
                 }, status=400)
