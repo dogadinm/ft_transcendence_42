@@ -18,10 +18,10 @@ def contract_creation():
 	contract_abi = contract_json["abi"]
 
 	# Define the contract address
-	contract_address = "0xF58EF4135f649D2fca71Aa816B3Bd655b2D4080A"  # Replace with your deployed address
+	contract_address = "0x9a3cc74b39684D73d4B43842eC9CE7F40b2C528d"  # Replace with your deployed address
 
 	# Connect to the Ethereum provider
-	web3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
+	web3 = Web3(Web3.HTTPProvider("HTTP://10.13.2.3:7545"))
 
 	# Initialize the contract instance
 	contract = web3.eth.contract(address=contract_address, abi=contract_abi)
@@ -61,7 +61,7 @@ def save_blockchain(winner, loser, csv_file_name):
 		# Pre-check if the game already exists in the contract
 		try:
 			game_exists = contract.functions.getGame(
-				row['tournament_id'], 
+				str(row['tournament_id']), 
 				int(row['game_id'])
 			).call()
 
@@ -75,7 +75,7 @@ def save_blockchain(winner, loser, csv_file_name):
 		# Step 1: Add a game dynamically
 		try:
 			tx_add_game = contract.functions.addGame(
-				row["tournament_id"],
+				str(row["tournament_id"]),
 				int(row["game_id"]),
 				row["game_type"],
 				row["loser_name"],
@@ -104,7 +104,7 @@ def save_blockchain(winner, loser, csv_file_name):
 	# Step 2: Approvals
 	try:
 		# Player 1 approves
-		tx_approve_1 = contract.functions.approve(row["tournament_id"], int(row["game_id"])).build_transaction({
+		tx_approve_1 = contract.functions.approve(str(row["tournament_id"]), int(row["game_id"])).build_transaction({
 			'from': player1_addr,
 			'gas': 200000,
 			'gasPrice': web3.eth.gas_price,
@@ -118,7 +118,7 @@ def save_blockchain(winner, loser, csv_file_name):
 		player1_nonce += 1
 
 		# Loser approves
-		tx_approve_2 = contract.functions.approve(row["tournament_id"], int(row["game_id"])).build_transaction({
+		tx_approve_2 = contract.functions.approve(str(row["tournament_id"]), int(row["game_id"])).build_transaction({
 			'from': loser_addr,
 			'gas': 200000,
 			'gasPrice': web3.eth.gas_price,
@@ -133,13 +133,13 @@ def save_blockchain(winner, loser, csv_file_name):
 
 	except Exception as e:
 		print(f"Error during approvals: {e}")
-		os.remove(csv_file)
+		#os.remove(csv_file)
 		#continue
 
 	# Step 3: Execute the transaction
 	try:
 		tx_execute = contract.functions.execute(
-			row["tournament_id"],
+			str(row["tournament_id"]),
 			int(row["game_id"]),
 			row["game_type"],
 			row["loser_name"],
@@ -165,7 +165,7 @@ def save_blockchain(winner, loser, csv_file_name):
 
 	except Exception as e:
 		print(f"Error during execution: {e}")
-		os.remove(csv_file)
+		#os.remove(csv_file)
 		# continue
 	
 

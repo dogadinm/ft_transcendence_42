@@ -57,6 +57,8 @@ class ChatConsumer(WebsocketConsumer):
             return
 
         if message:
+            if(len(message) > 500):
+                return
             PrivateMessage.objects.create(
                 sender=self.user,
                 receiver=friend,

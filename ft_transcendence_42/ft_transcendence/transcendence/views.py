@@ -94,6 +94,7 @@ def callback(request):
         user, created = User.objects.get_or_create(
             username=user_data['login'],
             email=user_data['email'],
+            tournament_nickname = user_data['login'],
         )
 
         if created:
@@ -287,9 +288,11 @@ def profile(request, username):
 @login_required
 def profile_settings(request):
     user = request.user
-
+    print("hello")
     if request.method == "POST":
         form = ProfileSettingsForm(request.POST, request.FILES, user=user)
+        print(form)
+        print(form.is_valid())
         if form.is_valid():
             user.tournament_nickname = form.cleaned_data["tournament_nickname"]
             user.description = form.cleaned_data["description"]

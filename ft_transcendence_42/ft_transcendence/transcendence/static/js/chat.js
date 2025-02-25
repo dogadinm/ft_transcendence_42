@@ -61,6 +61,10 @@
     const messageInput = document.getElementById("message-input").value.trim();
 
     if (!messageInput || !currentChat) return;
+    if (messageInput.length > 500) {
+      displayErrorMessage("Message must be less than 500 characters");
+    }
+
 
     window.chatSocke.send(JSON.stringify({ action: "message", message: messageInput }));
     document.getElementById("message-form").reset();

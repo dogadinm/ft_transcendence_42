@@ -4,27 +4,30 @@
 	id = 0;
 	const gameDataElement = document.getElementById("gameData");
     const room = gameDataElement.dataset.roomLobby;
-    const ws = new WebSocket(`wss://${window.location.host}/ws/doublejack_lobby/${room}/`);
+	if(window.doublejackSocket){
+		window.doublejackSocket.close()
+	}
+    window.doublejackSocket = new WebSocket(`wss://${window.location.host}/ws/doublejack_lobby/${room}/`);
 	// ws = new WebSocket(`ws://${window.location.host}/ws/doublejack/`);
-	console.log(ws.onopen);
+	console.log(window.doublejackSocket.onopen);
 	// Set status message when WebSocket opens
-	ws.onopen = function(event) {
+	window.doublejackSocket.onopen = function(event) {
 		document.getElementById('ws_status').textContent = 'Connected to WebSocket';
 	};
 
 	// Handle messages received from the WebSocket
-	ws.onmessage = function(event) {
+	window.doublejackSocket.onmessage = function(event) {
 		const data = JSON.parse(event.data);
 		console.log(data);
 		if (data && data.joined) {
 			id = data.joined;
 		}
-		if (data && data.gamestatus && data.gamestatus == 'ENDED')
+		if (data && data.gamestatus && data.gamestatus == 'GameStatus.ENDED')
 		{
 			document.getElementById('buttons').innerHTML = '<p>game finished</p>'
 		}
 		if (data && data.reset) {
-			if (data.gamestatus && data.gamestatus == 'ENDED')
+			if (data.gamestatus && data.gamestatus == 'GameStatus.ENDED')
 			{
 				document.getElementById('buttons').innerHTML = '<p>game finished</p>'
 			}
@@ -35,7 +38,7 @@
 					const message = {
 						action: 'reset'  // This is the action we'll send to the WebSocket
 					};
-					ws.send(JSON.stringify(message));  // Send the action to WebSocket
+					window.doublejackSocket.send(JSON.stringify(message));  // Send the action to WebSocket
 				};
 			}
 		}
@@ -45,13 +48,13 @@
 				const message = {
 					action: 'hit'  // This is the action we'll send to the WebSocket
 				};
-				ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				window.doublejackSocket.send(JSON.stringify(message));  // Send the action to WebSocket
 			};
 			document.getElementById('stay').onclick = function() {
 				const message = {
 					action: 'stay'  // This is the action we'll send to the WebSocket
 				};
-				ws.send(JSON.stringify(message));  // Send the action to WebSocket
+				window.doublejackSocket.send(JSON.stringify(message));  // Send the action to WebSocket
 			};
 		}
 		if (data && data.disable) {
@@ -141,13 +144,13 @@
 	};
 
 	// Handle WebSocket error
-	ws.onerror = function(error) {
+	window.doublejackSocket.onerror = function(error) {
 		console.error('WebSocket Error:', error);
 		document.getElementById('ws_status').textContent = 'WebSocket Error';
 	};
 
 	// Handle WebSocket closure
-	ws.onclose = function(event) {
+	window.doublejackSocket.onclose = function(event) {
 		document.getElementById('ws_status').textContent = 'WebSocket connection closed';
 	};
 
@@ -156,6 +159,6 @@
 		const message = {
 			action: 'join'  // This is the action we'll send to the WebSocket
 		};
-		ws.send(JSON.stringify(message));  // Send the action to WebSocket
+		window.doublejackSocket.send(JSON.stringify(message));  // Send the action to WebSocket
 	};
 })();

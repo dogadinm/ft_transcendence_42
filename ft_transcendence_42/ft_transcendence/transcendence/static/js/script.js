@@ -16,6 +16,10 @@ if (!window.tournamentLobbySocket) {
 if (!window.isEventListenerAdded) {
     window.isEventListenerAdded = false;
 }
+if (!window.doublejackSocket) {
+    window.doublejackSocket = null;
+}
+
 
 async function navigate(url, addToHistory = true) {
     // console.log(window.lobbySocket)
@@ -31,6 +35,9 @@ async function navigate(url, addToHistory = true) {
     // }
     // console.log(window.lobbySocket)
     // console.log(window.tournamentLobbySocket)
+    if(window.doublejackSocket){
+		window.doublejackSocket.close()
+	}
     try {
         const response = await fetch(url, {
             method: "GET",
@@ -67,7 +74,7 @@ function executeScriptsInContent(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const scripts = doc.querySelectorAll("script");
 
-    const exceptions = ["tournament.js", "pongLobby.js", "chat.js", "pongScript.js"];
+    const exceptions = ["tournament.js", "doublejack", "pongLobby.js", "chat.js", "pongScript.js"];
 
     scripts.forEach(script => {
         const src = script.src;
@@ -127,7 +134,7 @@ function startStatus() {
         window.statusSocket.close();
     }
 
-    window.statusSocket = new WebSocket(`ws://${window.location.host}/ws/status/`);
+    window.statusSocket = new WebSocket(`wss://${window.location.host}/ws/status/`);
 
     window.statusSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);

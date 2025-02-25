@@ -35,8 +35,6 @@
     <h1>{{username}}'s friends</h1>
     {% for friend in page_obj %}
       <div class="friend-item" data-name="{{ friend.username }}" style="display: flex; align-items: center; margin-bottom: 10px;">
-          <div class="status-indicator" style="width: 10px; height: 10px; border-radius: 50%; background-color: red; margin-right: 5px;"></div>
-          <span class="status-indicator {% if friend.is_online %}online{% else %}offline{% endif %}"></span>
           <img src="{{ friend.photo.url }}" alt="avatar" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 10px;">
           <li style="font-size: 18px; margin-right: 20px;">
               <a href="/profile/{{ friend.username }}" class="ajax-link">{{ friend.username }}</a>

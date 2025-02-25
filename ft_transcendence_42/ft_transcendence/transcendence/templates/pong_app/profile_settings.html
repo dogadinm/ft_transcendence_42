@@ -15,15 +15,15 @@
     </div>
     <div class="container mt-5">
         <h1 class="text-center">Profile settings</h1>
-        <form id="profile-settings-form" method="post" enctype="multipart/form-data" action="{% url 'profile_settings' %}">
+        <form id="find-friend-form" onsubmit="event.preventDefault(); initializeSaveButton();">
             {% csrf_token %}
             <div class="mb-3">
-                <label for="tournament_nickname" class="form-label">Tournament nickname</label>
-                <input type="text" class="form-control" id="tournament_nickname" name="tournament_nickname" value="{{ tournament_nickname }}" required>
+                <label for="tournament_nickname"  class="form-label">Tournament nickname</label>
+                <input type="text" class="form-control" id="tournament-nickname" name="tournament_nickname" value="{{ tournament_nickname }}" required>
             </div>
 
             <div class="mb-3">
-                <label for="photo" class="form-label">Profile photo(png,jpeg,jpg)</label>
+                <label for="photo"  class="form-label">Profile photo(png,jpeg,jpg)</label>
                 <input type="file" class="form-control" id="photo" name="photo">
             </div>
 
@@ -33,9 +33,11 @@
             </div>
 
             <!-- Keep type="button" or ensure preventDefault() is working -->
-            <a href="#" class="btn btn-primary" id="save-button">Save changes</a>
+            <!-- <a href="#" class="btn btn-primary" id="save-button">Save changes</a> -->
+            <button id="save-button">Save changes</button>
         </form>
-        <div id="settings-feedback" style="display: none;"></div>
+        <!-- <div id="settings-feedback" style="display: none;"></div> -->
+        <p id="error-message" style="color: #1abc9c;"></p>
         <script src="{% static 'js/profileSettings.js' %}"></script>
     </div>
 </div>

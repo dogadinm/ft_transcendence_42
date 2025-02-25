@@ -19,7 +19,7 @@
           const timerElement = document.getElementById("timer");
   
           const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
-          const wsUrl = `${wsProtocol}://127.0.0.1:8000/ws/tournament/${tournamentId}/`;
+          const wsUrl = `${wsProtocol}://${window.location.host}/ws/tournament/${tournamentId}/`;
           
 
       
