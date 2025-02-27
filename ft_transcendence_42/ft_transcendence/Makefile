@@ -32,12 +32,12 @@ clean: down
 
 # Full cleanup: Remove all Docker resources (containers, images, volumes, networks)
 fclean: clean
-	docker-compose down --volumes
-	docker rm -f $(shell docker ps -aq)
-	docker rmi -f $(shell docker images -aq)
-	docker volume rm $(shell docker volume ls -q)
-	docker network rm $(shell docker network ls -q)
-	docker system prune -a --volumes -f
+	docker-compose down --volumes || true
+	docker rm -f $(shell docker ps -aq) || true
+	docker rmi -f $(shell docker images -aq) || true
+	docker volume rm $(shell docker volume ls -q) || true
+	docker network rm $(shell docker network ls -q) || true
+	docker system prune -a --volumes -f || true
 
 # Rebuild the project (clean, build, and start Docker containers)
 re: clean build up

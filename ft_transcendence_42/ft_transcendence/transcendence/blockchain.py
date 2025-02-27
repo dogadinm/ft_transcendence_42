@@ -18,10 +18,10 @@ def contract_creation():
 	contract_abi = contract_json["abi"]
 
 	# Define the contract address
-	contract_address = "0x9a3cc74b39684D73d4B43842eC9CE7F40b2C528d"  # Replace with your deployed address
+	contract_address = "0x873242B50c7C3E57Bc3861780A062785685c29f7"  # Replace with your deployed address
 
 	# Connect to the Ethereum provider
-	web3 = Web3(Web3.HTTPProvider("HTTP://10.13.2.3:7545"))
+	web3 = Web3(Web3.HTTPProvider("HTTP://10.11.10.3:7545"))
 
 	# Initialize the contract instance
 	contract = web3.eth.contract(address=contract_address, abi=contract_abi)
