@@ -13,6 +13,7 @@ class ProfileSettingsForm(forms.Form):
         max_length=25,
         required=True,
         widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Tournament nickname can only contain letters and numbers.')],
     )
     description = forms.CharField(
         max_length=500,
@@ -47,6 +48,7 @@ class RegistrationForm(forms.Form):
         max_length=25,
         required=True,
         widget=forms.TextInput(attrs={"class": "form-control"}),
+        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Username can only contain letters and numbers.')],
     )
     email = forms.EmailField(
         max_length=30,
@@ -109,7 +111,7 @@ class FiendFriendForm(forms.Form):
         max_length=25,
         required=True,
         widget=forms.TextInput(attrs={"class": "form-control"}),
-        validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Lobby can only contain letters and numbers.')],
+        # validators=[RegexValidator(regex='^[a-zA-Z0-9]*$', message='Lobby can only contain letters and numbers.')],
         error_messages={
             'min_length': 'Username must be at least 3 characters long.',
             'max_length': 'Username cannot be more than 25 characters.',

@@ -11,7 +11,10 @@ function initializeSaveButton() {
 	} else if (tournamentInput.length > 25) {
 		displayErrorMessage("Tournament nickname cannot be more than 25 characters.");
 		return;
-	}
+	} else if (!/^[a-zA-Z0-9]+$/.test(tournamentInput)) {
+        displayErrorMessage("Tournament name can only contain letters and digits.");
+        return;
+    }
     if (tournamentInput.length > 500) {
 		displayErrorMessage("Description cannot be more than 500 characters.");
 		return;

@@ -83,7 +83,7 @@
             );
 
             this.context.fillStyle = '#ffffff';
-            this.context.fillText('Press any key to begin',
+            this.context.fillText('Press spacebar to begin',
                 this.botCanvas.width / 2,
                 this.botCanvas.height / 2 + 15
             );
